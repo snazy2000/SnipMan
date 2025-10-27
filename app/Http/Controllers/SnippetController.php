@@ -6,8 +6,10 @@ use App\Models\Folder;
 use App\Models\Snippet;
 use App\Models\SnippetVersion;
 use App\Models\Team;
+use App\Jobs\ProcessSnippetAI;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class SnippetController extends Controller
@@ -63,6 +65,7 @@ class SnippetController extends Controller
      */
     public function store(Request $request)
     {
+
         $request->validate([
             'title' => 'required|string|max:255',
             'language' => 'required|string|max:50',
@@ -70,7 +73,17 @@ class SnippetController extends Controller
             'folder_id' => 'required|exists:folders,id',
             'owner_type' => 'required|in:personal,team',
             'team_id' => 'nullable|required_if:owner_type,team|exists:teams,id',
+            'user_tags' => 'nullable',
         ]);
+
+        // Parse user_tags from JSON string to array
+        $userTags = [];
+        if ($request->filled('user_tags')) {
+            $decoded = json_decode($request->input('user_tags'), true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                $userTags = $decoded;
+            }
+        }
 
         // Set owner based on owner_type
         if ($request->owner_type === 'team') {
@@ -82,9 +95,10 @@ class SnippetController extends Controller
                 'language' => $request->language,
                 'content' => $request->content,
                 'folder_id' => $request->folder_id,
-                'owner_type' => 'App\Models\Team',
+                'owner_type' => 'App\\Models\\Team',
                 'owner_id' => $team->id,
                 'created_by' => Auth::id(),
+                'user_tags' => $userTags,
             ];
         } else {
             $snippetData = [
@@ -92,9 +106,10 @@ class SnippetController extends Controller
                 'language' => $request->language,
                 'content' => $request->content,
                 'folder_id' => $request->folder_id,
-                'owner_type' => 'App\Models\User',
+                'owner_type' => 'App\\Models\\User',
                 'owner_id' => Auth::id(),
                 'created_by' => Auth::id(),
+                'user_tags' => $userTags,
             ];
         }
 
@@ -108,6 +123,11 @@ class SnippetController extends Controller
             'created_by' => Auth::id(),
         ]);
 
+        // Trigger AI analysis in background
+        if (config('ai.features.auto_description')) {
+            ProcessSnippetAI::dispatch($snippet);
+        }
+
         return redirect()->route('snippets.show', $snippet)
             ->with('success', 'Snippet created successfully.');
     }
@@ -119,7 +139,7 @@ class SnippetController extends Controller
     {
         $this->authorize('view', $snippet);
 
-        $snippet->load(['folder', 'creator', 'versions.creator', 'shares']);
+        $snippet->load(['folder', 'creator', 'versions.creator', 'shares', 'activeShares']);
 
         return view('snippets.show', compact('snippet'));
     }
@@ -151,17 +171,31 @@ class SnippetController extends Controller
     {
         $this->authorize('update', $snippet);
 
+
         $request->validate([
             'title' => 'required|string|max:255',
             'language' => 'required|string|max:50',
             'content' => 'required|string',
             'folder_id' => 'required|exists:folders,id',
+            'user_tags' => 'nullable',
         ]);
+
+        // Parse user_tags from JSON string to array
+        $userTags = [];
+        if ($request->filled('user_tags')) {
+            $decoded = json_decode($request->input('user_tags'), true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                $userTags = $decoded;
+            }
+        }
 
         // Check if content changed to create new version
         $contentChanged = $snippet->content !== $request->content;
 
-        $snippet->update($request->only(['title', 'language', 'content', 'folder_id']));
+        $snippet->update(array_merge(
+            $request->only(['title', 'language', 'content', 'folder_id']),
+            ['user_tags' => $userTags]
+        ));
 
         // Create new version if content changed
         if ($contentChanged) {
@@ -172,6 +206,11 @@ class SnippetController extends Controller
                 'content' => $request->content,
                 'created_by' => Auth::id(),
             ]);
+
+            // Trigger AI analysis for updated content
+            if (config('ai.features.auto_description')) {
+                ProcessSnippetAI::dispatch($snippet, true); // Force reprocess
+            }
         }
 
         return redirect()->route('snippets.show', $snippet)
@@ -189,5 +228,226 @@ class SnippetController extends Controller
 
         return redirect()->route('snippets.index')
             ->with('success', 'Snippet deleted successfully.');
+    }
+
+    /**
+     * Move snippet to a different folder.
+     */
+    public function move(Request $request, Snippet $snippet)
+    {
+        try {
+            $this->authorize('update', $snippet);
+
+            $request->validate([
+                'folder_id' => 'nullable|exists:folders,id',
+            ]);
+
+            $folderId = $request->folder_id;
+
+            // If moving to a folder, validate user has access to it
+            if ($folderId) {
+                $folder = Folder::findOrFail($folderId);
+
+                // Check if user can update this folder (i.e., can add snippets to it)
+                $this->authorize('update', $folder);
+            }
+
+            $snippet->update(['folder_id' => $folderId]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Snippet moved successfully.'
+            ]);
+
+        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You do not have permission to move this snippet.'
+            ], 403);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid folder specified.',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            Log::error('Error moving snippet: ' . $e->getMessage(), [
+                'snippet_id' => $snippet->id,
+                'folder_id' => $request->folder_id,
+                'user_id' => Auth::id(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while moving the snippet. Please try again.'
+            ], 500);
+        }
+    }
+
+    /**
+     * Get share status for the snippet
+     */
+    public function getShareStatus(Snippet $snippet)
+    {
+        $this->authorize('view', $snippet);
+
+        $share = $snippet->activeShares()->first();
+
+        if ($share) {
+            return response()->json([
+                'success' => true,
+                'shared' => true,
+                'share_url' => $share->getPublicUrl(),
+                'uuid' => $share->uuid
+            ]);
+        } else {
+            return response()->json([
+                'success' => true,
+                'shared' => false,
+                'share_url' => null,
+                'uuid' => null
+            ]);
+        }
+    }
+
+    /**
+     * Create or get a public share for the snippet
+     */
+    public function createShare(Snippet $snippet)
+    {
+        $this->authorize('view', $snippet);
+
+        // Check if an active share already exists
+        $share = $snippet->activeShares()->first();
+
+        if (!$share) {
+            $share = $snippet->shares()->create([
+                'is_active' => true,
+                'views' => 0,
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'share_url' => $share->getPublicUrl(),
+            'uuid' => $share->uuid
+        ]);
+    }
+
+    /**
+     * Toggle share status
+     */
+    public function toggleShare(Snippet $snippet)
+    {
+        $this->authorize('view', $snippet);
+
+        $share = $snippet->activeShares()->first();
+
+        if ($share) {
+            $share->update(['is_active' => false]);
+            return response()->json([
+                'success' => true,
+                'shared' => false,
+                'message' => 'Public sharing disabled'
+            ]);
+        } else {
+            $share = $snippet->shares()->create([
+                'is_active' => true,
+                'views' => 0,
+            ]);
+            return response()->json([
+                'success' => true,
+                'shared' => true,
+                'share_url' => $share->getPublicUrl(),
+                'uuid' => $share->uuid
+            ]);
+        }
+    }
+
+    /**
+     * View a publicly shared snippet
+     */
+    public function viewShared($uuid)
+    {
+        $share = \App\Models\SnippetShare::where('uuid', $uuid)
+            ->where('is_active', true)
+            ->firstOrFail();
+
+        $snippet = $share->snippet()->with(['creator', 'folder'])->first();
+
+        if (!$snippet) {
+            abort(404, 'Snippet not found');
+        }
+
+        // Increment view count
+        $share->incrementViews();
+
+        return view('snippets.shared', compact('snippet', 'share'));
+    }
+
+    /**
+     * List all shared snippets for the current user
+     */
+    public function sharedList()
+    {
+        $user = auth()->user();
+
+        // Get user's team IDs
+        $userTeamIds = $user->teams()->pluck('teams.id')->toArray();
+
+        // Get all snippets owned by the user or their teams that have active shares
+        $sharedSnippets = Snippet::where(function($query) use ($user, $userTeamIds) {
+            // User's own snippets
+            $query->where(function($q) use ($user) {
+                $q->where('owner_type', 'App\Models\User')
+                  ->where('owner_id', $user->id);
+            });
+
+            // Team snippets where user is a member
+            if (!empty($userTeamIds)) {
+                $query->orWhere(function($q) use ($userTeamIds) {
+                    $q->where('owner_type', 'App\Models\Team')
+                      ->whereIn('owner_id', $userTeamIds);
+                });
+            }
+        })
+        ->whereHas('activeShares')
+        ->with(['activeShares', 'folder', 'creator'])
+        ->orderBy('updated_at', 'desc')
+        ->paginate(10);
+
+        return view('snippets.shared-list', compact('sharedSnippets'));
+    }
+
+    /**
+     * Revoke sharing for a snippet
+     */
+    public function revokeShare(Snippet $snippet)
+    {
+        $this->authorize('update', $snippet);
+
+        $snippet->activeShares()->update(['is_active' => false]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Sharing revoked successfully'
+        ]);
+    }
+
+    /**
+     * Manually trigger AI analysis for a snippet
+     */
+    public function processAI(Snippet $snippet)
+    {
+        $this->authorize('update', $snippet);
+
+        // Dispatch AI processing job
+        ProcessSnippetAI::dispatch($snippet, true); // Force reprocess
+
+        return response()->json([
+            'success' => true,
+            'message' => 'AI analysis started. Results will appear shortly.'
+        ]);
     }
 }

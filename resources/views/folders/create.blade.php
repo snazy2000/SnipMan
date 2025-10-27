@@ -5,15 +5,15 @@
 @section('content')
 <div class="max-w-2xl mx-auto">
     <div class="mb-8">
-        <h1 class="text-2xl font-semibold text-gray-900">Create New Folder</h1>
-        <p class="text-gray-600 mt-1">Organize your snippets with a new folder</p>
+        <h1 class="text-2xl font-semibold text-gray-900 dark:text-gray-100 transition-colors duration-200">Create New Folder</h1>
+        <p class="text-gray-600 dark:text-gray-400 mt-1 transition-colors duration-200">Organize your snippets with a new folder</p>
     </div>
 
-    <div class="bg-white rounded-lg border border-gray-200 p-6">
+    <div class="bg-white dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 p-6 transition-colors duration-200">
         @if($errors->any())
-            <div class="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
-                <h3 class="text-sm font-medium text-red-800 mb-2">There were some errors with your submission:</h3>
-                <ul class="text-sm text-red-700 list-disc list-inside">
+            <div class="mb-6 bg-red-50 dark:bg-red-900/50 border border-red-200 dark:border-red-600 rounded-lg p-4 transition-colors duration-200">
+                <h3 class="text-sm font-medium text-red-800 dark:text-red-200 mb-2 transition-colors duration-200">There were some errors with your submission:</h3>
+                <ul class="text-sm text-red-700 dark:text-red-300 list-disc list-inside transition-colors duration-200">
                     @foreach($errors->all() as $error)
                         <li>{{ $error }}</li>
                     @endforeach
@@ -26,14 +26,14 @@
 
             <!-- Folder Name -->
             <div class="mb-6">
-                <label for="name" class="block text-sm font-medium text-gray-700 mb-2">
+                <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 transition-colors duration-200">
                     Folder Name <span class="text-red-500">*</span>
                 </label>
                 <input type="text"
                        id="name"
                        name="name"
                        value="{{ old('name') }}"
-                       class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent @error('name') border-red-500 @enderror"
+                       class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent transition-colors duration-200 @error('name') border-red-500 @enderror"
                        placeholder="Enter folder name"
                        required>
                 @error('name')
@@ -43,7 +43,7 @@
 
             <!-- Owner Type -->
             <div class="mb-6">
-                <label class="block text-sm font-medium text-gray-700 mb-2">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 transition-colors duration-200">
                     Owner <span class="text-red-500">*</span>
                 </label>
                 <div class="space-y-3">

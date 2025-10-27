@@ -10,21 +10,24 @@
             border-radius: 0.5rem;
             overflow: hidden;
         }
+
+        .dark .monaco-container {
+            border-color: #4b5563;
+        }
     </style>
 @endpush
 
 @section('content')
-<div class="max-w-4xl mx-auto">
-    <div class="mb-8">
-        <h1 class="text-2xl font-semibold text-gray-900">Create New Snippet</h1>
-        <p class="text-gray-600 mt-1">Save and organize your code snippets</p>
-    </div>
+<div class="mb-8">
+    <h1 class="text-2xl font-semibold text-gray-900 dark:text-gray-100 transition-colors duration-200">Create New Snippet</h1>
+    <p class="text-gray-600 dark:text-gray-400 mt-1 transition-colors duration-200">Save and organize your code snippets</p>
+</div>
 
-    <div class="bg-white rounded-lg border border-gray-200 p-6">
+    <div class="bg-white dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 p-6 transition-colors duration-200">
         @if($errors->any())
-            <div class="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
-                <h3 class="text-sm font-medium text-red-800 mb-2">There were some errors with your submission:</h3>
-                <ul class="text-sm text-red-700 list-disc list-inside">
+            <div class="mb-6 bg-red-50 dark:bg-red-900/50 border border-red-200 dark:border-red-600 rounded-lg p-4 transition-colors duration-200">
+                <h3 class="text-sm font-medium text-red-800 dark:text-red-200 mb-2 transition-colors duration-200">There were some errors with your submission:</h3>
+                <ul class="text-sm text-red-700 dark:text-red-300 list-disc list-inside transition-colors duration-200">
                     @foreach($errors->all() as $error)
                         <li>{{ $error }}</li>
                     @endforeach
@@ -38,14 +41,14 @@
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
                 <!-- Snippet Title -->
                 <div>
-                    <label for="title" class="block text-sm font-medium text-gray-700 mb-2">
+                    <label for="title" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 transition-colors duration-200">
                         Title <span class="text-red-500">*</span>
                     </label>
                     <input type="text"
                            id="title"
                            name="title"
                            value="{{ old('title') }}"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent @error('title') border-red-500 @enderror"
+                           class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent transition-colors duration-200 @error('title') border-red-500 @enderror"
                            placeholder="Enter snippet title"
                            required>
                     @error('title')
@@ -55,12 +58,12 @@
 
                 <!-- Language -->
                 <div>
-                    <label for="language" class="block text-sm font-medium text-gray-700 mb-2">
+                    <label for="language" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 transition-colors duration-200">
                         Language <span class="text-red-500">*</span>
                     </label>
                     <select id="language"
                             name="language"
-                            class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent @error('language') border-red-500 @enderror"
+                            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent transition-colors duration-200 @error('language') border-red-500 @enderror"
                             required>
                         <option value="">Select a language...</option>
                         <option value="javascript" {{ old('language') == 'javascript' ? 'selected' : '' }}>JavaScript</option>
@@ -96,7 +99,7 @@
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
                 <!-- Owner Type -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 transition-colors duration-200">
                         Owner <span class="text-red-500">*</span>
                     </label>
                     <div class="space-y-3">
@@ -105,10 +108,10 @@
                             <input type="radio"
                                    name="owner_type"
                                    value="personal"
-                                   class="text-indigo-600 focus:ring-indigo-500"
+                                   class="text-indigo-600 dark:text-indigo-400 focus:ring-indigo-500 dark:focus:ring-indigo-400 transition-colors duration-200"
                                    {{ old('owner_type', 'personal') == 'personal' ? 'checked' : '' }}
                                    onchange="updateOwnerOptions()">
-                            <span class="ml-2 text-sm text-gray-700">Personal Snippet</span>
+                            <span class="ml-2 text-sm text-gray-700 dark:text-gray-300 transition-colors duration-200">Personal Snippet</span>
                         </label>
 
                         <!-- Team Snippet -->
@@ -117,10 +120,10 @@
                                 <input type="radio"
                                        name="owner_type"
                                        value="team"
-                                       class="text-indigo-600 focus:ring-indigo-500"
+                                       class="text-indigo-600 dark:text-indigo-400 focus:ring-indigo-500 dark:focus:ring-indigo-400 transition-colors duration-200"
                                        {{ old('owner_type') == 'team' ? 'checked' : '' }}
                                        onchange="updateOwnerOptions()">
-                                <span class="ml-2 text-sm text-gray-700">Team Snippet</span>
+                                <span class="ml-2 text-sm text-gray-700 dark:text-gray-300 transition-colors duration-200">Team Snippet</span>
                             </label>
                         @endif
                     </div>
@@ -132,12 +135,12 @@
                 <!-- Team Selection -->
                 @if($teams->count() > 0)
                     <div id="team-selection" style="{{ old('owner_type') == 'team' ? '' : 'display: none;' }}">
-                        <label for="team_id" class="block text-sm font-medium text-gray-700 mb-2">
+                        <label for="team_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 transition-colors duration-200">
                             Select Team <span class="text-red-500">*</span>
                         </label>
                         <select id="team_id"
                                 name="team_id"
-                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent @error('team_id') border-red-500 @enderror">
+                                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent transition-colors duration-200 @error('team_id') border-red-500 @enderror">
                             <option value="">Choose a team...</option>
                             @foreach($teams as $team)
                                 <option value="{{ $team->id }}" {{ old('team_id') == $team->id ? 'selected' : '' }}>
@@ -155,12 +158,12 @@
             <!-- Folder -->
             @if($folders->count() > 0)
                 <div class="mb-6">
-                    <label for="folder_id" class="block text-sm font-medium text-gray-700 mb-2">
+                    <label for="folder_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 transition-colors duration-200">
                         Folder <span class="text-red-500">*</span>
                     </label>
                     <select id="folder_id"
                             name="folder_id"
-                            class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent @error('folder_id') border-red-500 @enderror"
+                            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent transition-colors duration-200 @error('folder_id') border-red-500 @enderror"
                             required>
                         <option value="">Select a folder...</option>
                         @foreach($folders as $folder)
@@ -188,7 +191,7 @@
 
             <!-- Code Content -->
             <div class="mb-6">
-                <label for="content" class="block text-sm font-medium text-gray-700 mb-2">
+                <label for="content" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 transition-colors duration-200">
                     Code <span class="text-red-500">*</span>
                 </label>
 
@@ -205,25 +208,73 @@
                     <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                 @enderror
             </div>
+            <!-- User Tags (Alpine.js) -->
+            <div class="mb-6" x-data="tagInput({
+                tags: @json(old('user_tags', [])),
+                input: ''
+            })">
+                <label class="block text-sm font-medium text-green-700 dark:text-green-300 mb-2">Your Tags</label>
+                <div class="flex flex-wrap gap-2 mb-2">
+                    <template x-for="(tag, idx) in tags" :key="tag">
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-200 border border-green-200 dark:border-green-700 transition-colors duration-200">
+                            <span x-text="tag"></span>
+                            <button type="button" class="ml-2 text-green-700 hover:text-red-600 dark:text-green-300 dark:hover:text-red-400 focus:outline-none" @click="removeTag(idx)">
+                                &times;
+                            </button>
+                        </span>
+                    </template>
+                    <input
+                        x-model="input"
+                        @keydown.enter.prevent="addTag()"
+                        @keydown.tab.prevent="addTag()"
+                        @keydown.",".prevent="addTag()"
+                        type="text"
+                        class="px-2 py-1 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-green-500 dark:focus:ring-green-400 transition-colors duration-200"
+                        placeholder="Add tag and press Enter, Tab, or Comma"
+                    >
+                </div>
+                <input type="hidden" name="user_tags" :value="JSON.stringify(tags)">
+                <span class="text-xs text-gray-400 mt-1 block">Press Enter, Tab, or comma to add. Click × to remove.</span>
+            </div>
 
             <!-- Form Actions -->
-            <div class="flex items-center justify-between pt-6 border-t border-gray-200">
+            <div class="flex items-center justify-between pt-6 border-t border-gray-200 dark:border-gray-600 transition-colors duration-200">
                 <a href="{{ route('snippets.index') }}"
-                   class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
+                   class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-600 hover:bg-gray-200 dark:hover:bg-gray-500 rounded-lg transition-colors duration-200">
                     Cancel
                 </a>
                 <button type="submit"
-                        class="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors">
+                        class="px-6 py-2 bg-indigo-600 dark:bg-indigo-700 hover:bg-indigo-700 dark:hover:bg-indigo-600 text-white text-sm font-medium rounded-lg transition-colors duration-200">
                     Create Snippet
                 </button>
             </div>
         </form>
     </div>
-</div>
 
 @push('scripts')
     <!-- Monaco Editor -->
-    <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.44.0/min/vs/loader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.54.0/min/vs/loader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script>
+    // Alpine.js tag input component
+    function tagInput(initial) {
+        return {
+            tags: Array.isArray(initial.tags) ? initial.tags : (typeof initial.tags === 'string' && initial.tags ? JSON.parse(initial.tags) : []),
+            input: initial.input || '',
+            addTag() {
+                let tag = this.input.trim();
+                if (tag.endsWith(',')) tag = tag.slice(0, -1);
+                if (tag && !this.tags.includes(tag)) {
+                    this.tags.push(tag);
+                }
+                this.input = '';
+            },
+            removeTag(idx) {
+                this.tags.splice(idx, 1);
+            }
+        }
+    }
+    </script>
 @endpush
 
 <script>
@@ -283,40 +334,81 @@ function updateEditorLanguage() {
 
 // Initialize Monaco Editor when page loads
 document.addEventListener('DOMContentLoaded', function() {
-    require.config({ paths: { 'vs': 'https://cdn.jsdelivr.net/npm/monaco-editor@0.44.0/min/vs' }});
-
-    require(['vs/editor/editor.main'], function() {
-        monacoEditor = monaco.editor.create(document.getElementById('monaco-editor'), {
-            value: '// Start typing your code here...',
-            language: 'javascript',
-            theme: 'vs',
-            automaticLayout: true,
-            fontSize: 14,
-            minimap: { enabled: false },
-            scrollBeyondLastLine: false,
-            wordWrap: 'on',
-            lineNumbers: 'on',
-            folding: true,
-            bracketMatching: 'always',
-            autoIndent: 'full',
-            formatOnPaste: true,
-            formatOnType: true
-        });
-
-        // Set initial content if there's old input
-        const oldContent = {{ Js::from(old('content', '')) }};
-        if (oldContent) {
-            monacoEditor.setValue(oldContent);
+    // Wait for Monaco loader to be available
+    function initializeMonaco() {
+        if (typeof require === 'undefined') {
+            setTimeout(initializeMonaco, 100);
+            return;
         }
 
-        // Update hidden textarea when editor content changes
-        monacoEditor.onDidChangeModelContent(function() {
-            document.getElementById('content').value = monacoEditor.getValue();
+        require.config({
+            paths: {
+                'vs': 'https://cdn.jsdelivr.net/npm/monaco-editor@0.54.0/min/vs'
+            }
         });
 
-        // Update language when dropdown changes
-        document.getElementById('language').addEventListener('change', updateEditorLanguage);
-    });
+        require(['vs/editor/editor.main'], function() {
+            // Function to detect current dark mode state
+            function getCurrentTheme() {
+                return document.documentElement.classList.contains('dark') ? 'vs-dark' : 'vs';
+            }
+
+            monacoEditor = monaco.editor.create(document.getElementById('monaco-editor'), {
+                value: '// Start typing your code here...',
+                language: 'javascript',
+                theme: getCurrentTheme(),
+                automaticLayout: true,
+                fontSize: 14,
+                minimap: { enabled: false },
+                scrollBeyondLastLine: false,
+                wordWrap: 'on',
+                lineNumbers: 'on',
+                folding: true,
+                bracketMatching: 'always',
+                autoIndent: 'full',
+                formatOnPaste: true,
+                formatOnType: true,
+                scrollbar: {
+                    alwaysConsumeMouseWheel: false,
+                    handleMouseWheel: true
+                },
+                mouseWheelZoom: false,
+                fastScrollSensitivity: 5
+            });
+
+            // Listen for theme changes and update Monaco editor
+            const observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                        const newTheme = getCurrentTheme();
+                        monaco.editor.setTheme(newTheme);
+                    }
+                });
+            });
+
+            // Start observing changes to the html element's class list
+            observer.observe(document.documentElement, {
+                attributes: true,
+                attributeFilter: ['class']
+            });
+
+            // Set initial content if there's old input
+            const oldContent = {{ Js::from(old('content', '')) }};
+            if (oldContent) {
+                monacoEditor.setValue(oldContent);
+            }
+
+            // Update hidden textarea when editor content changes
+            monacoEditor.onDidChangeModelContent(function() {
+                document.getElementById('content').value = monacoEditor.getValue();
+            });
+
+            // Update language when dropdown changes
+            document.getElementById('language').addEventListener('change', updateEditorLanguage);
+        });
+    }
+
+    initializeMonaco();
 });
 
 // Update hidden textarea before form submission

@@ -150,4 +150,58 @@ class FolderController extends Controller
         return redirect()->route('folders.index')
             ->with('success', 'Folder deleted successfully.');
     }
+
+    /**
+     * Move folder to a different parent folder.
+     */
+    public function move(Request $request, Folder $folder)
+    {
+        $this->authorize('update', $folder);
+
+        $request->validate([
+            'parent_id' => 'nullable|exists:folders,id',
+        ]);
+
+        $parentId = $request->parent_id;
+
+        // Prevent circular references
+        if ($parentId) {
+            $parent = Folder::findOrFail($parentId);
+
+            // Check if the target parent is a descendant of the current folder
+            if ($this->isDescendant($folder, $parent)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot move folder to its own descendant.'
+                ], 400);
+            }
+
+            // Validate user has access to target parent folder
+            $this->authorize('update', $parent);
+        }
+
+        $folder->update(['parent_id' => $parentId]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Folder moved successfully.'
+        ]);
+    }
+
+    /**
+     * Check if a folder is a descendant of another folder.
+     */
+    private function isDescendant(Folder $ancestor, Folder $folder): bool
+    {
+        $current = $folder;
+
+        while ($current->parent) {
+            if ($current->parent->id === $ancestor->id) {
+                return true;
+            }
+            $current = $current->parent;
+        }
+
+        return false;
+    }
 }

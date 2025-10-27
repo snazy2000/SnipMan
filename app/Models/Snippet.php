@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class Snippet extends Model
 {
+
     protected $fillable = [
         'folder_id',
         'owner_id',
@@ -17,6 +18,19 @@ class Snippet extends Model
         'language',
         'content',
         'created_by',
+        'ai_description',
+        'ai_tags',
+        'ai_quality_score',
+        'ai_processed_at',
+        'ai_processing_failed',
+        'user_tags',
+    ];
+
+    protected $casts = [
+        'ai_tags' => 'array',
+        'user_tags' => 'array',
+        'ai_processed_at' => 'datetime',
+        'ai_processing_failed' => 'boolean',
     ];
 
     /**
@@ -73,5 +87,45 @@ class Snippet extends Model
     public function activeShares(): HasMany
     {
         return $this->shares()->where('is_active', true);
+    }
+
+    /**
+     * Check if AI analysis is available for this snippet.
+     */
+    public function hasAIAnalysis(): bool
+    {
+        return $this->ai_processed_at && !$this->ai_processing_failed;
+    }
+
+    /**
+     * Check if AI analysis is currently being processed.
+     */
+    public function isAIProcessing(): bool
+    {
+        return !$this->ai_processed_at && !$this->ai_processing_failed;
+    }
+
+    /**
+     * Check if AI analysis failed.
+     */
+    public function hasAIProcessingFailed(): bool
+    {
+        return $this->ai_processing_failed;
+    }
+
+    /**
+     * Get the AI description or fallback to manual description.
+     */
+    public function getBestDescription(): ?string
+    {
+        return $this->ai_description ?: $this->description;
+    }
+
+    /**
+     * Trigger AI analysis for this snippet.
+     */
+    public function processAI(bool $forceReprocess = false): void
+    {
+        \App\Jobs\ProcessSnippetAI::dispatch($this, $forceReprocess);
     }
 }

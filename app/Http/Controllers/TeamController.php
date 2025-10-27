@@ -99,4 +99,85 @@ class TeamController extends Controller
         return redirect()->route('teams.index')
             ->with('success', 'Team deleted successfully.');
     }
+
+    /**
+     * Add a member to the team
+     */
+    public function addMember(Request $request, Team $team)
+    {
+        $this->authorize('update', $team);
+
+        $request->validate([
+            'email' => 'required|email|exists:users,email',
+            'role' => 'required|in:owner,editor,viewer'
+        ]);
+
+        $user = \App\Models\User::where('email', $request->email)->first();
+
+        if (!$user) {
+            return back()->withErrors(['email' => 'User not found with this email address.']);
+        }
+
+        if ($team->members()->where('user_id', $user->id)->exists()) {
+            return back()->withErrors(['email' => 'This user is already a member of the team.']);
+        }
+
+        $team->members()->attach($user->id, ['role' => $request->role]);
+
+        return back()->with('success', "{$user->name} has been added to the team as {$request->role}.");
+    }
+
+    /**
+     * Update a team member's role
+     */
+    public function updateMemberRole(Request $request, Team $team, \App\Models\User $user)
+    {
+        $this->authorize('update', $team);
+
+        $request->validate([
+            'role' => 'required|in:owner,editor,viewer'
+        ]);
+
+        if (!$team->members()->where('user_id', $user->id)->exists()) {
+            return back()->withErrors(['error' => 'User is not a member of this team.']);
+        }
+
+        // Prevent removing the last owner
+        if ($request->role !== 'owner') {
+            $ownerCount = $team->members()->wherePivot('role', 'owner')->count();
+            $isCurrentUserOwner = $team->members()->where('user_id', $user->id)->wherePivot('role', 'owner')->exists();
+
+            if ($ownerCount <= 1 && $isCurrentUserOwner) {
+                return back()->withErrors(['error' => 'Cannot change role: team must have at least one owner.']);
+            }
+        }
+
+        $team->members()->updateExistingPivot($user->id, ['role' => $request->role]);
+
+        return back()->with('success', "{$user->name}'s role has been updated to {$request->role}.");
+    }
+
+    /**
+     * Remove a member from the team
+     */
+    public function removeMember(Team $team, \App\Models\User $user)
+    {
+        $this->authorize('update', $team);
+
+        if (!$team->members()->where('user_id', $user->id)->exists()) {
+            return back()->withErrors(['error' => 'User is not a member of this team.']);
+        }
+
+        // Prevent removing the last owner
+        $ownerCount = $team->members()->wherePivot('role', 'owner')->count();
+        $isUserOwner = $team->members()->where('user_id', $user->id)->wherePivot('role', 'owner')->exists();
+
+        if ($ownerCount <= 1 && $isUserOwner) {
+            return back()->withErrors(['error' => 'Cannot remove: team must have at least one owner.']);
+        }
+
+        $team->members()->detach($user->id);
+
+        return back()->with('success', "{$user->name} has been removed from the team.");
+    }
 }
