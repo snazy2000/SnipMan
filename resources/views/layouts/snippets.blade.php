@@ -410,24 +410,6 @@
                             </div>
                         </div>
                     </div>
-
-                    <!-- Sidebar Footer -->
-                    <div class="p-4 border-t border-gray-200">
-                        <div class="grid grid-cols-2 gap-2">
-                            <a href="{{ route('teams.index') }}" class="text-center py-2 px-3 text-xs text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded {{ request()->routeIs('teams.*') ? 'bg-gray-100 text-gray-800' : '' }}">
-                                Teams
-                            </a>
-                            <a href="{{ route('folders.index') }}" class="text-center py-2 px-3 text-xs text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded {{ request()->routeIs('folders.*') ? 'bg-gray-100 text-gray-800' : '' }}">
-                                Folders
-                            </a>
-                            <a href="{{ route('snippets.index') }}" class="text-center py-2 px-3 text-xs text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded {{ request()->routeIs('snippets.index') ? 'bg-gray-100 text-gray-800' : '' }}">
-                                Snippets
-                            </a>
-                            <a href="{{ route('snippets.sharedList') }}" class="text-center py-2 px-3 text-xs text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded {{ request()->routeIs('snippets.sharedList') ? 'bg-gray-100 text-gray-800' : '' }}">
-                                Shared
-                            </a>
-                        </div>
-                    </div>
                 </div>
 
                 <!-- Main Content Area -->

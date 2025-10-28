@@ -1,0 +1,22 @@
+
+# --- Build Stage: Node for assets ---
+FROM node:20-alpine as build-assets
+WORKDIR /app
+COPY package*.json ./
+COPY resources/ ./resources/
+COPY vite.config.js ./
+RUN npm install && npm run build
+
+# --- Final Stage: PHP-Nginx ---
+FROM trafex/php-nginx:latest
+USER root
+RUN apk --no-cache add \
+	php84-pdo \
+	php84-pdo_pgsql \
+	php84-pgsql \
+	postgresql-dev
+
+# Copy application code (except node_modules)
+COPY . .
+COPY --from=build-assets /app/public/build ./public/build
+USER nobody
