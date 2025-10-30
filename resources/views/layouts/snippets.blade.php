@@ -112,6 +112,9 @@
             .folder-toggle {
                 transition: transform 0.2s ease-in-out;
             }
+
+
+
         </style>
     </head>
     <body class="font-sans antialiased bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
