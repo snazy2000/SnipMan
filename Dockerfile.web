@@ -16,7 +16,17 @@ RUN apk --no-cache add \
 	php84-pgsql \
 	postgresql-dev
 
+
+# Copy composer files and install dependencies first for better caching
+COPY composer.json composer.lock ./
+RUN apk --no-cache add curl git && \
+	curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer && \
+	composer install --no-dev --optimize-autoloader
+
 # Copy application code (except node_modules)
 COPY . .
 COPY --from=build-assets /app/public/build ./public/build
+# Set permissions for Laravel writable directories
+RUN chown -R nobody:nobody storage bootstrap/cache && \
+	chmod -R ug+rwx storage bootstrap/cache
 USER nobody
