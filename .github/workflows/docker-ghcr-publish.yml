@@ -5,8 +5,8 @@ on:
       - closed
     branches:
       - main
-    paths-ignore:
-      - 'helm-chart/**'
+
+  build-and-push:
     runs-on: ubuntu-latest
     permissions:
       packages: write
