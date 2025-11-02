@@ -1,11 +1,9 @@
-name: Build and Publish Docker Images to GHCR
+name: Build and Publish Release Docker Images to GHCR
 
 on:
-  pull_request:
+  release:
     types:
-      - closed
-    branches:
-      - main
+      - published
 
 jobs:
   build-and-push:
@@ -30,9 +28,10 @@ jobs:
       - name: Set image tags
         id: vars
         run: |
-          SHA_SHORT=$(git rev-parse --short HEAD)
-          echo "tags=ghcr.io/${GITHUB_REPOSITORY_OWNER}/snipman-web:sha-${SHA_SHORT}" >> $GITHUB_OUTPUT
-          echo "tags_queue=ghcr.io/${GITHUB_REPOSITORY_OWNER}/snipman-queue:sha-${SHA_SHORT}" >> $GITHUB_OUTPUT
+          # Get version from release tag (without v prefix)
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "tags=ghcr.io/${GITHUB_REPOSITORY_OWNER}/snipman-web:latest,ghcr.io/${GITHUB_REPOSITORY_OWNER}/snipman-web:${VERSION}" >> $GITHUB_OUTPUT
+          echo "tags_queue=ghcr.io/${GITHUB_REPOSITORY_OWNER}/snipman-queue:latest,ghcr.io/${GITHUB_REPOSITORY_OWNER}/snipman-queue:${VERSION}" >> $GITHUB_OUTPUT
 
       - name: Build and push web image
         uses: docker/build-push-action@v5
