@@ -40,20 +40,30 @@ class FolderController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
+    public function create(Request $request)
     {
         $user = Auth::user();
         $teams = $user->teams;
-        $folders = $user->folders()->get();
 
-        // Add team folders where user has editor+ role
+        // Get personal folders
+        $personalFolders = $user->folders()->get();
+
+        // Get team folders where user has editor+ role
+        $teamFolders = collect();
         foreach ($user->teams as $team) {
             if (in_array($team->pivot->role, ['owner', 'editor'])) {
-                $folders = $folders->merge($team->folders);
+                $folders = $team->folders()->get();
+                foreach ($folders as $folder) {
+                    $folder->team_name = $team->name;
+                }
+                $teamFolders = $teamFolders->merge($folders);
             }
         }
 
-        return view('folders.create', compact('teams', 'folders'));
+        // Get team_id from query parameter if provided
+        $preselectedTeamId = $request->query('team_id');
+
+        return view('folders.create', compact('teams', 'personalFolders', 'teamFolders', 'preselectedTeamId'));
     }
 
     /**

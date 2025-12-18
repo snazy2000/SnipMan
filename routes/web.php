@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\AdminController;
+use App\Http\Controllers\AISettingsController;
 use App\Http\Controllers\FolderController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SearchController;
@@ -33,6 +35,9 @@ Route::middleware('auth')->group(function () {
     // AI processing routes
     Route::post('/snippets/{snippet}/process-ai', [SnippetController::class, 'processAI'])->name('snippets.processAI');
 
+    // Clone/Fork snippet route
+    Route::post('/snippets/{snippet}/clone', [SnippetController::class, 'clone'])->name('snippets.clone');
+
     // Search routes
     Route::get('/search', [SearchController::class, 'search'])->name('search');
 
@@ -50,6 +55,29 @@ Route::middleware('auth')->group(function () {
 
     Route::resource('folders', FolderController::class);
     Route::resource('snippets', SnippetController::class);
+});
+
+// Admin routes - only accessible by super admins
+Route::middleware(['auth', 'super_admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/', [AdminController::class, 'index'])->name('index');
+
+    // User management
+    Route::get('/users', [AdminController::class, 'users'])->name('users');
+    Route::get('/users/{user}/edit', [AdminController::class, 'editUser'])->name('users.edit');
+    Route::patch('/users/{user}', [AdminController::class, 'updateUser'])->name('users.update');
+    Route::delete('/users/{user}', [AdminController::class, 'destroyUser'])->name('users.destroy');
+
+    // Team management
+    Route::get('/teams', [AdminController::class, 'teams'])->name('teams');
+    Route::get('/teams/{team}/edit', [AdminController::class, 'editTeam'])->name('teams.edit');
+    Route::patch('/teams/{team}', [AdminController::class, 'updateTeam'])->name('teams.update');
+    Route::delete('/teams/{team}', [AdminController::class, 'destroyTeam'])->name('teams.destroy');
+
+    // AI Settings routes (moved to admin)
+    Route::get('/ai/settings', [AISettingsController::class, 'index'])->name('ai.settings');
+    Route::post('/ai/settings', [AISettingsController::class, 'update'])->name('ai.settings.update');
+    Route::post('/ai/reset', [AISettingsController::class, 'resetToDefaults'])->name('ai.settings.reset');
+    Route::post('/ai/clear-caches', [AISettingsController::class, 'clearCaches'])->name('ai.settings.clear-caches');
 });
 
 require __DIR__.'/auth.php';

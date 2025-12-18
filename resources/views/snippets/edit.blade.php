@@ -96,7 +96,7 @@
             </div>
 
             <!-- Folder -->
-            @if($folders->count() > 0)
+            @if($personalFolders->count() > 0 || $teamFolders->count() > 0)
                 <div class="mb-6">
                     <label for="folder_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 transition-colors duration-200">
                         Folder <span class="text-red-500">*</span>
@@ -106,14 +106,44 @@
                             class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent transition-colors duration-200 @error('folder_id') border-red-500 @enderror"
                             required>
                         <option value="">Select a folder...</option>
-                        @foreach($folders as $folder)
-                            <option value="{{ $folder->id }}" {{ old('folder_id', $snippet->folder_id) == $folder->id ? 'selected' : '' }}>
-                                {{ $folder->name }}
-                                @if($folder->owner_type === 'App\Models\Team')
-                                    (Team: {{ $folder->owner->name }})
+
+                        @if($snippet->owner_type === 'App\Models\User')
+                            {{-- Personal Folders --}}
+                            @foreach($personalFolders as $folder)
+                                <option value="{{ $folder->id }}" {{ old('folder_id', $snippet->folder_id) == $folder->id ? 'selected' : '' }}>
+                                    {{ $folder->name }}
+                                </option>
+                                @foreach($folder->children as $child)
+                                    <option value="{{ $child->id }}" {{ old('folder_id', $snippet->folder_id) == $child->id ? 'selected' : '' }}>
+                                        └─ {{ $child->name }}
+                                    </option>
+                                    @foreach($child->children as $grandchild)
+                                        <option value="{{ $grandchild->id }}" {{ old('folder_id', $snippet->folder_id) == $grandchild->id ? 'selected' : '' }}>
+                                            &nbsp;&nbsp;└─ {{ $grandchild->name }}
+                                        </option>
+                                    @endforeach
+                                @endforeach
+                            @endforeach
+                        @else
+                            {{-- Team Folders --}}
+                            @foreach($teamFolders as $folder)
+                                @if($folder->owner_id === $snippet->owner_id)
+                                    <option value="{{ $folder->id }}" {{ old('folder_id', $snippet->folder_id) == $folder->id ? 'selected' : '' }}>
+                                        {{ $folder->name }}
+                                    </option>
+                                    @foreach($folder->children as $child)
+                                        <option value="{{ $child->id }}" {{ old('folder_id', $snippet->folder_id) == $child->id ? 'selected' : '' }}>
+                                            └─ {{ $child->name }}
+                                        </option>
+                                        @foreach($child->children as $grandchild)
+                                            <option value="{{ $grandchild->id }}" {{ old('folder_id', $snippet->folder_id) == $grandchild->id ? 'selected' : '' }}>
+                                                &nbsp;&nbsp;└─ {{ $grandchild->name }}
+                                            </option>
+                                        @endforeach
+                                    @endforeach
                                 @endif
-                            </option>
-                        @endforeach
+                            @endforeach
+                        @endif
                     </select>
                     @error('folder_id')
                         <p class="text-red-500 text-xs mt-1">{{ $message }}</p>

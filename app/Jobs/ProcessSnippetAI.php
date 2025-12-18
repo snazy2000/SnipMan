@@ -3,7 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\Snippet;
-use App\Services\LocalAIService;
+use App\Services\AIService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\InteractsWithQueue;
@@ -32,55 +32,120 @@ class ProcessSnippetAI implements ShouldQueue
     /**
      * Execute the job.
      */
-    public function handle(LocalAIService $aiService): void
+    public function handle(AIService $aiService): void
     {
         try {
-            Log::info('Processing AI analysis for snippet', [
+            Log::info('Starting AI analysis job processing', [
                 'snippet_id' => $this->snippet->id,
+                'snippet_title' => $this->snippet->title,
                 'language' => $this->snippet->language,
-                'force_reprocess' => $this->forceReprocess
+                'content_length' => strlen($this->snippet->content),
+                'force_reprocess' => $this->forceReprocess,
+                'current_provider' => $aiService->getProviderName(),
+                'attempts' => $this->attempts(),
+                'queue' => config('ai.processing.queue', 'default'),
+                'current_ai_status' => [
+                    'ai_processed_at' => $this->snippet->ai_processed_at,
+                    'ai_processing_failed' => $this->snippet->ai_processing_failed,
+                    'has_description' => !empty($this->snippet->ai_description),
+                ]
             ]);
 
             // Skip if already processed and not forcing reprocess
             if (!$this->forceReprocess && $this->snippet->ai_processed_at && !$this->snippet->ai_processing_failed) {
-                Log::info('Snippet already processed, skipping', ['snippet_id' => $this->snippet->id]);
+                Log::info('Snippet already processed, skipping', [
+                    'snippet_id' => $this->snippet->id,
+                    'ai_processed_at' => $this->snippet->ai_processed_at
+                ]);
                 return;
             }
 
             // Check if AI service is available
+            Log::info('Checking AI service availability', [
+                'snippet_id' => $this->snippet->id,
+                'provider' => $aiService->getProviderName(),
+                'provider_config' => $aiService->getProviderConfig()
+            ]);
+
             if (!$aiService->isAvailable()) {
-                Log::warning('AI service not available', ['snippet_id' => $this->snippet->id]);
+                Log::warning('AI service not available', [
+                    'snippet_id' => $this->snippet->id,
+                    'provider' => $aiService->getProviderName()
+                ]);
                 $this->markAsFailed('AI service not available');
                 return;
             }
 
+            Log::info('AI service is available, starting code analysis', [
+                'snippet_id' => $this->snippet->id,
+                'provider' => $aiService->getProviderName()
+            ]);
+
             // Analyze the code
+            $startTime = microtime(true);
             $results = $aiService->analyzeCode($this->snippet->content, $this->snippet->language);
+            $processingTime = microtime(true) - $startTime;
+
+            Log::info('AI analysis completed', [
+                'snippet_id' => $this->snippet->id,
+                'processing_time_seconds' => round($processingTime, 2),
+                'results_summary' => [
+                    'has_description' => !empty($results['description']),
+                    'description_length' => !empty($results['description']) ? strlen($results['description']) : 0,
+                    'processed_at' => $results['processed_at'] ?? null,
+                ]
+            ]);
 
             // Update the snippet with AI results
             $this->snippet->update([
                 'ai_description' => $results['description'],
-                'ai_tags' => !empty($results['tags']) ? json_encode($results['tags']) : null,
-                'ai_quality_score' => $results['quality_score'],
                 'ai_processed_at' => $results['processed_at'],
                 'ai_processing_failed' => false,
             ]);
 
-            Log::info('AI analysis completed successfully', [
+            Log::info('Snippet updated with AI results successfully', [
                 'snippet_id' => $this->snippet->id,
                 'has_description' => !empty($results['description']),
-                'tags_count' => count($results['tags']),
-                'quality_score' => $results['quality_score']
             ]);
 
         } catch (Exception $e) {
-            Log::error('AI processing failed', [
+            $errorMessage = $e->getMessage();
+            $errorCode = $e->getCode();
+            $isRateLimited = $errorCode === 429 || str_contains($errorMessage, '429') || str_contains($errorMessage, 'rate-limited') || str_contains($errorMessage, 'rate limit');
+
+            Log::error('AI processing failed with exception', [
                 'snippet_id' => $this->snippet->id,
-                'error' => $e->getMessage(),
+                'error_message' => $errorMessage,
+                'error_code' => $errorCode,
+                'error_file' => $e->getFile(),
+                'error_line' => $e->getLine(),
+                'attempts' => $this->attempts(),
+                'provider' => $aiService ? $aiService->getProviderName() : 'unknown',
+                'is_rate_limited' => $isRateLimited,
                 'trace' => $e->getTraceAsString()
             ]);
 
-            $this->markAsFailed($e->getMessage());
+            // For rate limiting, provide specific guidance
+            if ($isRateLimited && $aiService && method_exists($aiService->getProvider(), 'getRateLimitAdvice')) {
+                $advice = $aiService->getProvider()->getRateLimitAdvice();
+                Log::info('Rate limit advice for snippet processing', [
+                    'snippet_id' => $this->snippet->id,
+                    'advice' => $advice
+                ]);
+
+                // Set a more helpful error message for rate limiting
+                $helpfulMessage = "Rate limited by AI provider. ";
+                if (isset($advice['is_free_model']) && $advice['is_free_model']) {
+                    $helpfulMessage .= "Consider switching to a paid model (like anthropic/claude-3.5-sonnet) or adding your own API key for better reliability.";
+                } else {
+                    $helpfulMessage .= "Please wait a moment and try again.";
+                }
+
+                $this->markAsFailed($helpfulMessage);
+            } else {
+                $this->markAsFailed($errorMessage);
+            }
+
             throw $e; // Re-throw to trigger retry mechanism
         }
     }

@@ -58,26 +58,27 @@
 
             .folder-contents {
                 overflow: hidden;
-                transition: all 0.2s ease-in-out;
+                transition: all 0.1s ease-in-out;
             }
 
             .drop-zone {
                 min-height: 20px;
-                transition: all 0.2s ease-in-out;
+                transition: all 0.1s ease-in-out;
                 pointer-events: auto !important;
                 position: relative;
             }
 
             /* Show drop zones when dragging */
             body.dragging .drop-zone {
-                border-color: #d1d5db !important;
-                background-color: #f9fafb !important;
+                border-color: #3b82f6 !important;
+                background-color: rgba(59, 130, 246, 0.1) !important;
                 border-style: dashed !important;
+                border-width: 2px !important;
             }
 
             .drop-zone.drag-over {
                 border-color: #3b82f6 !important;
-                background-color: #eff6ff !important;
+                background-color: rgba(59, 130, 246, 0.2) !important;
                 border-style: solid !important;
             }
 
@@ -85,10 +86,17 @@
                 opacity: 0.5;
             }
 
+            .drop-zone.drop-zone-disabled:not(.folder-header) {
+                border-color: transparent !important;
+                background-color: transparent !important;
+                min-height: 0 !important;
+                padding: 0 !important;
+            }
+
             /* Show drop zones more clearly when dragging */
             body.dragging .drop-zone {
-                border-color: #d1d5db !important;
-                background-color: #f8fafc !important;
+                border-color: #3b82f6 !important;
+                background-color: rgba(59, 130, 246, 0.1) !important;
                 border-style: dashed !important;
                 border-width: 2px !important;
             }
@@ -110,7 +118,7 @@
             }
 
             .folder-toggle {
-                transition: transform 0.2s ease-in-out;
+                transition: transform 0.1s ease-in-out;
             }
 
 
@@ -145,6 +153,11 @@
                                 <a href="{{ route('teams.index') }}" class="text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 px-3 py-2 text-sm font-medium transition-colors duration-200 {{ request()->routeIs('teams.*') ? 'text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-600 dark:border-indigo-400' : '' }}">
                                     Teams
                                 </a>
+                                @if(auth()->user()->isSuperAdmin())
+                                    <a href="{{ route('admin.index') }}" class="text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 px-3 py-2 text-sm font-medium transition-colors duration-200 {{ request()->routeIs('admin.*') ? 'text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-600 dark:border-indigo-400' : '' }}">
+                                        <i class="fas fa-shield-alt mr-1"></i>Admin
+                                    </a>
+                                @endif
                             </div>
                         </div>
 
@@ -347,50 +360,72 @@
                             $personalFolders = Auth::user()->folders()->whereNull('parent_id')->with(['children.children', 'snippets'])->get();
                         @endphp
 
-                        @if($personalFolders->isEmpty())
-                            <div class="text-center py-4">
-                                <p class="text-sm text-gray-500 dark:text-gray-400 mb-2">No folders yet</p>
-                                <a href="{{ route('folders.create') }}" class="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300">Create your first folder</a>
-                            </div>
-                        @else
-                            <div class="tree-container">
-                                @foreach($personalFolders as $folder)
-                                    @include('partials.folder-tree-item', ['folder' => $folder, 'level' => 0, 'isTeam' => false])
-                                @endforeach
-                            </div>
-                        @endif
-
-                        <!-- Team Folders Tree -->
-                        @php
-                            $teamFolders = collect();
-                            foreach(Auth::user()->teams as $team) {
-                                $folders = $team->folders()->whereNull('parent_id')->with(['children.children', 'snippets'])->get();
-                                foreach($folders as $folder) {
-                                    $folder->team_name = $team->name;
-                                    $folder->team_id = $team->id;
-                                }
-                                $teamFolders = $teamFolders->merge($folders);
-                            }
-                        @endphp
-
-                        @if($teamFolders->isNotEmpty())
-                            <div class="mt-6">
-                                <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">TEAM FOLDERS</h3>
+                        <div class="personal-folders">
+                            @if($personalFolders->isEmpty())
+                                <div class="text-center py-4">
+                                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-2">No folders yet</p>
+                                    <a href="{{ route('folders.create') }}" class="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300">Create your first folder</a>
+                                </div>
+                            @else
                                 <div class="tree-container">
-                                    @foreach($teamFolders as $folder)
-                                        @include('partials.folder-tree-item', ['folder' => $folder, 'level' => 0, 'isTeam' => true])
+                                    @foreach($personalFolders as $folder)
+                                        @include('partials.folder-tree-item', ['folder' => $folder, 'level' => 0, 'isTeam' => false])
                                     @endforeach
                                 </div>
-                            </div>
-                        @endif
+                            @endif
+                        </div>
+
+                        <!-- Team Folders Tree -->
+                        <div class="team-folders mt-6">
+                            <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">TEAM FOLDERS</h3>
+                            @if(Auth::user()->teams->isEmpty())
+                                <div class="text-center py-4">
+                                    <p class="text-sm text-gray-500 dark:text-gray-400">No team folders yet</p>
+                                </div>
+                            @else
+                                @foreach(Auth::user()->teams as $team)
+                                    @php
+                                        $teamFolders = $team->folders()->whereNull('parent_id')->with(['children.children', 'snippets'])->get();
+                                    @endphp
+                                    <div class="mb-4" data-team-id="{{ $team->id }}">
+                                        <div class="flex items-center justify-between mb-2 pl-2 pr-1">
+                                            <h4 class="text-sm font-medium text-gray-600 dark:text-gray-300">{{ $team->name }}</h4>
+                                            @if(in_array($team->pivot->role, ['owner', 'editor']))
+                                                <a href="{{ route('folders.create', ['team_id' => $team->id]) }}" class="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300" title="Add Folder to {{ $team->name }}">
+                                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                                                    </svg>
+                                                </a>
+                                            @endif
+                                        </div>
+                                        @if($teamFolders->isNotEmpty())
+                                            <div class="tree-container">
+                                                @foreach($teamFolders as $folder)
+                                                    @php
+                                                        $folder->team_id = $team->id;
+                                                    @endphp
+                                                    @include('partials.folder-tree-item', ['folder' => $folder, 'level' => 0, 'isTeam' => true])
+                                                @endforeach
+                                            </div>
+                                        @else
+                                            <p class="text-xs text-gray-400 dark:text-gray-500 pl-2 py-2">No folders yet</p>
+                                        @endif
+                                    </div>
+                                @endforeach
+                            @endif
+                        </div>
 
                         <!-- No Folder Section -->
                         <div class="mt-6">
-                            <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">NO FOLDER</h3>
-                            <div class="drop-zone border-2 border-dashed border-gray-200 rounded-lg p-2 min-h-[40px] transition-colors"
+                            <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">NO FOLDER - PERSONAL</h3>
+                            <div class="drop-zone border-2 border-dashed border-gray-200 rounded-lg p-2 min-h-[40px] transition-colors personal-folders"
                                  data-folder-id="null" data-drop-type="snippets">
                                 @php
-                                    $unfoldered = Auth::user()->snippets()->whereNull('folder_id')->latest()->get();
+                                    $unfoldered = Auth::user()->snippets()
+                                        ->where('owner_type', 'App\Models\User')
+                                        ->whereNull('folder_id')
+                                        ->latest()
+                                        ->get();
                                 @endphp
 
                                 @forelse($unfoldered as $snippet)
@@ -408,9 +443,46 @@
                                         </span>
                                     </div>
                                 @empty
-                                    <div class="text-xs text-gray-400 p-2">Drop snippets here</div>
+                                    <div class="text-xs text-gray-400 p-2">Drop personal snippets here</div>
                                 @endforelse
                             </div>
+
+                            <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 mt-6">NO FOLDER - TEAM</h3>
+                            @foreach(Auth::user()->teams as $team)
+                                @php
+                                    $unfoldered = Auth::user()->snippets()
+                                        ->where('owner_type', 'App\Models\Team')
+                                        ->where('owner_id', $team->id)
+                                        ->whereNull('folder_id')
+                                        ->latest()
+                                        ->get();
+                                @endphp
+                                @if($unfoldered->isNotEmpty())
+                                    <div data-team-id="{{ $team->id }}" class="mb-4">
+                                        <h4 class="text-sm font-medium text-gray-600 dark:text-gray-300 mb-2 pl-2">{{ $team->name }}</h4>
+                                        <div class="drop-zone border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-lg p-2 min-h-[40px] transition-colors team-folders"
+                                             data-folder-id="null" data-drop-type="snippets" data-team-id="{{ $team->id }}">
+
+                                @forelse($unfoldered as $snippet)
+                                    <div class="snippet-item mb-1 cursor-move flex items-center px-2 py-1 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors duration-200"
+                                         draggable="true"
+                                         data-snippet-id="{{ $snippet->id }}"
+                                         data-type="snippet">
+                                        <div class="w-4 h-4 mr-2 text-xs bg-gray-200 dark:bg-gray-700 rounded flex items-center justify-center text-gray-600 dark:text-gray-300"
+                                             draggable="false">
+                                            {{ strtoupper(substr($snippet->language, 0, 2)) }}
+                                        </div>
+                                        <span class="truncate cursor-pointer hover:text-gray-900 dark:hover:text-white transition-colors duration-200">
+                                            {{ $snippet->title }}
+                                        </span>
+                                    </div>
+                                @empty
+                                    <div class="text-xs text-gray-400 dark:text-gray-500 p-2">Drop {{ $team->name }} snippets here</div>
+                                @endforelse
+                                        </div>
+                                    </div>
+                                @endif
+                            @endforeach
                         </div>
                     </div>
                 </div>
@@ -606,6 +678,34 @@
                 draggedElement.style.opacity = '0.5';
                 document.body.classList.add('dragging');
 
+                // Determine if dragged item is from team or personal section
+                const draggedIsTeam = draggedElement.closest('.team-folders') !== null;
+                const sourceTeamId = draggedIsTeam ? getTeamId(draggedElement) : null;
+
+                // Show only valid drop zones
+                document.querySelectorAll('.drop-zone').forEach(zone => {
+                    const dropIsTeam = zone.closest('.team-folders') !== null;
+                    const targetTeamId = dropIsTeam ? getTeamId(zone) : null;
+
+                    let isValidDropZone = false;
+
+                    if (draggedIsTeam && dropIsTeam) {
+                        // For team items, team IDs must match
+                        isValidDropZone = sourceTeamId === targetTeamId;
+                    } else if (!draggedIsTeam && !dropIsTeam) {
+                        // For personal items, both must be personal
+                        isValidDropZone = true;
+                    }
+
+                    if (isValidDropZone) {
+                        zone.classList.add('drop-zone-active');
+                        zone.classList.remove('drop-zone-disabled');
+                    } else {
+                        zone.classList.remove('drop-zone-active');
+                        zone.classList.add('drop-zone-disabled');
+                    }
+                });
+
                 // Simple drag data - try multiple data formats for better compatibility
                 e.dataTransfer.effectAllowed = 'move';
                 e.dataTransfer.setData('text/plain', draggedId);
@@ -632,6 +732,8 @@
                 document.body.classList.remove('dragging');
                 document.querySelectorAll('.drop-zone').forEach(zone => {
                     zone.classList.remove('drag-over');
+                    zone.classList.remove('drop-zone-active');
+                    zone.classList.remove('drop-zone-disabled');
                 });
                 draggedElement = null;
                 draggedType = null;
@@ -700,6 +802,12 @@
                 }
             }
 
+            function getTeamId(element) {
+                // Walk up the DOM tree to find the closest team section
+                const teamSection = element.closest('[data-team-id]');
+                return teamSection ? teamSection.dataset.teamId : null;
+            }
+
             function canDrop(dropZone) {
                 const dropType = dropZone.dataset.dropType;
                 const targetFolderId = dropZone.dataset.folderId;
@@ -707,6 +815,28 @@
                 // Prevent dropping on self
                 if (draggedType === 'folder' && draggedId === targetFolderId) {
                     return false;
+                }
+
+                // Get the dragged element's owner type
+                const draggedElement = document.querySelector(`[data-${draggedType}-id="${draggedId}"]`);
+                const draggedIsTeam = draggedElement.closest('.team-folders') !== null;
+
+                // Get the drop zone's owner type
+                const dropIsTeam = dropZone.closest('.team-folders') !== null;
+
+                // Prevent dropping between personal and team sections
+                if (draggedIsTeam !== dropIsTeam) {
+                    return false;
+                }
+
+                // If this is a team item, ensure it stays within the same team
+                if (draggedIsTeam) {
+                    const sourceTeamId = getTeamId(draggedElement);
+                    const targetTeamId = getTeamId(dropZone);
+
+                    if (sourceTeamId !== targetTeamId) {
+                        return false;
+                    }
                 }
 
                 // Check drop type compatibility

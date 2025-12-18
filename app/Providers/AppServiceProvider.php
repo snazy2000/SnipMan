@@ -11,7 +11,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Register AI Service as singleton
+        $this->app->singleton(\App\Services\AIService::class, function ($app) {
+            return new \App\Services\AIService();
+        });
     }
 
     /**

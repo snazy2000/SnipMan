@@ -141,9 +141,12 @@
                         <select id="team_id"
                                 name="team_id"
                                 class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent transition-colors duration-200 @error('team_id') border-red-500 @enderror">
-                            <option value="">Choose a team...</option>
+                            @if($teams->count() > 1)
+                                <option value="">Choose a team...</option>
+                            @endif
                             @foreach($teams as $team)
-                                <option value="{{ $team->id }}" {{ old('team_id') == $team->id ? 'selected' : '' }}>
+                                <option value="{{ $team->id }}" 
+                                    {{ old('team_id') == $team->id || ($teams->count() == 1) ? 'selected' : '' }}>
                                     {{ $team->name }}
                                 </option>
                             @endforeach
@@ -156,7 +159,7 @@
             </div>
 
             <!-- Folder -->
-            @if($folders->count() > 0)
+            @if($personalFolders->count() > 0 || $teamFolders->count() > 0)
                 <div class="mb-6">
                     <label for="folder_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 transition-colors duration-200">
                         Folder <span class="text-red-500">*</span>
@@ -164,15 +167,63 @@
                     <select id="folder_id"
                             name="folder_id"
                             class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent transition-colors duration-200 @error('folder_id') border-red-500 @enderror"
-                            required>
-                        <option value="">Select a folder...</option>
-                        @foreach($folders as $folder)
-                            <option value="{{ $folder->id }}" {{ old('folder_id', request('folder_id')) == $folder->id ? 'selected' : '' }}>
+                            required
+                            {{ old('owner_type') == 'team' && empty(old('team_id')) ? 'disabled' : '' }}>
+                        <option value="">{{ old('owner_type') == 'team' ? 'Select a team first...' : 'Select a folder...' }}</option>
+                        
+                        <!-- Personal Folders -->
+                        @foreach($personalFolders as $folder)
+                            <option value="{{ $folder->id }}" 
+                                    class="personal-folder"
+                                    {{ old('folder_id', request('folder_id')) == $folder->id ? 'selected' : '' }}
+                                    style="{{ old('owner_type') == 'team' ? 'display: none;' : '' }}">
                                 {{ $folder->name }}
-                                @if($folder->owner_type === 'App\Models\Team')
-                                    (Team: {{ $folder->owner->name }})
-                                @endif
                             </option>
+                            @foreach($folder->children as $child)
+                                <option value="{{ $child->id }}" 
+                                        class="personal-folder"
+                                        {{ old('folder_id', request('folder_id')) == $child->id ? 'selected' : '' }}
+                                        style="{{ old('owner_type') == 'team' ? 'display: none;' : '' }}">
+                                    └─ {{ $child->name }}
+                                </option>
+                                @foreach($child->children as $grandchild)
+                                    <option value="{{ $grandchild->id }}" 
+                                            class="personal-folder"
+                                            {{ old('folder_id', request('folder_id')) == $grandchild->id ? 'selected' : '' }}
+                                            style="{{ old('owner_type') == 'team' ? 'display: none;' : '' }}">
+                                        &nbsp;&nbsp;└─ {{ $grandchild->name }}
+                                    </option>
+                                @endforeach
+                            @endforeach
+                        @endforeach
+
+                        <!-- Team Folders -->
+                        @foreach($teamFolders as $folder)
+                            <option value="{{ $folder->id }}" 
+                                    class="team-folder"
+                                    data-team-id="{{ $folder->owner_id }}"
+                                    {{ old('folder_id', request('folder_id')) == $folder->id ? 'selected' : '' }}
+                                    style="{{ old('owner_type') != 'team' ? 'display: none;' : '' }}">
+                                {{ $folder->name }} ({{ $folder->team_name }})
+                            </option>
+                            @foreach($folder->children as $child)
+                                <option value="{{ $child->id }}" 
+                                        class="team-folder"
+                                        data-team-id="{{ $folder->owner_id }}"
+                                        {{ old('folder_id', request('folder_id')) == $child->id ? 'selected' : '' }}
+                                        style="{{ old('owner_type') != 'team' ? 'display: none;' : '' }}">
+                                    └─ {{ $child->name }} ({{ $folder->team_name }})
+                                </option>
+                                @foreach($child->children as $grandchild)
+                                    <option value="{{ $grandchild->id }}" 
+                                            class="team-folder"
+                                            data-team-id="{{ $folder->owner_id }}"
+                                            {{ old('folder_id', request('folder_id')) == $grandchild->id ? 'selected' : '' }}
+                                            style="{{ old('owner_type') != 'team' ? 'display: none;' : '' }}">
+                                        &nbsp;&nbsp;└─ {{ $grandchild->name }} ({{ $folder->team_name }})
+                                    </option>
+                                @endforeach
+                            @endforeach
                         @endforeach
                     </select>
                     @error('folder_id')
@@ -280,21 +331,72 @@
 <script>
 let monacoEditor;
 
-function updateOwnerOptions() {
-    const ownerTypeRadios = document.getElementsByName('owner_type');
-    const teamSelection = document.getElementById('team-selection');
-
-    for (let radio of ownerTypeRadios) {
-        if (radio.checked) {
-            if (radio.value === 'team') {
-                teamSelection.style.display = 'block';
-            } else {
-                teamSelection.style.display = 'none';
-            }
-            break;
+    function updateOwnerOptions() {
+        var ownerType = document.querySelector('input[name="owner_type"]:checked').value;
+        var teamSelection = document.getElementById('team-selection');
+        var folderSelect = document.getElementById('folder_id');
+        var personalFolderOptions = document.querySelectorAll('.personal-folder');
+        var teamFolderOptions = document.querySelectorAll('.team-folder');
+        
+        // Show/hide team selection
+        if (ownerType === 'team') {
+            teamSelection.style.display = '';
+            // Hide personal folder options
+            personalFolderOptions.forEach(opt => opt.style.display = 'none');
+            
+            var selectedTeamId = document.getElementById('team_id').value;
+            // Enable/disable folder dropdown based on team selection
+            folderSelect.disabled = !selectedTeamId;
+            folderSelect.querySelector('option[value=""]').textContent = selectedTeamId ? 'Select a folder...' : 'Select a team first...';
+            
+            // Show team folder options for the selected team only
+            teamFolderOptions.forEach(opt => {
+                if (selectedTeamId && opt.dataset.teamId === selectedTeamId) {
+                    opt.style.display = '';
+                } else {
+                    opt.style.display = 'none';
+                }
+            });
+        } else {
+            teamSelection.style.display = 'none';
+            // Show personal folder options
+            personalFolderOptions.forEach(opt => opt.style.display = '');
+            // Hide team folder options
+            teamFolderOptions.forEach(opt => opt.style.display = 'none');
+            // Enable folder select and update placeholder
+            folderSelect.disabled = false;
+            folderSelect.querySelector('option[value=""]').textContent = 'Select a folder...';
         }
+
+        // Reset folder selection
+        folderSelect.value = '';
     }
-}
+
+    // Add event listener for team selection change
+    document.getElementById('team_id').addEventListener('change', function() {
+        if (document.querySelector('input[name="owner_type"]:checked').value === 'team') {
+            var selectedTeamId = this.value;
+            var folderSelect = document.getElementById('folder_id');
+            var teamFolderOptions = document.querySelectorAll('.team-folder');
+            
+            // Enable/disable folder dropdown based on team selection
+            folderSelect.disabled = !selectedTeamId;
+            folderSelect.querySelector('option[value=""]').textContent = 
+                selectedTeamId ? 'Select a folder...' : 'Select a team first...';
+            
+            // Show only folders for the selected team
+            teamFolderOptions.forEach(opt => {
+                if (selectedTeamId && opt.dataset.teamId === selectedTeamId) {
+                    opt.style.display = '';
+                } else {
+                    opt.style.display = 'none';
+                }
+            });
+            
+            // Reset folder selection
+            folderSelect.value = '';
+        }
+    });
 
 function updateEditorLanguage() {
     const languageSelect = document.getElementById('language');
