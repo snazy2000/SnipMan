@@ -106,6 +106,12 @@
                                 Download
                             </button>
 
+                            <button onclick="openCloneModal(); open = false"
+                                    class="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors duration-200">
+                                <i class="fas fa-clone mr-2"></i>
+                                Clone Snippet
+                            </button>
+
                             @can('delete', $snippet)
                                 <div class="border-t border-gray-200 dark:border-gray-600"></div>
                                 <button onclick="confirmDelete(); open = false"
@@ -199,7 +205,7 @@
                 </dl>
 
                 <!-- AI Analysis Section -->
-                @if($snippet->hasAIAnalysis() || $snippet->isAIProcessing() || $snippet->hasAIProcessingFailed())
+                @if(($snippet->hasAIAnalysis() || ($snippet->isAIProcessing() && $aiAutoDescriptionEnabled) || $snippet->hasAIProcessingFailed()) && $aiAutoDescriptionEnabled)
                     <div class="mt-8 pt-6 border-t-2 border-gradient-to-r from-indigo-200 to-purple-200 dark:from-indigo-700 dark:to-purple-700">
                         <div class="flex items-center justify-between mb-6">
                             <h4 class="text-xl font-semibold text-gray-900 dark:text-gray-100 transition-colors duration-200">
@@ -259,47 +265,7 @@
                                     </dd>
                                 </div>
 
-                                <!-- AI Tags (display only) -->
-                                @php
-                                    $aiTags = $snippet->ai_tags;
-                                    if (is_string($aiTags)) {
-                                        $decoded = json_decode($aiTags, true);
-                                        if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
-                                            $aiTags = $decoded;
-                                        } else {
-                                            $aiTags = [];
-                                        }
-                                    }
-                                @endphp
-                                <div class="mb-4">
-                                    <dt class="text-sm font-semibold text-indigo-700 dark:text-indigo-300 transition-colors duration-200 mb-2">AI Tags</dt>
-                                    <dd class="flex flex-wrap gap-2">
-                                        @if($aiTags && count($aiTags) > 0)
-                                            @foreach($aiTags as $tag)
-                                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gradient-to-r from-indigo-100 to-purple-100 dark:from-indigo-900/50 dark:to-purple-900/50 text-indigo-800 dark:text-indigo-200 border border-indigo-200 dark:border-indigo-700 transition-colors duration-200">
-                                                    <i class="fas fa-tag mr-1.5 text-xs"></i>
-                                                    {{ $tag }}
-                                                </span>
-                                            @endforeach
-                                        @else
-                                            <span class="text-xs text-gray-400">No AI tags.</span>
-                                        @endif
-                                    </dd>
-                                </div>
-
-                                <!-- AI Quality Score -->
-                                @if($snippet->ai_quality_score)
-                                    <div class="mb-4">
-                                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 transition-colors duration-200">Code Quality Score</dt>
-                                        <dd class="mt-1 flex items-center">
-                                            <span class="text-sm text-gray-900 dark:text-gray-100 mr-2 transition-colors duration-200">{{ $snippet->ai_quality_score }}/10</span>
-                                            <div class="flex-1 bg-gray-200 dark:bg-gray-600 rounded-full h-2 max-w-xs">
-                                                <div class="bg-gradient-to-r from-red-400 via-yellow-400 to-green-400 h-2 rounded-full transition-all duration-500"
-                                                     style="width: {{ ($snippet->ai_quality_score / 10) * 100 }}%"></div>
-                                            </div>
-                                        </dd>
-                                    </div>
-                                @endif
+                                <!-- AI tags and quality score sections removed -->
 
                                 <div class="text-xs text-gray-400 dark:text-gray-500 transition-colors duration-200">
                                     <i class="fas fa-clock mr-1"></i>
@@ -307,7 +273,7 @@
                                 </div>
                             </div>
 
-                        @elseif($snippet->isAIProcessing())
+                        @elseif($snippet->isAIProcessing() && $aiAutoDescriptionEnabled)
                             <div class="flex items-center text-sm text-gray-600 dark:text-gray-400 transition-colors duration-200">
                                 <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-indigo-600 dark:border-indigo-400 mr-2"></div>
                                 AI analysis in progress...
@@ -461,6 +427,70 @@
                         Close
                     </button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Clone Modal -->
+    <div id="clone-modal" class="hidden fixed inset-0 bg-gray-600 dark:bg-gray-900 bg-opacity-50 dark:bg-opacity-75 overflow-y-auto h-full w-full z-50 transition-all duration-200">
+        <div class="relative top-20 mx-auto p-5 border border-gray-200 dark:border-gray-600 w-96 shadow-lg rounded-lg bg-white dark:bg-gray-800 transition-colors duration-200">
+            <div class="mb-4">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 transition-colors duration-200">Clone Snippet</h3>
+                <p class="mt-2 text-sm text-gray-600 dark:text-gray-400 transition-colors duration-200">
+                    Create a copy of this snippet in your personal collection or a team.
+                </p>
+            </div>
+
+            <form id="clone-form" action="{{ route('snippets.clone', $snippet) }}" method="POST" class="space-y-4">
+                @csrf
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 transition-colors duration-200">
+                        Title
+                    </label>
+                    <input type="text" name="title"
+                           value="{{ $snippet->title }} (Copy)"
+                           class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent transition-colors duration-200"
+                           required>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 transition-colors duration-200">
+                        Destination
+                    </label>
+                    <select name="owner_type" id="clone-owner-type" onchange="updateCloneFolders()"
+                            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent transition-colors duration-200">
+                        <option value="personal">My Personal Snippets</option>
+                        @foreach($availableTeams ?? [] as $team)
+                            <option value="team" data-team-id="{{ $team->id }}">{{ $team->name }}</option>
+                        @endforeach
+                    </select>
+                    <input type="hidden" name="team_id" id="clone-team-id">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 transition-colors duration-200">
+                        Folder <span class="text-gray-400">(Optional)</span>
+                    </label>
+                    <select name="folder_id" id="clone-folder-id"
+                            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent transition-colors duration-200">
+                        <option value="">No Folder</option>
+                        <!-- Folders will be populated dynamically -->
+                    </select>
+                </div>
+
+                <div class="flex justify-end space-x-3 mt-5">
+                    <button type="button" onclick="closeCloneModal()"
+                            class="px-4 py-2 bg-gray-100 dark:bg-gray-600 hover:bg-gray-200 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-300 rounded font-medium transition-colors duration-200">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                            class="px-4 py-2 bg-indigo-600 dark:bg-indigo-700 hover:bg-indigo-700 dark:hover:bg-indigo-600 text-white rounded font-medium transition-colors duration-200">
+                        <i class="fas fa-clone mr-2"></i>
+                        Clone Snippet
+                    </button>
+                </div>
+            </form>
             </div>
         </div>
     </div>
@@ -1066,6 +1096,53 @@ function initializeMonaco() {
 document.addEventListener('DOMContentLoaded', function() {
     initializeMonaco();
 });
+
+// Clone modal functions
+const cloneFoldersData = @json($cloneFoldersData ?? ['personal' => [], 'teams' => []]);
+
+function openCloneModal() {
+    document.getElementById('clone-modal').classList.remove('hidden');
+    updateCloneFolders();
+}
+
+function closeCloneModal() {
+    document.getElementById('clone-modal').classList.add('hidden');
+}
+
+function updateCloneFolders() {
+    const ownerTypeSelect = document.getElementById('clone-owner-type');
+    const selectedOption = ownerTypeSelect.options[ownerTypeSelect.selectedIndex];
+    const teamIdInput = document.getElementById('clone-team-id');
+    const folderSelect = document.getElementById('clone-folder-id');
+
+    // Clear folder options
+    folderSelect.innerHTML = '<option value="">No Folder</option>';
+
+    if (selectedOption.value === 'personal') {
+        teamIdInput.value = '';
+        // Add personal folders
+        if (cloneFoldersData.personal && cloneFoldersData.personal.length > 0) {
+            cloneFoldersData.personal.forEach(folder => {
+                const option = document.createElement('option');
+                option.value = folder.id;
+                option.textContent = folder.name;
+                folderSelect.appendChild(option);
+            });
+        }
+    } else {
+        const teamId = selectedOption.dataset.teamId;
+        teamIdInput.value = teamId;
+        // Add team folders
+        if (cloneFoldersData.teams && cloneFoldersData.teams[teamId]) {
+            cloneFoldersData.teams[teamId].forEach(folder => {
+                const option = document.createElement('option');
+                option.value = folder.id;
+                option.textContent = folder.name;
+                folderSelect.appendChild(option);
+            });
+        }
+    }
+}
 </script>
 
 @endsection

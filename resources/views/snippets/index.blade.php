@@ -23,7 +23,7 @@
                                 <span class="inline-flex items-center p-1 rounded-full text-xs bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300" title="AI Analyzed">
                                     <i class="fas fa-robot text-xs"></i>
                                 </span>
-                            @elseif($snippet->isAIProcessing())
+                            @elseif($snippet->isAIProcessing() && $aiAutoDescriptionEnabled)
                                 <span class="inline-flex items-center p-1 rounded-full text-xs bg-yellow-100 dark:bg-yellow-900/50 text-yellow-700 dark:text-yellow-300" title="AI Processing">
                                     <i class="fas fa-spinner fa-spin text-xs"></i>
                                 </span>
@@ -37,34 +37,6 @@
                     <div class="mb-3">
                         <pre class="text-xs text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-800 p-2 rounded overflow-hidden transition-colors duration-200" style="max-height: 120px;"><code>{{ Str::limit($snippet->content, 200) }}</code></pre>
                     </div>
-
-                    <!-- AI Tags -->
-                    @php
-                        $aiTags = $snippet->ai_tags;
-                        if (is_string($aiTags)) {
-                            $decoded = json_decode($aiTags, true);
-                            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
-                                $aiTags = $decoded;
-                            } else {
-                                $aiTags = [];
-                            }
-                        }
-                    @endphp
-                    @if($aiTags && count($aiTags) > 0)
-                        <div class="mb-3 flex flex-wrap gap-1">
-                            @foreach(array_slice($aiTags, 0, 3) as $tag)
-                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 transition-colors duration-200">
-                                    <i class="fas fa-tag mr-1 text-xxs"></i>
-                                    {{ $tag }}
-                                </span>
-                            @endforeach
-                            @if(count($aiTags) > 3)
-                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 transition-colors duration-200">
-                                    +{{ count($aiTags) - 3 }}
-                                </span>
-                            @endif
-                        </div>
-                    @endif
 
                     <div class="flex justify-between items-center text-xs text-gray-500 dark:text-gray-400 transition-colors duration-200">
                         <span>{{ $snippet->created_at->diffForHumans() }}</span>
@@ -86,7 +58,7 @@
                             <span class="inline-flex items-center p-1 rounded-full text-xs bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300" title="AI Analyzed">
                                 <i class="fas fa-robot text-xs"></i>
                             </span>
-                        @elseif($snippet->isAIProcessing())
+                        @elseif($snippet->isAIProcessing() && $aiAutoDescriptionEnabled)
                             <span class="inline-flex items-center p-1 rounded-full text-xs bg-yellow-100 dark:bg-yellow-900/50 text-yellow-700 dark:text-yellow-300" title="AI Processing">
                                 <i class="fas fa-spinner fa-spin text-xs"></i>
                             </span>
@@ -100,34 +72,6 @@
                 <div class="mb-3">
                     <pre class="text-xs text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-800 p-2 rounded overflow-hidden transition-colors duration-200" style="max-height: 120px;"><code>{{ Str::limit($snippet->content, 200) }}</code></pre>
                 </div>
-
-                <!-- AI Tags -->
-                @php
-                    $aiTags = $snippet->ai_tags;
-                    if (is_string($aiTags)) {
-                        $decoded = json_decode($aiTags, true);
-                        if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
-                            $aiTags = $decoded;
-                        } else {
-                            $aiTags = [];
-                        }
-                    }
-                @endphp
-                @if($aiTags && count($aiTags) > 0)
-                    <div class="mb-3 flex flex-wrap gap-1">
-                        @foreach(array_slice($aiTags, 0, 3) as $tag)
-                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 transition-colors duration-200">
-                                <i class="fas fa-tag mr-1 text-xxs"></i>
-                                {{ $tag }}
-                            </span>
-                        @endforeach
-                        @if(count($aiTags) > 3)
-                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 transition-colors duration-200">
-                                +{{ count($aiTags) - 3 }}
-                            </span>
-                        @endif
-                    </div>
-                @endif
 
                 <div class="flex justify-between items-center text-xs text-gray-500 dark:text-gray-400 transition-colors duration-200">
                     <span>{{ $snippet->created_at->diffForHumans() }}</span>

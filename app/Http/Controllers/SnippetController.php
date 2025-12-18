@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AISetting;
 use App\Models\Folder;
 use App\Models\Snippet;
 use App\Models\SnippetVersion;
@@ -38,7 +39,10 @@ class SnippetController extends Controller
             $teamSnippets = $teamSnippets->merge($snippets);
         }
 
-        return view('snippets.index', compact('personalSnippets', 'teamSnippets'));
+        // Check if AI auto description feature is enabled
+        $aiAutoDescriptionEnabled = AISetting::get('ai.features.auto_description', false);
+
+        return view('snippets.index', compact('personalSnippets', 'teamSnippets', 'aiAutoDescriptionEnabled'));
     }
 
     /**
@@ -48,16 +52,29 @@ class SnippetController extends Controller
     {
         $user = Auth::user();
         $teams = $user->teams;
-        $folders = $user->folders()->get();
 
-        // Add team folders where user has editor+ role
+        // Get personal folders with hierarchy
+        $personalFolders = $user->folders()
+            ->whereNull('parent_id')
+            ->with(['children.children', 'snippets'])
+            ->get();
+
+        // Get team folders with hierarchy
+        $teamFolders = collect();
         foreach ($user->teams as $team) {
             if (in_array($team->pivot->role, ['owner', 'editor'])) {
-                $folders = $folders->merge($team->folders);
+                $folders = $team->folders()
+                    ->whereNull('parent_id')
+                    ->with(['children.children', 'snippets'])
+                    ->get();
+                foreach ($folders as $folder) {
+                    $folder->team_name = $team->name;
+                }
+                $teamFolders = $teamFolders->merge($folders);
             }
         }
 
-        return view('snippets.create', compact('teams', 'folders'));
+        return view('snippets.create', compact('teams', 'personalFolders', 'teamFolders'));
     }
 
     /**
@@ -123,8 +140,8 @@ class SnippetController extends Controller
             'created_by' => Auth::id(),
         ]);
 
-        // Trigger AI analysis in background
-        if (config('ai.features.auto_description')) {
+        // Trigger AI analysis in background if auto_description is enabled
+        if (AISetting::get('ai.features.auto_description', false)) {
             ProcessSnippetAI::dispatch($snippet);
         }
 
@@ -141,7 +158,24 @@ class SnippetController extends Controller
 
         $snippet->load(['folder', 'creator', 'versions.creator', 'shares', 'activeShares']);
 
-        return view('snippets.show', compact('snippet'));
+        // Get teams where user can create snippets (for cloning)
+        $user = Auth::user();
+        $availableTeams = $user->teams()->wherePivotIn('role', ['owner', 'editor'])->get();
+
+        // Get folders for cloning modal
+        $cloneFoldersData = [
+            'personal' => $user->folders()->select('id', 'name')->get()->toArray(),
+            'teams' => []
+        ];
+
+        foreach ($availableTeams as $team) {
+            $cloneFoldersData['teams'][$team->id] = $team->folders()->select('id', 'name')->get()->toArray();
+        }
+
+        // Check if AI auto description feature is enabled
+        $aiAutoDescriptionEnabled = AISetting::get('ai.features.auto_description', false);
+
+        return view('snippets.show', compact('snippet', 'availableTeams', 'cloneFoldersData', 'aiAutoDescriptionEnabled'));
     }
 
     /**
@@ -152,16 +186,29 @@ class SnippetController extends Controller
         $this->authorize('update', $snippet);
 
         $user = Auth::user();
-        $folders = $user->folders()->get();
 
-        // Add team folders where user has editor+ role
+        // Get personal folders with hierarchy
+        $personalFolders = $user->folders()
+            ->whereNull('parent_id')
+            ->with(['children.children', 'snippets'])
+            ->get();
+
+        // Get team folders with hierarchy
+        $teamFolders = collect();
         foreach ($user->teams as $team) {
             if (in_array($team->pivot->role, ['owner', 'editor'])) {
-                $folders = $folders->merge($team->folders);
+                $folders = $team->folders()
+                    ->whereNull('parent_id')
+                    ->with(['children.children', 'snippets'])
+                    ->get();
+                foreach ($folders as $folder) {
+                    $folder->team_name = $team->name;
+                }
+                $teamFolders = $teamFolders->merge($folders);
             }
         }
 
-        return view('snippets.edit', compact('snippet', 'folders'));
+        return view('snippets.edit', compact('snippet', 'personalFolders', 'teamFolders'));
     }
 
     /**
@@ -207,8 +254,8 @@ class SnippetController extends Controller
                 'created_by' => Auth::id(),
             ]);
 
-            // Trigger AI analysis for updated content
-            if (config('ai.features.auto_description')) {
+            // Trigger AI analysis for updated content if auto_description is enabled
+            if (AISetting::get('ai.features.auto_description', false)) {
                 ProcessSnippetAI::dispatch($snippet, true); // Force reprocess
             }
         }
@@ -228,6 +275,77 @@ class SnippetController extends Controller
 
         return redirect()->route('snippets.index')
             ->with('success', 'Snippet deleted successfully.');
+    }
+
+    /**
+     * Clone/Fork a snippet
+     */
+    public function clone(Request $request, Snippet $snippet)
+    {
+        // Check if user can view the original snippet
+        $this->authorize('view', $snippet);
+
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'owner_type' => 'required|in:personal,team',
+            'team_id' => 'nullable|required_if:owner_type,team|exists:teams,id',
+            'folder_id' => 'nullable|exists:folders,id',
+        ]);
+
+        $user = Auth::user();
+
+        // Determine owner
+        if ($request->owner_type === 'team') {
+            $team = Team::findOrFail($request->team_id);
+
+            // Check if user can create snippets in this team
+            $membership = $team->members()->where('user_id', $user->id)->first();
+            if (!$membership || !in_array($membership->pivot->role, ['owner', 'editor'])) {
+                abort(403, 'You do not have permission to create snippets in this team.');
+            }
+
+            $ownerId = $team->id;
+            $ownerType = Team::class;
+        } else {
+            $ownerId = $user->id;
+            $ownerType = \App\Models\User::class;
+        }
+
+        // Validate folder belongs to the correct owner
+        if ($request->filled('folder_id')) {
+            $folder = Folder::findOrFail($request->folder_id);
+            if ($folder->owner_id != $ownerId || $folder->owner_type != $ownerType) {
+                abort(403, 'The selected folder does not belong to the chosen owner.');
+            }
+        }
+
+        // Create the cloned snippet
+        $clonedSnippet = Snippet::create([
+            'title' => $request->title,
+            'language' => $snippet->language,
+            'content' => $snippet->content,
+            'owner_id' => $ownerId,
+            'owner_type' => $ownerType,
+            'folder_id' => $request->folder_id,
+            'created_by' => $user->id,
+            'user_tags' => $snippet->user_tags, // Copy user tags
+        ]);
+
+        // Create initial version
+        SnippetVersion::create([
+            'snippet_id' => $clonedSnippet->id,
+            'version_number' => 1,
+            'content' => $snippet->content,
+            'created_by' => $user->id,
+        ]);
+
+        // Trigger AI analysis in background if auto_description is enabled
+        if (AISetting::get('ai.features.auto_description', false)) {
+            ProcessSnippetAI::dispatch($clonedSnippet);
+        }
+
+        return redirect()->route('snippets.show', $clonedSnippet)
+            ->with('success', 'Snippet cloned successfully.');
     }
 
     /**
@@ -442,12 +560,45 @@ class SnippetController extends Controller
     {
         $this->authorize('update', $snippet);
 
-        // Dispatch AI processing job
-        ProcessSnippetAI::dispatch($snippet, true); // Force reprocess
-
-        return response()->json([
-            'success' => true,
-            'message' => 'AI analysis started. Results will appear shortly.'
+        Log::info('Manual AI processing requested', [
+            'snippet_id' => $snippet->id,
+            'snippet_title' => $snippet->title,
+            'language' => $snippet->language,
+            'user_id' => auth()->id(),
+            'user_name' => auth()->user()->name,
+            'content_length' => strlen($snippet->content),
+            'current_ai_status' => [
+                'has_ai_description' => !empty($snippet->ai_description),
+                'ai_processed_at' => $snippet->ai_processed_at,
+                'ai_processing_failed' => $snippet->ai_processing_failed,
+            ]
         ]);
+
+        try {
+            // Dispatch AI processing job
+            ProcessSnippetAI::dispatch($snippet, true); // Force reprocess
+
+            Log::info('AI processing job dispatched successfully', [
+                'snippet_id' => $snippet->id,
+                'queue_name' => config('ai.processing.queue', 'default')
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'AI analysis started. Results will appear shortly.'
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Failed to dispatch AI processing job', [
+                'snippet_id' => $snippet->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to start AI analysis. Please try again.'
+            ], 500);
+        }
     }
 }

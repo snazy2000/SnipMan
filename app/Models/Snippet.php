@@ -19,15 +19,12 @@ class Snippet extends Model
         'content',
         'created_by',
         'ai_description',
-        'ai_tags',
-        'ai_quality_score',
         'ai_processed_at',
         'ai_processing_failed',
         'user_tags',
     ];
 
     protected $casts = [
-        'ai_tags' => 'array',
         'user_tags' => 'array',
         'ai_processed_at' => 'datetime',
         'ai_processing_failed' => 'boolean',

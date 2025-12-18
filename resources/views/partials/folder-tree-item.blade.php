@@ -42,9 +42,6 @@
                 <span class="text-sm text-gray-700 dark:text-gray-200 hover:text-gray-900 dark:hover:text-white truncate block transition-colors duration-200">
                     {{ $folder->name }}
                 </span>
-                @if($isTeam && isset($folder->team_name))
-                    <div class="text-xs text-gray-500 dark:text-gray-400 truncate">{{ $folder->team_name }}</div>
-                @endif
             </div>
 
             <!-- Snippet Count -->

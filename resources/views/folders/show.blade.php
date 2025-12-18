@@ -94,22 +94,33 @@
     @if($folder->snippets->count() > 0)
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             @foreach($folder->snippets as $snippet)
-                <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md dark:hover:shadow-lg transition-all duration-200 cursor-pointer"
+                <div class="bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg p-4 hover:shadow-md dark:hover:shadow-gray-900/25 transition-all duration-200 cursor-pointer"
                      onclick="window.location.href='{{ route('snippets.show', $snippet) }}'">
                     <div class="flex justify-between items-start mb-3">
-                        <h3 class="font-medium text-gray-900 dark:text-white truncate transition-colors duration-200">{{ $snippet->title }}</h3>
-                        <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 ml-2 transition-colors duration-200">
-                            {{ ucfirst($snippet->language) }}
-                        </span>
+                        <h3 class="font-medium text-gray-900 dark:text-gray-100 truncate transition-colors duration-200">{{ $snippet->title }}</h3>
+                        <div class="flex items-center space-x-2 ml-2">
+                            @if($snippet->hasAIAnalysis())
+                                <span class="inline-flex items-center p-1 rounded-full text-xs bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300" title="AI Analyzed">
+                                    <i class="fas fa-robot text-xs"></i>
+                                </span>
+                            @elseif($snippet->isAIProcessing())
+                                <span class="inline-flex items-center p-1 rounded-full text-xs bg-yellow-100 dark:bg-yellow-900/50 text-yellow-700 dark:text-yellow-300" title="AI Processing">
+                                    <i class="fas fa-spinner fa-spin text-xs"></i>
+                                </span>
+                            @endif
+                            <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 transition-colors duration-200">
+                                {{ ucfirst($snippet->language) }}
+                            </span>
+                        </div>
                     </div>
 
                     <div class="mb-3">
-                        <pre class="text-xs text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-700 p-2 rounded overflow-hidden transition-colors duration-200" style="max-height: 120px;"><code>{{ Str::limit($snippet->content, 200) }}</code></pre>
+                        <pre class="text-xs text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-800 p-2 rounded overflow-hidden transition-colors duration-200" style="max-height: 120px;"><code>{{ Str::limit($snippet->content, 200) }}</code></pre>
                     </div>
 
                     <div class="flex justify-between items-center text-xs text-gray-500 dark:text-gray-400 transition-colors duration-200">
                         <span>{{ $snippet->created_at->diffForHumans() }}</span>
-                        <span>{{ $snippet->creator->name }}</span>
+                        <span class="text-gray-400 dark:text-gray-500 transition-colors duration-200">{{ $snippet->creator->name }}</span>
                     </div>
                 </div>
             @endforeach

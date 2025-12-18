@@ -5,6 +5,7 @@ namespace App\Services;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Config;
+use App\Models\AISetting;
 use Exception;
 
 class LocalAIService
@@ -14,12 +15,26 @@ class LocalAIService
     private int $timeout;
     private int $maxTokens;
 
-    public function __construct()
+    public function __construct(array $config = [])
     {
-        $this->baseUrl = Config::get('ai.ollama.base_url');
-        $this->model = Config::get('ai.ollama.model');
-        $this->timeout = Config::get('ai.ollama.timeout');
-        $this->maxTokens = Config::get('ai.ollama.max_tokens');
+        $this->baseUrl = $config['base_url'] ?? Config::get('ai.ollama.base_url', 'http://localhost:11434');
+        $this->model = $config['model'] ?? Config::get('ai.ollama.model', 'codellama:7b');
+        $this->timeout = $config['timeout'] ?? Config::get('ai.ollama.timeout', 30);
+        $this->maxTokens = $config['max_tokens'] ?? Config::get('ai.ollama.max_tokens', 512);
+    }
+
+    /**
+     * Get configuration value from database first, then fallback to config/env
+     */
+    private function getConfigValue(string $key, $default = null)
+    {
+        try {
+            // Try to get from database first
+            return AISetting::get($key, $default);
+        } catch (\Exception $e) {
+            // If database is not available or table doesn't exist, use default
+            return $default;
+        }
     }
 
     /**
@@ -27,7 +42,9 @@ class LocalAIService
      */
     public function generateDescription(string $code, string $language): ?string
     {
-        if (!Config::get('ai.features.auto_description')) {
+        // Check if feature is enabled in database first, then config
+        $enabled = $this->getConfigValue('ai.features.auto_description', Config::get('ai.features.auto_description'));
+        if (!$enabled) {
             return null;
         }
 
@@ -38,58 +55,6 @@ class LocalAIService
         );
 
         return $this->makeRequest($prompt);
-    }
-
-    /**
-     * Generate smart tags for the given code
-     */
-    public function generateTags(string $code, string $language): array
-    {
-        if (!Config::get('ai.features.smart_tagging')) {
-            return [];
-        }
-
-        $prompt = str_replace(
-            ['{language}', '{code}'],
-            [$language, $code],
-            Config::get('ai.prompts.tags')
-        );
-
-        $response = $this->makeRequest($prompt);
-
-        if (!$response) {
-            return [];
-        }
-
-        // Parse comma-separated tags
-        $tags = array_map('trim', explode(',', $response));
-        return array_filter($tags, fn($tag) => !empty($tag));
-    }
-
-    /**
-     * Generate a quality score for the given code
-     */
-    public function generateQualityScore(string $code, string $language): ?int
-    {
-        if (!Config::get('ai.features.quality_scoring')) {
-            return null;
-        }
-
-        $prompt = str_replace(
-            ['{language}', '{code}'],
-            [$language, $code],
-            Config::get('ai.prompts.quality')
-        );
-
-        $response = $this->makeRequest($prompt);
-
-        if (!$response) {
-            return null;
-        }
-
-        // Extract numeric score
-        $score = (int) filter_var($response, FILTER_SANITIZE_NUMBER_INT);
-        return ($score >= 1 && $score <= 10) ? $score : null;
     }
 
     /**
@@ -183,33 +148,41 @@ class LocalAIService
      */
     public function analyzeCode(string $code, string $language): array
     {
+        Log::info('LocalAIService: Starting code analysis', [
+            'language' => $language,
+            'code_length' => strlen($code),
+            'model' => $this->model,
+            'features_enabled' => [
+                'auto_description' => $this->getConfigValue('ai.features.auto_description', Config::get('ai.features.auto_description')),
+            ]
+        ]);
+
         $results = [
             'description' => null,
-            'tags' => [],
-            'quality_score' => null,
             'processed_at' => now(),
         ];
 
         // Only proceed if Ollama is available
         if (!$this->isAvailable()) {
-            Log::warning('Ollama not available for code analysis');
+            Log::warning('LocalAIService: Ollama not available for code analysis', [
+                'base_url' => $this->baseUrl,
+                'model' => $this->model
+            ]);
             return $results;
         }
 
+        Log::info('LocalAIService: Ollama is available, generating description');
+
         // Generate description
-        if (Config::get('ai.features.auto_description')) {
-            $results['description'] = $this->generateDescription($code, $language);
-        }
+        $startTime = microtime(true);
+        $results['description'] = $this->generateDescription($code, $language);
+        $descriptionTime = microtime(true) - $startTime;
 
-        // Generate tags
-        if (Config::get('ai.features.smart_tagging')) {
-            $results['tags'] = $this->generateTags($code, $language);
-        }
-
-        // Generate quality score
-        if (Config::get('ai.features.quality_scoring')) {
-            $results['quality_score'] = $this->generateQualityScore($code, $language);
-        }
+        Log::info('LocalAIService: Description generation completed', [
+            'time_seconds' => round($descriptionTime, 2),
+            'has_description' => !empty($results['description']),
+            'description_length' => !empty($results['description']) ? strlen($results['description']) : 0
+        ]);
 
         return $results;
     }
