@@ -321,3 +321,109 @@ test('team viewer cannot update team snippet', function () {
 
     $response->assertForbidden();
 });
+
+test('user cannot see other users personal snippets', function () {
+    $user1 = User::factory()->create();
+    $user2 = User::factory()->create();
+
+    // User 1 creates personal snippet
+    $snippet1 = Snippet::factory()->create([
+        'title' => 'User 1 Personal Snippet',
+        'owner_type' => 'App\Models\User',
+        'owner_id' => $user1->id,
+        'created_by' => $user1->id,
+    ]);
+
+    // User 2 creates personal snippet
+    $snippet2 = Snippet::factory()->create([
+        'title' => 'User 2 Personal Snippet',
+        'owner_type' => 'App\Models\User',
+        'owner_id' => $user2->id,
+        'created_by' => $user2->id,
+    ]);
+
+    // User 1 should only see their own snippet
+    $response = $this
+        ->actingAs($user1)
+        ->get(route('snippets.index'));
+
+    $response->assertSee('User 1 Personal Snippet');
+    $response->assertDontSee('User 2 Personal Snippet');
+
+    // User 2 should only see their own snippet
+    $response = $this
+        ->actingAs($user2)
+        ->get(route('snippets.index'));
+
+    $response->assertSee('User 2 Personal Snippet');
+    $response->assertDontSee('User 1 Personal Snippet');
+
+    // User 2 cannot directly access User 1's snippet
+    $response = $this
+        ->actingAs($user2)
+        ->get(route('snippets.show', $snippet1));
+
+    $response->assertForbidden();
+});
+
+test('user can see team snippets only from their teams', function () {
+    $user1 = User::factory()->create();
+    $user2 = User::factory()->create();
+    $user3 = User::factory()->create();
+
+    // Create Team A with user1 and user2
+    $teamA = Team::factory()->create(['owner_id' => $user1->id]);
+    $teamA->members()->attach($user1->id, ['role' => 'owner', 'invitation_status' => 'accepted']);
+    $teamA->members()->attach($user2->id, ['role' => 'editor', 'invitation_status' => 'accepted']);
+
+    // Create Team B with only user3
+    $teamB = Team::factory()->create(['owner_id' => $user3->id]);
+    $teamB->members()->attach($user3->id, ['role' => 'owner', 'invitation_status' => 'accepted']);
+
+    // Create snippet in Team A
+    $snippetTeamA = Snippet::factory()->create([
+        'title' => 'Team A Snippet',
+        'owner_type' => 'App\Models\Team',
+        'owner_id' => $teamA->id,
+        'created_by' => $user1->id,
+    ]);
+
+    // Create snippet in Team B
+    $snippetTeamB = Snippet::factory()->create([
+        'title' => 'Team B Snippet',
+        'owner_type' => 'App\Models\Team',
+        'owner_id' => $teamB->id,
+        'created_by' => $user3->id,
+    ]);
+
+    // User1 (member of Team A) can see Team A snippet but not Team B
+    $response = $this
+        ->actingAs($user1)
+        ->get(route('snippets.index'));
+
+    $response->assertSee('Team A Snippet');
+    $response->assertDontSee('Team B Snippet');
+
+    // User2 (member of Team A) can see Team A snippet but not Team B
+    $response = $this
+        ->actingAs($user2)
+        ->get(route('snippets.index'));
+
+    $response->assertSee('Team A Snippet');
+    $response->assertDontSee('Team B Snippet');
+
+    // User3 (member of Team B only) cannot see Team A snippet
+    $response = $this
+        ->actingAs($user3)
+        ->get(route('snippets.index'));
+
+    $response->assertDontSee('Team A Snippet');
+    $response->assertSee('Team B Snippet');
+
+    // User3 cannot directly access Team A's snippet
+    $response = $this
+        ->actingAs($user3)
+        ->get(route('snippets.show', $snippetTeamA));
+
+    $response->assertForbidden();
+});
