@@ -53,4 +53,3 @@ test('super admin user is created with verified email', function () {
     expect($user)->not->toBeNull()
         ->and($user->is_super_admin)->toBeTrue();
 });
-
