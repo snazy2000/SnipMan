@@ -4,7 +4,6 @@ namespace App\Notifications;
 
 use App\Models\Team;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
@@ -13,8 +12,11 @@ class TeamInvitation extends Notification
     use Queueable;
 
     public $team;
+
     public $role;
+
     public $token;
+
     public $isNewUser;
 
     /**
@@ -46,11 +48,11 @@ class TeamInvitation extends Notification
         if ($this->isNewUser) {
             // For new users, they need to set up their account first
             $url = url(route('invitation.show', ['token' => $this->token], false));
-            $subject = 'You\'ve been invited to join ' . $this->team->name . ' on ' . config('app.name');
+            $subject = 'You\'ve been invited to join '.$this->team->name.' on '.config('app.name');
         } else {
             // For existing users, direct team invitation
             $url = url(route('teams.acceptInvitation', ['token' => $this->token], false));
-            $subject = 'Team Invitation: Join ' . $this->team->name;
+            $subject = 'Team Invitation: Join '.$this->team->name;
         }
 
         return (new MailMessage)

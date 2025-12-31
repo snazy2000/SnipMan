@@ -31,7 +31,7 @@ return new class extends Migration
                 'ai_tags',
                 'ai_quality_score',
                 'ai_processed_at',
-                'ai_processing_failed'
+                'ai_processing_failed',
             ]);
         });
     }

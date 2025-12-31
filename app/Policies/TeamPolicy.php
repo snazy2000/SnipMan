@@ -4,7 +4,6 @@ namespace App\Policies;
 
 use App\Models\Team;
 use App\Models\User;
-use Illuminate\Auth\Access\Response;
 
 class TeamPolicy
 {
@@ -54,6 +53,7 @@ class TeamPolicy
         }
 
         $membership = $team->members()->where('user_id', $user->id)->first();
+
         return $membership && in_array($membership->pivot->role, ['owner', 'editor']);
     }
 
@@ -74,6 +74,7 @@ class TeamPolicy
         }
 
         $membership = $team->members()->where('user_id', $user->id)->first();
+
         return $membership && $membership->pivot->role === 'owner';
     }
 
