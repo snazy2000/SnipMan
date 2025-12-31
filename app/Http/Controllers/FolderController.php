@@ -43,7 +43,7 @@ class FolderController extends Controller
     public function create(Request $request)
     {
         $user = Auth::user();
-        
+
         // Only get teams where user has editor or owner role (can create folders)
         $teams = $user->teams()->wherePivotIn('role', ['owner', 'editor'])->get();
 
@@ -62,7 +62,7 @@ class FolderController extends Controller
 
         // Get team_id from query parameter if provided
         $preselectedTeamId = $request->query('team_id');
-        
+
         // Get parent_id from query parameter if provided
         $preselectedParentId = $request->query('parent_id');
 
@@ -101,7 +101,21 @@ class FolderController extends Controller
             ];
         }
 
-        Folder::create($folderData);
+        $folder = Folder::create($folderData);
+
+        // Return JSON for AJAX requests
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Folder created successfully.',
+                'folder' => [
+                    'id' => $folder->id,
+                    'name' => $folder->name,
+                    'owner_type' => $folder->owner_type,
+                    'owner_id' => $folder->owner_id,
+                ]
+            ]);
+        }
 
         return redirect()->route('folders.index')
             ->with('success', 'Folder created successfully.');

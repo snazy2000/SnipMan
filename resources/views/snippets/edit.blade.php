@@ -98,9 +98,14 @@
             <!-- Folder -->
             @if($personalFolders->count() > 0 || $teamFolders->count() > 0)
                 <div class="mb-6">
-                    <label for="folder_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 transition-colors duration-200">
-                        Folder <span class="text-red-500">*</span>
-                    </label>
+                    <div class="flex items-center justify-between mb-2">
+                        <label for="folder_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 transition-colors duration-200">
+                            Folder <span class="text-red-500">*</span>
+                        </label>
+                        <button type="button" id="create-folder-btn" class="text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-medium">
+                            + Create Folder
+                        </button>
+                    </div>
                     <select id="folder_id"
                             name="folder_id"
                             class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent transition-colors duration-200 @error('folder_id') border-red-500 @enderror"
@@ -109,40 +114,39 @@
 
                         @if($snippet->owner_type === 'App\Models\User')
                             {{-- Personal Folders --}}
-                            @foreach($personalFolders as $folder)
-                                <option value="{{ $folder->id }}" {{ old('folder_id', $snippet->folder_id) == $folder->id ? 'selected' : '' }}>
-                                    {{ $folder->name }}
-                                </option>
-                                @foreach($folder->children as $child)
-                                    <option value="{{ $child->id }}" {{ old('folder_id', $snippet->folder_id) == $child->id ? 'selected' : '' }}>
-                                        └─ {{ $child->name }}
-                                    </option>
-                                    @foreach($child->children as $grandchild)
-                                        <option value="{{ $grandchild->id }}" {{ old('folder_id', $snippet->folder_id) == $grandchild->id ? 'selected' : '' }}>
-                                            &nbsp;&nbsp;└─ {{ $grandchild->name }}
-                                        </option>
-                                    @endforeach
-                                @endforeach
-                            @endforeach
+                            @include('partials.folder-options', [
+                                'folders' => $personalFolders,
+                                'level' => 0,
+                                'selectedId' => old('folder_id', $snippet->folder_id),
+                                'folderClass' => 'personal-folder'
+                            ])
                         @else
                             {{-- Team Folders --}}
-                            @foreach($teamFolders as $folder)
-                                @if($folder->owner_id === $snippet->owner_id)
-                                    <option value="{{ $folder->id }}" {{ old('folder_id', $snippet->folder_id) == $folder->id ? 'selected' : '' }}>
-                                        {{ $folder->name }}
-                                    </option>
-                                    @foreach($folder->children as $child)
-                                        <option value="{{ $child->id }}" {{ old('folder_id', $snippet->folder_id) == $child->id ? 'selected' : '' }}>
-                                            └─ {{ $child->name }}
-                                        </option>
-                                        @foreach($child->children as $grandchild)
-                                            <option value="{{ $grandchild->id }}" {{ old('folder_id', $snippet->folder_id) == $grandchild->id ? 'selected' : '' }}>
-                                                &nbsp;&nbsp;└─ {{ $grandchild->name }}
-                                            </option>
-                                        @endforeach
-                                    @endforeach
-                                @endif
-                            @endforeach
+                            @php
+                                // Get the team that owns this snippet
+                                $snippetTeam = null;
+                                if ($snippet->owner_type === 'App\Models\Team') {
+                                    $snippetTeam = Auth::user()->teams->firstWhere('id', $snippet->owner_id);
+                                }
+                            @endphp
+                            @if($snippetTeam)
+                                @php
+                                    // Get all folders for this team (reload with full hierarchy recursively)
+                                    $teamSnippetFolders = $snippetTeam->folders()
+                                        ->whereNull('parent_id')
+                                        ->with(['children' => function($query) {
+                                            $query->with('children');
+                                        }])
+                                        ->get();
+                                @endphp
+                                @include('partials.folder-options', [
+                                    'folders' => $teamSnippetFolders,
+                                    'level' => 0,
+                                    'selectedId' => old('folder_id', $snippet->folder_id),
+                                    'folderClass' => 'team-folder',
+                                    'teamId' => $snippet->owner_id
+                                ])
+                            @endif
                         @endif
                     </select>
                     @error('folder_id')
@@ -255,10 +259,228 @@
         @endcan
     </div>
 
+    <!-- Folder Creation Modal (Outside Form) -->
+    @php
+        // Get the team that owns this snippet for modal use
+        $snippetTeam = null;
+        if ($snippet->owner_type === 'App\Models\Team') {
+            $snippetTeam = Auth::user()->teams->firstWhere('id', $snippet->owner_id);
+        }
+    @endphp
+    <div id="folder-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50" style="display: none;">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-md mx-4 transition-colors duration-200">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Create New Folder</h3>
+                <button type="button" onclick="closeFolderModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <form id="folder-creation-form" onsubmit="createFolder(event)">
+                <input type="hidden" id="modal-owner-type" name="owner_type" value="{{ $snippet->owner_type === 'App\\Models\\User' ? 'personal' : 'team' }}">
+                <input type="hidden" id="modal-team-id" name="team_id" value="{{ $snippet->owner_type === 'App\\Models\\Team' ? $snippet->owner_id : '' }}">
+
+                <div class="mb-4">
+                    <label for="modal-folder-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Folder Name <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text"
+                           id="modal-folder-name"
+                           name="name"
+                           required
+                           class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 transition-colors duration-200"
+                           placeholder="Enter folder name">
+                </div>
+
+                <div id="modal-parent-container" class="mb-4" style="display: {{ ($snippet->owner_type === 'App\\Models\\User' && $personalFolders->count() > 0) || ($snippet->owner_type === 'App\\Models\\Team' && $teamFolders->count() > 0) ? 'block' : 'none' }};">
+                    <label for="modal-parent-id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Parent Folder (Optional)
+                    </label>
+                    <select id="modal-parent-id"
+                            name="parent_id"
+                            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 transition-colors duration-200">
+                        <option value="">No parent (root level)</option>
+                        @if($snippet->owner_type === 'App\\Models\\User')
+                            @include('partials.folder-options', [
+                                'folders' => $personalFolders,
+                                'level' => 0,
+                                'folderClass' => 'personal-folder'
+                            ])
+                        @else
+                            @if($snippetTeam)
+                                @php
+                                    // Get all folders for this team (reload with full hierarchy recursively)
+                                    $teamSnippetFolders = $snippetTeam->folders()
+                                        ->whereNull('parent_id')
+                                        ->with(['children' => function($query) {
+                                            $query->with('children');
+                                        }])
+                                        ->get();
+                                @endphp
+                                @include('partials.folder-options', [
+                                    'folders' => $teamSnippetFolders,
+                                    'level' => 0,
+                                    'folderClass' => 'team-folder',
+                                    'teamId' => $snippet->owner_id
+                                ])
+                            @endif
+                        @endif
+                    </select>
+                </div>
+
+                <div id="modal-error" class="mb-4 text-sm text-red-600 dark:text-red-400" style="display: none;"></div>
+
+                <div class="flex justify-end gap-3">
+                    <button type="button"
+                            onclick="closeFolderModal()"
+                            class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors duration-200">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                            id="modal-submit-btn"
+                            class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-700 dark:hover:bg-indigo-600 rounded-lg transition-colors duration-200">
+                        Create Folder
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
 <script>
 function confirmDelete() {
     if (confirm('Are you sure you want to delete this snippet? This action cannot be undone.')) {
         document.getElementById('delete-form').submit();
+    }
+}
+
+// Modal functions
+document.addEventListener('DOMContentLoaded', function() {
+    var createFolderBtn = document.getElementById('create-folder-btn');
+    if (createFolderBtn) {
+        createFolderBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            openFolderModal();
+        });
+    }
+});
+
+function openFolderModal() {
+    var modal = document.getElementById('folder-modal');
+    document.getElementById('modal-folder-name').value = '';
+    document.getElementById('modal-error').style.display = 'none';
+    modal.style.display = 'flex';
+}
+
+function closeFolderModal() {
+    var modal = document.getElementById('folder-modal');
+    modal.style.display = 'none';
+}
+
+async function createFolder(e) {
+    e.preventDefault();
+
+    var submitBtn = document.getElementById('modal-submit-btn');
+    var errorDiv = document.getElementById('modal-error');
+    var folderName = document.getElementById('modal-folder-name').value;
+    var ownerType = document.getElementById('modal-owner-type').value;
+    var teamId = document.getElementById('modal-team-id').value;
+    var parentId = document.getElementById('modal-parent-id').value;
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Creating...';
+    errorDiv.style.display = 'none';
+
+    try {
+        var formData = new FormData();
+        formData.append('name', folderName);
+        formData.append('owner_type', ownerType);
+        if (teamId) {
+            formData.append('team_id', teamId);
+        }
+        if (parentId) {
+            formData.append('parent_id', parentId);
+        }
+
+        var response = await fetch('{{ route("folders.store") }}', {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json',
+            },
+            body: formData
+        });
+
+        var data = await response.json();
+
+        if (response.ok) {
+            // Add the new folder to the dropdown
+            var folderSelect = document.getElementById('folder_id');
+            var option = document.createElement('option');
+            option.value = data.folder.id;
+
+            // Add indentation if it's a child folder
+            var displayName = data.folder.name;
+            if (parentId) {
+                // Find the parent option to determine indentation level
+                var parentOption = folderSelect.querySelector('option[value="' + parentId + '"]');
+                if (parentOption) {
+                    var parentText = parentOption.textContent;
+                    if (parentText.includes('└─')) {
+                        if (parentText.trim().startsWith('└─')) {
+                            displayName = '  └─ ' + displayName; // Grandchild
+                        } else {
+                            displayName = '    └─ ' + displayName; // Great-grandchild
+                        }
+                    } else {
+                        displayName = '└─ ' + displayName; // Child
+                    }
+                }
+            }
+
+            option.textContent = displayName;
+            option.selected = true;
+
+            if (ownerType === 'team') {
+                option.className = 'team-folder';
+                option.dataset.teamId = teamId;
+            } else {
+                option.className = 'personal-folder';
+            }
+
+            folderSelect.appendChild(option);
+
+            // Also add to modal parent dropdown
+            var modalParentSelect = document.getElementById('modal-parent-id');
+            var parentOption = document.createElement('option');
+            parentOption.value = data.folder.id;
+            parentOption.textContent = displayName;
+            if (ownerType === 'team') {
+                parentOption.className = 'team-folder';
+                parentOption.dataset.teamId = teamId;
+            } else {
+                parentOption.className = 'personal-folder';
+            }
+            modalParentSelect.appendChild(parentOption);
+
+            // Show parent container if it was hidden
+            document.getElementById('modal-parent-container').style.display = 'block';
+
+            closeFolderModal();
+
+            // Show success toast
+            showToast('Folder "' + data.folder.name + '" created successfully', 'success');
+        } else {
+            errorDiv.textContent = data.message || 'Failed to create folder';
+            errorDiv.style.display = 'block';
+        }
+    } catch (error) {
+        errorDiv.textContent = 'An error occurred. Please try again.';
+        errorDiv.style.display = 'block';
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Create Folder';
     }
 }
 </script>
@@ -437,6 +659,134 @@ document.querySelector('form').addEventListener('submit', function(e) {
 function confirmDelete() {
     if (confirm('Are you sure you want to delete this snippet? This action cannot be undone.')) {
         document.getElementById('delete-form').submit();
+    }
+}
+
+// Modal functions
+var createFolderBtn = document.getElementById('create-folder-btn');
+if (createFolderBtn) {
+    createFolderBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        openFolderModal();
+    });
+}
+
+function openFolderModal() {
+    var modal = document.getElementById('folder-modal');
+    document.getElementById('modal-folder-name').value = '';
+    document.getElementById('modal-error').style.display = 'none';
+    modal.style.display = 'flex';
+}
+
+function closeFolderModal() {
+    var modal = document.getElementById('folder-modal');
+    modal.style.display = 'none';
+}
+
+async function createFolder(e) {
+    e.preventDefault();
+
+    var submitBtn = document.getElementById('modal-submit-btn');
+    var errorDiv = document.getElementById('modal-error');
+    var folderName = document.getElementById('modal-folder-name').value;
+    var ownerType = document.getElementById('modal-owner-type').value;
+    var teamId = document.getElementById('modal-team-id').value;
+    var parentId = document.getElementById('modal-parent-id').value;
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Creating...';
+    errorDiv.style.display = 'none';
+
+    try {
+        var formData = new FormData();
+        formData.append('name', folderName);
+        formData.append('owner_type', ownerType);
+        if (teamId) {
+            formData.append('team_id', teamId);
+        }
+        if (parentId) {
+            formData.append('parent_id', parentId);
+        }
+
+        var response = await fetch('{{ route("folders.store") }}', {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json',
+            },
+            body: formData
+        });
+
+        var data = await response.json();
+
+        if (response.ok) {
+            // Add the new folder to the dropdown
+            var folderSelect = document.getElementById('folder_id');
+            var option = document.createElement('option');
+            option.value = data.folder.id;
+
+            // Add indentation if it's a child folder
+            var displayName = data.folder.name;
+            if (parentId) {
+                // Find the parent option to determine indentation level
+                var parentOption = folderSelect.querySelector('option[value="' + parentId + '"]');
+                if (parentOption) {
+                    var parentText = parentOption.textContent;
+                    if (parentText.includes('└─')) {
+                        if (parentText.trim().startsWith('└─')) {
+                            displayName = '  └─ ' + displayName; // Grandchild
+                        } else {
+                            displayName = '    └─ ' + displayName; // Great-grandchild
+                        }
+                    } else {
+                        displayName = '└─ ' + displayName; // Child
+                    }
+                }
+            }
+
+            option.textContent = displayName;
+            option.selected = true;
+
+            if (ownerType === 'team') {
+                option.className = 'team-folder';
+                option.dataset.teamId = teamId;
+            } else {
+                option.className = 'personal-folder';
+            }
+
+            folderSelect.appendChild(option);
+
+            // Also add to modal parent dropdown
+            var modalParentSelect = document.getElementById('modal-parent-id');
+            var parentOption = document.createElement('option');
+            parentOption.value = data.folder.id;
+            parentOption.textContent = displayName;
+            if (ownerType === 'team') {
+                parentOption.className = 'team-folder';
+                parentOption.dataset.teamId = teamId;
+            } else {
+                parentOption.className = 'personal-folder';
+            }
+            modalParentSelect.appendChild(parentOption);
+
+            // Show parent container if it was hidden
+            document.getElementById('modal-parent-container').style.display = 'block';
+
+            closeFolderModal();
+
+            // Show success toast
+            showToast('Folder "' + data.folder.name + '" created successfully', 'success');
+        } else {
+            errorDiv.textContent = data.message || 'Failed to create folder';
+            errorDiv.style.display = 'block';
+        }
+    } catch (error) {
+        errorDiv.textContent = 'An error occurred. Please try again.';
+        errorDiv.style.display = 'block';
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Create Folder';
     }
 }
 </script>
