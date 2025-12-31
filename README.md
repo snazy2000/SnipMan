@@ -1,62 +1,243 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# SnippetMan
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+[![Laravel](https://img.shields.io/badge/Laravel-12-red.svg)](https://laravel.com)
+[![PHP](https://img.shields.io/badge/PHP-8.4+-blue.svg)](https://php.net)
 
-## About Laravel
+A modern, collaborative code snippet management platform built with Laravel 12. Organize, share, and collaborate on code snippets with powerful features for individual developers and teams.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## ✨ Features
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- **🔐 Secure Authentication** - User registration, login, email verification, and password management
+- **👥 Team Collaboration** - Create teams, invite members, and manage permissions (Owner/Editor/Viewer)
+- **📝 Rich Snippet Editor** - Monaco Editor with syntax highlighting for multiple programming languages
+- **📁 Folder Organization** - Hierarchical folder structure for personal and team snippets
+- **🔗 Public Sharing** - Share snippets publicly with unique URLs and view tracking
+- **🤖 AI-Powered Features** - Automatic snippet descriptions using Ollama or OpenRouter
+- **📊 Version Control** - Automatic versioning when content changes
+- **🏷️ Tagging System** - Custom tags for better organization
+- **🛠️ Admin Panel** - Comprehensive user and team management
+- **🎨 Modern UI** - Responsive design with Tailwind CSS and Alpine.js
+
+## 🚀 Quick Start
+
+### Prerequisites
+- PHP 8.2 or higher
+- Composer
+- Node.js 20+
+- npm or yarn
+
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/yourusername/snippetman.git
+   cd snippetman
+   ```
+
+2. **Install PHP dependencies**
+   ```bash
+   composer install
+   ```
+
+3. **Install Node dependencies**
+   ```bash
+   npm install
+   ```
+
+4. **Environment setup**
+   ```bash
+   cp .env.example .env
+   php artisan key:generate
+   ```
+
+5. **Database setup**
+   ```bash
+   php artisan migrate
+   php artisan db:seed  # Optional: seed with sample data
+   ```
+
+6. **Build assets**
+   ```bash
+   npm run build
+   ```
+
+7. **Start the application**
+   ```bash
+   php artisan serve
+   ```
+
+### Docker Setup
+
+SnippetMan includes a complete Docker setup with separate containers for the web application and queue workers.
+
+#### Prerequisites
+- Docker and Docker Compose
+- PostgreSQL database (external or via Docker)
+
+#### Quick Start with Docker
+
+1. **Clone and configure**
+   ```bash
+   git clone https://github.com/yourusername/snippetman.git
+   cd snippetman
+   cp .env.example .env
+   ```
+
+2. **Configure environment**
+   Edit `.env` with your database settings:
+   ```env
+   APP_ENV=production
+   APP_DEBUG=false
+   APP_URL=http://localhost:8080
+
+   DB_CONNECTION=pgsql
+   DB_HOST=your-postgres-host
+   DB_PORT=5432
+   DB_DATABASE=snippetman
+   DB_USERNAME=your-username
+   DB_PASSWORD=your-password
+
+   QUEUE_CONNECTION=database
+   ```
+
+3. **Build and start services**
+   ```bash
+   # Build and start all services
+   docker-compose up -d
+
+   # Or build first, then start
+   docker-compose build
+   docker-compose up -d
+   ```
+
+4. **Run database migrations**
+   ```bash
+   docker-compose exec web php artisan key:generate
+   docker-compose exec web php artisan migrate
+   docker-compose exec web php artisan db:seed  # Optional
+   ```
+
+5. **Access the application**
+   Open [http://localhost:8080](http://localhost:8080) in your browser
+
+#### Docker Services
+
+- **Web Service** (`snippetman-web`): Nginx + PHP-FPM, serves the application on port 8080
+- **Queue Service** (`snippetman-queue`): Background job processing for AI features
+
+#### Docker Commands
+
+```bash
+# View logs
+docker-compose logs -f web
+docker-compose logs -f queue
+
+# Execute commands in containers
+docker-compose exec web php artisan tinker
+docker-compose exec web php artisan queue:work
+
+# Stop services
+docker-compose down
+
+# Rebuild after code changes
+docker-compose build --no-cache
+docker-compose up -d
+```
+
+#### Pre-built Docker Images
+
+Pre-built images are available on GitHub Container Registry:
+
+```bash
+# Pull and run pre-built images
+docker pull ghcr.io/snazy2000/snippetman-web:latest
+docker pull ghcr.io/snazy2000/snippetman-queue:latest
+
+# Or use in docker-compose.yml
+services:
+  web:
+    image: ghcr.io/snazy2000/snippetman-web:latest
+  queue:
+    image: ghcr.io/snazy2000/snippetman-queue:latest
+```
+
+## 🧪 Testing
+
+Run the comprehensive test suite:
+```bash
+# Run all tests
+php artisan test
+
+# Run with coverage (requires PCOV)
+php artisan test --coverage
+
+# Run specific test groups
+php artisan test --testsuite=Feature
+php artisan test --testsuite=Unit
+```
+
+### Code Quality
+```bash
+# Code style checking
+./vendor/bin/pint --test
+
+# Static analysis
+./vendor/bin/phpstan analyse
+```
+
+## ⚙️ Configuration
+
+### Admin Setup
+Create the first super admin user:
+```bash
+php artisan make:superadmin --name="Admin User" --email="admin@example.com" --password="securepassword"
+```
+
+## 📖 Usage
+
+### Getting Started
+1. Register an Admin account as above
+2. Create your first snippet with syntax highlighting
+3. Organize snippets with folders and tags
+4. Share snippets publicly or collaborate with team members
+
+### Team Collaboration
+1. Create a team as the owner
+2. Invite members via email invitations
+3. Set appropriate roles (Editor, Viewer)
+4. Share team snippets and folders
+
+## 🏗️ Tech Stack
+
+- **Backend**: Laravel 12 (PHP 8.4)
+- **Database**: PostgreSQL (configurable for MySQL/MSSQL/Sqlite)
+- **Frontend**: Alpine.js + Tailwind CSS
+- **Build Tool**: Vite
+- **Testing**: Pest PHP
+- **Code Quality**: Laravel Pint, PHPStan
+- **Authentication**: Laravel Breeze
+- **Job Processing**: Laravel Queues
 
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### Development Setup
+```bash
+composer install
+npm install
+npm run dev  # For development with hot reload
+```
 
-## Learning Laravel
+### Code Style
+```bash
+# Fix code style issues
+./vendor/bin/pint
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+# Check for style issues
+./vendor/bin/pint --test
+```
+## 🙏 Acknowledgments
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
-
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-## Laravel Sponsors
-
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
-
-### Premium Partners
-
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
-
-## Contributing
-
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
-
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+- [Laravel](https://laravel.com) - The PHP framework
+- [Monaco Editor](https://microsoft.github.io/monaco-editor/) - Code editing experience
+- [Tailwind CSS](https://tailwindcss.com) - Utility-first CSS framework
+- [Alpine.js](https://alpinejs.dev) - Lightweight JavaScript framework
+- [Pest](https://pestphp.com) - PHP testing framework
