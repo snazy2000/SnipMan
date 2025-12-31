@@ -6,6 +6,8 @@ use App\Models\Team;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rules;
 
 class AdminController extends Controller
@@ -33,6 +35,43 @@ class AdminController extends Controller
             ->paginate(20);
 
         return view('admin.users.index', compact('users'));
+    }
+
+    /**
+     * Show the form for creating a new user.
+     */
+    public function createUser()
+    {
+        return view('admin.users.create');
+    }
+
+    /**
+     * Store a newly created user.
+     */
+    public function storeUser(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z\s]+$/'],
+            'email' => ['required', 'email', 'max:255', 'unique:users'],
+            'is_super_admin' => ['boolean'],
+        ]);
+
+        // Generate invitation token
+        $token = Str::random(64);
+
+        // Create user with temporary password and invitation token
+        $user = User::create([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'password' => Hash::make(Str::random(32)), // Temporary random password
+            'is_super_admin' => $request->has('is_super_admin'),
+            'invitation_token' => hash('sha256', $token),
+        ]);
+
+        // Send invitation email
+        $user->notify(new \App\Notifications\UserInvitation($token));
+
+        return redirect()->route('admin.users')->with('success', 'User created successfully. An invitation email has been sent to ' . $user->email);
     }
 
     /**
@@ -66,6 +105,26 @@ class AdminController extends Controller
         $user->save();
 
         return redirect()->route('admin.users')->with('success', 'User updated successfully.');
+    }
+
+    /**
+     * Resend user invitation
+     */
+    public function resendUserInvitation(User $user)
+    {
+        if (!$user->invitation_token) {
+            return redirect()->route('admin.users')->with('error', 'This user has already activated their account.');
+        }
+
+        // Generate new token
+        $token = Str::random(64);
+        $user->invitation_token = hash('sha256', $token);
+        $user->save();
+
+        // Resend invitation email
+        $user->notify(new \App\Notifications\UserInvitation($token));
+
+        return redirect()->route('admin.users')->with('success', 'Invitation resent to ' . $user->email);
     }
 
     /**
@@ -106,6 +165,16 @@ class AdminController extends Controller
             ->paginate(20);
 
         return view('admin.teams.index', compact('teams'));
+    }
+
+    /**
+     * Show team members.
+     */
+    public function showTeam(Team $team)
+    {
+        $team->load(['owner', 'members', 'snippets']);
+
+        return view('admin.teams.show', compact('team'));
     }
 
     /**

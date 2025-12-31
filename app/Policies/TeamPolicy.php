@@ -21,6 +21,11 @@ class TeamPolicy
      */
     public function view(User $user, Team $team): bool
     {
+        // Super admins can view any team
+        if ($user->is_super_admin) {
+            return true;
+        }
+
         // User can view team if they are a member or owner
         return $team->members->contains($user) || $team->owner_id === $user->id;
     }
@@ -38,6 +43,11 @@ class TeamPolicy
      */
     public function update(User $user, Team $team): bool
     {
+        // Super admins can update any team
+        if ($user->is_super_admin) {
+            return true;
+        }
+
         // Only team owner or members with owner/editor role can update
         if ($team->owner_id === $user->id) {
             return true;
@@ -48,10 +58,44 @@ class TeamPolicy
     }
 
     /**
+     * Determine whether the user can manage team settings and members.
+     * Only the team owner can manage settings and members.
+     */
+    public function manageSettings(User $user, Team $team): bool
+    {
+        // Super admins can manage any team
+        if ($user->is_super_admin) {
+            return true;
+        }
+
+        // Only team owner or members with owner role can manage settings
+        if ($team->owner_id === $user->id) {
+            return true;
+        }
+
+        $membership = $team->members()->where('user_id', $user->id)->first();
+        return $membership && $membership->pivot->role === 'owner';
+    }
+
+    /**
+     * Determine whether the user can manage team members (add, remove, change roles).
+     * Only the team owner can manage members.
+     */
+    public function manageMembers(User $user, Team $team): bool
+    {
+        return $this->manageSettings($user, $team);
+    }
+
+    /**
      * Determine whether the user can delete the model.
      */
     public function delete(User $user, Team $team): bool
     {
+        // Super admins can delete any team
+        if ($user->is_super_admin) {
+            return true;
+        }
+
         // Only team owner can delete the team
         return $team->owner_id === $user->id;
     }

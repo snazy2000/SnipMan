@@ -3,6 +3,18 @@
 @section('title', $team->name)
 
 @section('content')
+@if(auth()->user()->is_super_admin && !$team->members->contains(auth()->user()) && $team->owner_id !== auth()->id())
+    <div class="mb-6 bg-yellow-500/10 dark:bg-yellow-500/10 border border-yellow-500/50 dark:border-yellow-500/50 rounded-lg p-4">
+        <div class="flex items-center">
+            <i class="fas fa-shield-alt text-yellow-600 dark:text-yellow-400 text-xl mr-3"></i>
+            <div>
+                <h3 class="text-sm font-semibold text-yellow-700 dark:text-yellow-300">Viewing as Super Admin</h3>
+                <p class="text-xs text-yellow-600 dark:text-yellow-400">You are not a member of this team. You have access due to admin privileges.</p>
+            </div>
+        </div>
+    </div>
+@endif
+
 <div class="flex items-center justify-between mb-6">
     <div class="flex items-center">
         <a href="{{ route('teams.index') }}" class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 mr-4 transition-colors duration-200">
@@ -13,7 +25,7 @@
         <h1 class="text-3xl font-bold text-gray-900 dark:text-white transition-colors duration-200">{{ $team->name }}</h1>
     </div>
 
-    @can('update', $team)
+    @can('manageSettings', $team)
         <div class="flex space-x-2">
             <a href="{{ route('teams.edit', $team) }}" class="bg-gray-600 dark:bg-gray-500 hover:bg-gray-700 dark:hover:bg-gray-600 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200">
                 Edit Team
@@ -67,7 +79,7 @@
             <div class="p-6">
                 <div class="flex items-center justify-between mb-4">
                     <h2 class="text-lg font-medium text-gray-900 dark:text-white transition-colors duration-200">Team Members</h2>
-                    @can('update', $team)
+                    @can('manageMembers', $team)
                         <button onclick="toggleAddMemberForm()"
                                 class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-indigo-700 dark:text-indigo-300 bg-indigo-100 dark:bg-indigo-900 hover:bg-indigo-200 dark:hover:bg-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-gray-800 focus:ring-indigo-500 transition-colors duration-200">
                             <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -79,7 +91,7 @@
                 </div>
 
                 <!-- Add Member Form (Hidden by default) -->
-                @can('update', $team)
+                @can('manageMembers', $team)
                     <div id="addMemberForm" class="hidden mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 transition-colors duration-200">
                         <form method="POST" action="{{ route('teams.addMember', $team) }}">
                             @csrf
@@ -138,21 +150,33 @@
                                         <span class="text-sm font-medium text-gray-700 dark:text-gray-300 transition-colors duration-200">{{ substr($member->name, 0, 1) }}</span>
                                     </div>
                                 </div>
-                                <div>
-                                    <p class="text-sm font-medium text-gray-900 dark:text-white transition-colors duration-200">{{ $member->name }}</p>
+                                <div class="flex-1">
+                                    <div class="flex items-center space-x-2">
+                                        <p class="text-sm font-medium text-gray-900 dark:text-white transition-colors duration-200">{{ $member->name }}</p>
+                                        @if($member->pivot->invitation_status === 'pending')
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 transition-colors duration-200">
+                                                Pending
+                                            </span>
+                                        @endif
+                                    </div>
                                     <p class="text-xs text-gray-500 dark:text-gray-400 transition-colors duration-200">{{ $member->email }}</p>
+                                    @if($member->pivot->invitation_status === 'pending' && $member->pivot->invited_at)
+                                        <p class="text-xs text-gray-400 dark:text-gray-500 transition-colors duration-200">
+                                            Invited {{ \Carbon\Carbon::parse($member->pivot->invited_at)->diffForHumans() }}
+                                        </p>
+                                    @endif
                                 </div>
                             </div>
                             <div class="flex items-center space-x-3">
-                                @can('update', $team)
+                                @can('manageMembers', $team)
                                     <!-- Role Dropdown -->
-                                    @if($member->id === auth()->id())
-                                        <!-- Current user cannot change their own role -->
+                                    @if($member->id === auth()->id() || $member->id === $team->owner_id)
+                                        <!-- Current user or actual team owner cannot have role changed -->
                                         <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium transition-colors duration-200
                                             @if($member->pivot->role === 'owner') bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200
                                             @elseif($member->pivot->role === 'editor') bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200
                                             @else bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 @endif">
-                                            {{ ucfirst($member->pivot->role) }} (You)
+                                            {{ ucfirst($member->pivot->role) }}@if($member->id === $team->owner_id) (Team Owner)@elseif($member->id === auth()->id()) (You)@endif
                                         </span>
                                     @else
                                         <form method="POST" action="{{ route('teams.updateMemberRole', [$team, $member]) }}" class="inline">
@@ -170,8 +194,20 @@
                                         </form>
                                     @endif
 
+                                    <!-- Resend Invitation -->
+                                    @if($member->pivot->invitation_status === 'pending')
+                                        <form method="POST" action="{{ route('teams.resendInvitation', [$team, $member]) }}" class="inline">
+                                            @csrf
+                                            <button type="submit" class="inline-flex items-center p-1 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900 rounded transition-colors duration-200" title="Resend Invitation">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                                                </svg>
+                                            </button>
+                                        </form>
+                                    @endif
+
                                     <!-- Remove Member -->
-                                    @if($member->id !== auth()->id() || $team->members()->wherePivot('role', 'owner')->count() > 1)
+                                    @if($member->id !== $team->owner_id && ($member->id !== auth()->id() || $team->members()->wherePivot('role', 'owner')->count() > 1))
                                         <form method="POST" action="{{ route('teams.removeMember', [$team, $member]) }}" class="inline"
                                               onsubmit="return confirm('Are you sure you want to remove {{ $member->name }} from the team?')">
                                             @csrf

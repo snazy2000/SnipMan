@@ -72,6 +72,10 @@
                                    onchange="updateOwnerOptions()">
                             <span class="ml-2 text-sm text-gray-700 dark:text-gray-300 transition-colors duration-200">Team Folder</span>
                         </label>
+                    @else
+                        <div class="text-sm text-gray-500 dark:text-gray-400 italic transition-colors duration-200">
+                            You don't have create permissions for any teams.
+                        </div>
                     @endif
                 </div>
                 @error('owner_type')
@@ -114,6 +118,9 @@
 
             <!-- Parent Folder (optional) -->
             @if($personalFolders->count() > 0 || $teamFolders->count() > 0)
+                @php
+                    $selectedParentId = old('parent_id', $preselectedParentId ?? '');
+                @endphp
                 <div class="mb-6">
                     <label for="parent_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 transition-colors duration-200">
                         Parent Folder (Optional)
@@ -124,13 +131,13 @@
                         <option value="">No parent (top level)</option>
                         <!-- Personal folders -->
                         @foreach($personalFolders as $folder)
-                            <option value="{{ $folder->id }}" data-owner-type="personal" {{ old('parent_id') == $folder->id ? 'selected' : '' }}>
+                            <option value="{{ $folder->id }}" data-owner-type="personal" {{ $selectedParentId == $folder->id ? 'selected' : '' }}>
                                 {{ $folder->name }}
                             </option>
                         @endforeach
                         <!-- Team folders -->
                         @foreach($teamFolders as $folder)
-                            <option value="{{ $folder->id }}" data-owner-type="team" data-team-id="{{ $folder->owner_id }}" {{ old('parent_id') == $folder->id ? 'selected' : '' }}>
+                            <option value="{{ $folder->id }}" data-owner-type="team" data-team-id="{{ $folder->owner_id }}" {{ $selectedParentId == $folder->id ? 'selected' : '' }}>
                                 {{ $folder->name }}
                                 @if(isset($folder->team_name))
                                     ({{ $folder->team_name }})
@@ -220,6 +227,31 @@ function filterParentFolders() {
     });
 }
 
+// When parent folder is selected, auto-select owner type and team
+function handleParentFolderChange() {
+    const parentSelect = document.getElementById('parent_id');
+    if (!parentSelect || !parentSelect.value) return;
+
+    const selectedOption = parentSelect.options[parentSelect.selectedIndex];
+    const ownerType = selectedOption.dataset.ownerType;
+    const teamId = selectedOption.dataset.teamId;
+
+    if (ownerType === 'personal') {
+        document.querySelector('input[name="owner_type"][value="personal"]').checked = true;
+        updateOwnerOptions();
+    } else if (ownerType === 'team' && teamId) {
+        document.querySelector('input[name="owner_type"][value="team"]').checked = true;
+        updateOwnerOptions();
+
+        const teamSelect = document.getElementById('team_id');
+        if (teamSelect) {
+            teamSelect.value = teamId;
+        }
+    }
+
+    filterParentFolders();
+}
+
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
     filterParentFolders();
@@ -228,6 +260,17 @@ document.addEventListener('DOMContentLoaded', function() {
     const teamSelect = document.getElementById('team_id');
     if (teamSelect) {
         teamSelect.addEventListener('change', filterParentFolders);
+    }
+
+    // Add event listener to parent select
+    const parentSelect = document.getElementById('parent_id');
+    if (parentSelect) {
+        parentSelect.addEventListener('change', handleParentFolderChange);
+    }
+
+    // If parent is preselected, trigger the handler
+    if (parentSelect && parentSelect.value) {
+        handleParentFolderChange();
     }
 });
 </script>

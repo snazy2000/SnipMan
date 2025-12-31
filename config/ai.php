@@ -47,7 +47,7 @@ return [
         'temperature' => env('OPENROUTER_TEMPERATURE', 0.1),
         'top_p' => env('OPENROUTER_TOP_P', 0.9),
         'site_url' => env('APP_URL', 'http://localhost'),
-        'site_name' => env('APP_NAME', 'Snippet Manager'),
+        'site_name' => env('APP_NAME', config('app.name', 'Snippet Manager')),
     ],
 
     /*

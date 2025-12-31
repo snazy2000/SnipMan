@@ -2,21 +2,6 @@
 
 @section('title', 'Create Snippet')
 
-@push('styles')
-    <style>
-        .monaco-container {
-            height: 400px;
-            border: 1px solid #d1d5db;
-            border-radius: 0.5rem;
-            overflow: hidden;
-        }
-
-        .dark .monaco-container {
-            border-color: #4b5563;
-        }
-    </style>
-@endpush
-
 @section('content')
 <div class="mb-8">
     <h1 class="text-2xl font-semibold text-gray-900 dark:text-gray-100 transition-colors duration-200">Create New Snippet</h1>
@@ -66,29 +51,29 @@
                             class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent transition-colors duration-200 @error('language') border-red-500 @enderror"
                             required>
                         <option value="">Select a language...</option>
-                        <option value="javascript" {{ old('language') == 'javascript' ? 'selected' : '' }}>JavaScript</option>
-                        <option value="typescript" {{ old('language') == 'typescript' ? 'selected' : '' }}>TypeScript</option>
-                        <option value="python" {{ old('language') == 'python' ? 'selected' : '' }}>Python</option>
-                        <option value="php" {{ old('language') == 'php' ? 'selected' : '' }}>PHP</option>
-                        <option value="java" {{ old('language') == 'java' ? 'selected' : '' }}>Java</option>
-                        <option value="csharp" {{ old('language') == 'csharp' ? 'selected' : '' }}>C#</option>
-                        <option value="cpp" {{ old('language') == 'cpp' ? 'selected' : '' }}>C++</option>
-                        <option value="c" {{ old('language') == 'c' ? 'selected' : '' }}>C</option>
-                        <option value="go" {{ old('language') == 'go' ? 'selected' : '' }}>Go</option>
-                        <option value="rust" {{ old('language') == 'rust' ? 'selected' : '' }}>Rust</option>
-                        <option value="ruby" {{ old('language') == 'ruby' ? 'selected' : '' }}>Ruby</option>
-                        <option value="swift" {{ old('language') == 'swift' ? 'selected' : '' }}>Swift</option>
-                        <option value="kotlin" {{ old('language') == 'kotlin' ? 'selected' : '' }}>Kotlin</option>
-                        <option value="html" {{ old('language') == 'html' ? 'selected' : '' }}>HTML</option>
-                        <option value="css" {{ old('language') == 'css' ? 'selected' : '' }}>CSS</option>
-                        <option value="sql" {{ old('language') == 'sql' ? 'selected' : '' }}>SQL</option>
-                        <option value="bash" {{ old('language') == 'bash' ? 'selected' : '' }}>Bash</option>
-                        <option value="powershell" {{ old('language') == 'powershell' ? 'selected' : '' }}>PowerShell</option>
-                        <option value="json" {{ old('language') == 'json' ? 'selected' : '' }}>JSON</option>
-                        <option value="yaml" {{ old('language') == 'yaml' ? 'selected' : '' }}>YAML</option>
-                        <option value="xml" {{ old('language') == 'xml' ? 'selected' : '' }}>XML</option>
-                        <option value="markdown" {{ old('language') == 'markdown' ? 'selected' : '' }}>Markdown</option>
-                        <option value="other" {{ old('language') == 'other' ? 'selected' : '' }}>Other</option>
+                        <option value="javascript" {{ old('language', auth()->user()->monaco_language ?? 'javascript') == 'javascript' ? 'selected' : '' }}>JavaScript</option>
+                        <option value="typescript" {{ old('language', auth()->user()->monaco_language ?? 'javascript') == 'typescript' ? 'selected' : '' }}>TypeScript</option>
+                        <option value="python" {{ old('language', auth()->user()->monaco_language ?? 'javascript') == 'python' ? 'selected' : '' }}>Python</option>
+                        <option value="php" {{ old('language', auth()->user()->monaco_language ?? 'javascript') == 'php' ? 'selected' : '' }}>PHP</option>
+                        <option value="java" {{ old('language', auth()->user()->monaco_language ?? 'javascript') == 'java' ? 'selected' : '' }}>Java</option>
+                        <option value="csharp" {{ old('language', auth()->user()->monaco_language ?? 'javascript') == 'csharp' ? 'selected' : '' }}>C#</option>
+                        <option value="cpp" {{ old('language', auth()->user()->monaco_language ?? 'javascript') == 'cpp' ? 'selected' : '' }}>C++</option>
+                        <option value="c" {{ old('language', auth()->user()->monaco_language ?? 'javascript') == 'c' ? 'selected' : '' }}>C</option>
+                        <option value="go" {{ old('language', auth()->user()->monaco_language ?? 'javascript') == 'go' ? 'selected' : '' }}>Go</option>
+                        <option value="rust" {{ old('language', auth()->user()->monaco_language ?? 'javascript') == 'rust' ? 'selected' : '' }}>Rust</option>
+                        <option value="ruby" {{ old('language', auth()->user()->monaco_language ?? 'javascript') == 'ruby' ? 'selected' : '' }}>Ruby</option>
+                        <option value="swift" {{ old('language', auth()->user()->monaco_language ?? 'javascript') == 'swift' ? 'selected' : '' }}>Swift</option>
+                        <option value="kotlin" {{ old('language', auth()->user()->monaco_language ?? 'javascript') == 'kotlin' ? 'selected' : '' }}>Kotlin</option>
+                        <option value="html" {{ old('language', auth()->user()->monaco_language ?? 'javascript') == 'html' ? 'selected' : '' }}>HTML</option>
+                        <option value="css" {{ old('language', auth()->user()->monaco_language ?? 'javascript') == 'css' ? 'selected' : '' }}>CSS</option>
+                        <option value="sql" {{ old('language', auth()->user()->monaco_language ?? 'javascript') == 'sql' ? 'selected' : '' }}>SQL</option>
+                        <option value="bash" {{ old('language', auth()->user()->monaco_language ?? 'javascript') == 'bash' ? 'selected' : '' }}>Bash</option>
+                        <option value="powershell" {{ old('language', auth()->user()->monaco_language ?? 'javascript') == 'powershell' ? 'selected' : '' }}>PowerShell</option>
+                        <option value="json" {{ old('language', auth()->user()->monaco_language ?? 'javascript') == 'json' ? 'selected' : '' }}>JSON</option>
+                        <option value="yaml" {{ old('language', auth()->user()->monaco_language ?? 'javascript') == 'yaml' ? 'selected' : '' }}>YAML</option>
+                        <option value="xml" {{ old('language', auth()->user()->monaco_language ?? 'javascript') == 'xml' ? 'selected' : '' }}>XML</option>
+                        <option value="markdown" {{ old('language', auth()->user()->monaco_language ?? 'javascript') == 'markdown' ? 'selected' : '' }}>Markdown</option>
+                        <option value="other" {{ old('language', auth()->user()->monaco_language ?? 'javascript') == 'other' ? 'selected' : '' }}>Other</option>
                     </select>
                     @error('language')
                         <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
@@ -125,6 +110,10 @@
                                        onchange="updateOwnerOptions()">
                                 <span class="ml-2 text-sm text-gray-700 dark:text-gray-300 transition-colors duration-200">Team Snippet</span>
                             </label>
+                        @else
+                            <div class="text-sm text-gray-500 dark:text-gray-400 italic transition-colors duration-200">
+                                You don't have create permissions for any teams.
+                            </div>
                         @endif
                     </div>
                     @error('owner_type')
@@ -145,7 +134,7 @@
                                 <option value="">Choose a team...</option>
                             @endif
                             @foreach($teams as $team)
-                                <option value="{{ $team->id }}" 
+                                <option value="{{ $team->id }}"
                                     {{ old('team_id') == $team->id || ($teams->count() == 1) ? 'selected' : '' }}>
                                     {{ $team->name }}
                                 </option>
@@ -170,24 +159,24 @@
                             required
                             {{ old('owner_type') == 'team' && empty(old('team_id')) ? 'disabled' : '' }}>
                         <option value="">{{ old('owner_type') == 'team' ? 'Select a team first...' : 'Select a folder...' }}</option>
-                        
+
                         <!-- Personal Folders -->
                         @foreach($personalFolders as $folder)
-                            <option value="{{ $folder->id }}" 
+                            <option value="{{ $folder->id }}"
                                     class="personal-folder"
                                     {{ old('folder_id', request('folder_id')) == $folder->id ? 'selected' : '' }}
                                     style="{{ old('owner_type') == 'team' ? 'display: none;' : '' }}">
                                 {{ $folder->name }}
                             </option>
                             @foreach($folder->children as $child)
-                                <option value="{{ $child->id }}" 
+                                <option value="{{ $child->id }}"
                                         class="personal-folder"
                                         {{ old('folder_id', request('folder_id')) == $child->id ? 'selected' : '' }}
                                         style="{{ old('owner_type') == 'team' ? 'display: none;' : '' }}">
                                     └─ {{ $child->name }}
                                 </option>
                                 @foreach($child->children as $grandchild)
-                                    <option value="{{ $grandchild->id }}" 
+                                    <option value="{{ $grandchild->id }}"
                                             class="personal-folder"
                                             {{ old('folder_id', request('folder_id')) == $grandchild->id ? 'selected' : '' }}
                                             style="{{ old('owner_type') == 'team' ? 'display: none;' : '' }}">
@@ -199,7 +188,7 @@
 
                         <!-- Team Folders -->
                         @foreach($teamFolders as $folder)
-                            <option value="{{ $folder->id }}" 
+                            <option value="{{ $folder->id }}"
                                     class="team-folder"
                                     data-team-id="{{ $folder->owner_id }}"
                                     {{ old('folder_id', request('folder_id')) == $folder->id ? 'selected' : '' }}
@@ -207,7 +196,7 @@
                                 {{ $folder->name }} ({{ $folder->team_name }})
                             </option>
                             @foreach($folder->children as $child)
-                                <option value="{{ $child->id }}" 
+                                <option value="{{ $child->id }}"
                                         class="team-folder"
                                         data-team-id="{{ $folder->owner_id }}"
                                         {{ old('folder_id', request('folder_id')) == $child->id ? 'selected' : '' }}
@@ -215,7 +204,7 @@
                                     └─ {{ $child->name }} ({{ $folder->team_name }})
                                 </option>
                                 @foreach($child->children as $grandchild)
-                                    <option value="{{ $grandchild->id }}" 
+                                    <option value="{{ $grandchild->id }}"
                                             class="team-folder"
                                             data-team-id="{{ $folder->owner_id }}"
                                             {{ old('folder_id', request('folder_id')) == $grandchild->id ? 'selected' : '' }}
@@ -247,7 +236,10 @@
                 </label>
 
                 <!-- Monaco Editor Container -->
-                <div id="monaco-editor" class="monaco-container"></div>
+                <div class="monaco-container">
+                    <div id="monaco-placeholder" class="monaco-placeholder">Start typing your code here...</div>
+                    <div id="monaco-editor" style="height: 100%;"></div>
+                </div>
 
                 <!-- Hidden textarea for form submission -->
                 <textarea id="content"
@@ -305,6 +297,7 @@
 @push('scripts')
     <!-- Monaco Editor -->
     <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.54.0/min/vs/loader.js"></script>
+    @include('partials.monaco-theme-loader')
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     <script>
     // Alpine.js tag input component
@@ -337,18 +330,18 @@ let monacoEditor;
         var folderSelect = document.getElementById('folder_id');
         var personalFolderOptions = document.querySelectorAll('.personal-folder');
         var teamFolderOptions = document.querySelectorAll('.team-folder');
-        
+
         // Show/hide team selection
         if (ownerType === 'team') {
             teamSelection.style.display = '';
             // Hide personal folder options
             personalFolderOptions.forEach(opt => opt.style.display = 'none');
-            
+
             var selectedTeamId = document.getElementById('team_id').value;
             // Enable/disable folder dropdown based on team selection
             folderSelect.disabled = !selectedTeamId;
             folderSelect.querySelector('option[value=""]').textContent = selectedTeamId ? 'Select a folder...' : 'Select a team first...';
-            
+
             // Show team folder options for the selected team only
             teamFolderOptions.forEach(opt => {
                 if (selectedTeamId && opt.dataset.teamId === selectedTeamId) {
@@ -378,12 +371,12 @@ let monacoEditor;
             var selectedTeamId = this.value;
             var folderSelect = document.getElementById('folder_id');
             var teamFolderOptions = document.querySelectorAll('.team-folder');
-            
+
             // Enable/disable folder dropdown based on team selection
             folderSelect.disabled = !selectedTeamId;
-            folderSelect.querySelector('option[value=""]').textContent = 
+            folderSelect.querySelector('option[value=""]').textContent =
                 selectedTeamId ? 'Select a folder...' : 'Select a team first...';
-            
+
             // Show only folders for the selected team
             teamFolderOptions.forEach(opt => {
                 if (selectedTeamId && opt.dataset.teamId === selectedTeamId) {
@@ -392,7 +385,7 @@ let monacoEditor;
                     opt.style.display = 'none';
                 }
             });
-            
+
             // Reset folder selection
             folderSelect.value = '';
         }
@@ -449,16 +442,16 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
 
-        require(['vs/editor/editor.main'], function() {
-            // Function to detect current dark mode state
-            function getCurrentTheme() {
-                return document.documentElement.classList.contains('dark') ? 'vs-dark' : 'vs';
-            }
+        require(['vs/editor/editor.main'], async function() {
+            // Load user's preferred theme
+            console.log('Starting theme load for:', userMonacoTheme);
+            const themeName = await loadMonacoTheme(userMonacoTheme);
+            console.log('Theme loaded, returned name:', themeName);
 
             monacoEditor = monaco.editor.create(document.getElementById('monaco-editor'), {
-                value: '// Start typing your code here...',
-                language: 'javascript',
-                theme: getCurrentTheme(),
+                value: '',
+                language: userMonacoLanguage,
+                theme: 'vs-dark', // Start with default theme
                 automaticLayout: true,
                 fontSize: 14,
                 minimap: { enabled: false },
@@ -478,21 +471,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 fastScrollSensitivity: 5
             });
 
-            // Listen for theme changes and update Monaco editor
-            const observer = new MutationObserver(function(mutations) {
-                mutations.forEach(function(mutation) {
-                    if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
-                        const newTheme = getCurrentTheme();
-                        monaco.editor.setTheme(newTheme);
-                    }
-                });
-            });
-
-            // Start observing changes to the html element's class list
-            observer.observe(document.documentElement, {
-                attributes: true,
-                attributeFilter: ['class']
-            });
+            console.log('Editor created, now setting theme:', themeName);
+            // Wait a moment for editor to fully initialize, then set theme
+            setTimeout(() => {
+                monaco.editor.setTheme(themeName);
+                console.log('Theme applied:', themeName);
+            }, 100);
 
             // Set initial content if there's old input
             const oldContent = {{ Js::from(old('content', '')) }};
@@ -502,7 +486,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // Update hidden textarea when editor content changes
             monacoEditor.onDidChangeModelContent(function() {
-                document.getElementById('content').value = monacoEditor.getValue();
+                const content = monacoEditor.getValue();
+                document.getElementById('content').value = content;
+
+                // Toggle placeholder visibility
+                const placeholder = document.getElementById('monaco-placeholder');
+                if (content.trim().length > 0) {
+                    placeholder.classList.add('hidden');
+                } else {
+                    placeholder.classList.remove('hidden');
+                }
             });
 
             // Update language when dropdown changes

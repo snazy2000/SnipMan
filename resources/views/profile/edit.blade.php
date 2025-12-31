@@ -25,6 +25,16 @@
                 @include('profile.partials.update-profile-information-form')
             </div>
 
+            <!-- Editor Theme -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 transition-colors duration-200 p-6">
+                @include('profile.partials.update-editor-theme-form')
+            </div>
+
+            <!-- Default Language -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 transition-colors duration-200 p-6">
+                @include('profile.partials.update-default-language-form')
+            </div>
+
             <!-- Update Password -->
             <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 transition-colors duration-200 p-6">
                 @include('profile.partials.update-password-form')

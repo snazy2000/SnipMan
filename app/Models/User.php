@@ -24,7 +24,11 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'monaco_theme',
+        'monaco_language',
         'is_super_admin',
+        'invitation_token',
+        'invitation_accepted_at',
     ];
 
     /**

@@ -22,6 +22,16 @@ Route::middleware('guest')->group(function () {
 
     Route::post('login', [AuthenticatedSessionController::class, 'store']);
 
+    // Invitation routes
+    Route::get('invitation/{token}', [\App\Http\Controllers\Auth\InvitationController::class, 'show'])
+        ->name('invitation.show');
+
+    Route::post('invitation/{token}', [\App\Http\Controllers\Auth\InvitationController::class, 'accept'])
+        ->name('invitation.accept');
+
+    Route::get('teams/invitation/{token}', [\App\Http\Controllers\TeamController::class, 'acceptInvitation'])
+        ->name('teams.acceptInvitation');
+
     Route::get('forgot-password', [PasswordResetLinkController::class, 'create'])
         ->name('password.request');
 

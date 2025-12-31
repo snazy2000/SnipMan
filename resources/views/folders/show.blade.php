@@ -33,14 +33,16 @@
         </div>
 
         <div class="flex space-x-3">
-            <a href="{{ route('folders.create') }}?parent_id={{ $folder->id }}"
-               class="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium transition-colors duration-200">
-                New Subfolder
-            </a>
-            <a href="{{ route('snippets.create') }}?folder_id={{ $folder->id }}"
-               class="px-4 py-2 bg-indigo-600 dark:bg-indigo-500 hover:bg-indigo-700 dark:hover:bg-indigo-600 text-white rounded-lg text-sm font-medium transition-colors duration-200">
-                New Snippet
-            </a>
+            @can('update', $folder)
+                <a href="{{ route('folders.create') }}?parent_id={{ $folder->id }}"
+                   class="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium transition-colors duration-200">
+                    New Subfolder
+                </a>
+                <a href="{{ route('snippets.create') }}?folder_id={{ $folder->id }}"
+                   class="px-4 py-2 bg-indigo-600 dark:bg-indigo-500 hover:bg-indigo-700 dark:hover:bg-indigo-600 text-white rounded-lg text-sm font-medium transition-colors duration-200">
+                    New Snippet
+                </a>
+            @endcan
             @can('update', $folder)
                 <a href="{{ route('folders.edit', $folder) }}"
                    class="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium transition-colors duration-200">

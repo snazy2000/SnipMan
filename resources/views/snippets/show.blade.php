@@ -41,58 +41,60 @@
             <span class="text-gray-900 dark:text-gray-100 transition-colors duration-200">{{ $snippet->title }}</span>
         </nav>
 
-        <div class="flex justify-between items-start">
-            <div>
-                <h1 class="text-2xl font-semibold text-gray-900 dark:text-gray-100 transition-colors duration-200">{{ $snippet->title }}</h1>
-                <div class="flex items-center mt-2 space-x-4 text-sm text-gray-500 dark:text-gray-400 transition-colors duration-200">
-                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 transition-colors duration-200">
+        <div class="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-4">
+            <div class="flex-1 min-w-0">
+                <h1 class="text-2xl font-semibold text-gray-900 dark:text-gray-100 transition-colors duration-200 break-words">{{ $snippet->title }}</h1>
+                <div class="flex flex-col sm:flex-row sm:flex-wrap sm:items-center mt-3 gap-2 sm:gap-x-4 text-sm text-gray-500 dark:text-gray-400 transition-colors duration-200">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 transition-colors duration-200 w-fit">
                         {{ ucfirst($snippet->language) }}
                     </span>
-                    <span>
+                    <span class="inline-flex items-center">
                         @if($snippet->owner_type === 'App\Models\Team')
-                            Team: {{ $snippet->owner->name }}
+                            <i class="fas fa-users mr-1.5 text-xs"></i> {{ $snippet->owner->name }}
                         @else
-                            Personal Snippet
+                            <i class="fas fa-user mr-1.5 text-xs"></i> Personal
                         @endif
                     </span>
                     @if($snippet->folder)
-                        <span>Folder: {{ $snippet->folder->name }}</span>
+                        <span class="inline-flex items-center"><i class="fas fa-folder mr-1.5 text-xs"></i> {{ $snippet->folder->name }}</span>
                     @endif
-                    <span>Created by {{ $snippet->creator->name }}</span>
-                    <span>{{ $snippet->created_at->diffForHumans() }}</span>
+                    <span class="inline-flex items-center"><i class="fas fa-user-circle mr-1.5 text-xs"></i> {{ $snippet->creator->name }}</span>
+                    <span class="inline-flex items-center"><i class="fas fa-clock mr-1.5 text-xs"></i> {{ $snippet->created_at->diffForHumans() }}</span>
                 </div>
             </div>
 
-            <div class="flex space-x-3">
+            <div class="flex flex-wrap gap-2 lg:flex-nowrap flex-shrink-0">
                 @can('update', $snippet)
                     <a href="{{ route('snippets.edit', $snippet) }}"
-                       class="px-4 py-2 bg-indigo-600 dark:bg-indigo-700 hover:bg-indigo-700 dark:hover:bg-indigo-600 text-white rounded-lg text-sm font-medium transition-colors duration-200">
-                        <i class="fas fa-edit mr-1"></i>
-                        Edit
+                       class="inline-flex items-center justify-center px-4 py-2 bg-indigo-600 dark:bg-indigo-700 hover:bg-indigo-700 dark:hover:bg-indigo-600 text-white rounded-lg text-sm font-medium transition-colors duration-200 whitespace-nowrap">
+                        <i class="fas fa-edit mr-1.5"></i>
+                        <span>Edit</span>
                     </a>
                 @endcan
 
                 <button onclick="copyToClipboard()"
-                        class="px-4 py-2 bg-gray-100 dark:bg-gray-600 hover:bg-gray-200 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-200 rounded-lg text-sm font-medium transition-colors duration-200">
-                    <i class="fas fa-copy mr-1"></i>
-                    Copy
+                        class="inline-flex items-center justify-center px-4 py-2 bg-gray-100 dark:bg-gray-600 hover:bg-gray-200 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-200 rounded-lg text-sm font-medium transition-colors duration-200 whitespace-nowrap">
+                    <i class="fas fa-copy mr-1.5"></i>
+                    <span>Copy</span>
                 </button>
 
                 <!-- More Actions Dropdown -->
                 <div class="relative" x-data="{ open: false }">
                     <button @click="open = !open"
-                            class="px-4 py-2 bg-gray-100 dark:bg-gray-600 hover:bg-gray-200 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-200 rounded-lg text-sm font-medium transition-colors duration-200">
+                            class="inline-flex items-center justify-center min-w-[2.5rem] px-4 py-2 bg-gray-100 dark:bg-gray-600 hover:bg-gray-200 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-200 rounded-lg text-sm font-medium transition-colors duration-200 whitespace-nowrap">
                         <i class="fas fa-ellipsis-h"></i>
                     </button>
 
                     <div x-show="open" @click.away="open = false" x-transition
                          class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-700 rounded-md shadow-lg z-10 border border-gray-200 dark:border-gray-600">
                         <div class="py-1">
+                            @can('share', $snippet)
                             <button onclick="toggleShare(); open = false"
                                     class="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors duration-200">
                                 <i class="fas fa-share mr-2"></i>
                                 Share
                             </button>
+                            @endcan
 
                             <button onclick="toggleHistory(); open = false"
                                     class="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors duration-200">
@@ -304,12 +306,12 @@
             <div class="mt-3">
                 <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4 transition-colors duration-200">Share Snippet</h3>
                 <div class="space-y-4">
-                    <div>
+                    <div id="share-url-section" class="hidden">
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 transition-colors duration-200">Public URL</label>
                         <div class="flex">
                             <input type="text" id="share-url" value=""
                                    class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-l-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent transition-colors duration-200" readonly>
-                            <button onclick="copyShareUrl()"
+                            <button id="copy-share-btn" onclick="copyShareUrl()"
                                     class="px-4 py-2 bg-indigo-600 dark:bg-indigo-700 hover:bg-indigo-700 dark:hover:bg-indigo-600 text-white rounded-r-lg text-sm font-medium transition-colors duration-200">
                                 Copy
                             </button>
@@ -347,9 +349,20 @@
             </div>
 
             <div class="space-y-4">
+                @php
+                    $allVersions = $snippet->versions->sortByDesc('version_number');
+                    $latestVersionNumber = $snippet->versions->max('version_number');
+                    // Get the version before the latest (skip the most recent version as it matches current content)
+                    $previousVersion = $allVersions->where('version_number', '<', $latestVersionNumber)->first();
+                @endphp
+
                 <!-- Current Version -->
-                <div class="border border-indigo-200 dark:border-indigo-600 bg-indigo-50 dark:bg-indigo-900/50 rounded-lg p-4 cursor-pointer hover:bg-indigo-100 dark:hover:bg-indigo-900/75 transition-colors duration-200"
-                     onclick="selectVersion('current', {{ Js::from($snippet->content) }}, 'Current Version', '{{ $snippet->updated_at->format('M j, Y \a\t g:i A') }}', '{{ $snippet->creator->name }}')">
+                @if($previousVersion)
+                    <div class="border border-indigo-200 dark:border-indigo-600 bg-indigo-50 dark:bg-indigo-900/50 rounded-lg p-4 cursor-pointer hover:bg-indigo-100 dark:hover:bg-indigo-900/75 transition-colors duration-200"
+                         onclick="selectVersion('current', {{ Js::from($previousVersion->content) }}, {{ Js::from($snippet->content) }}, 'Version {{ $previousVersion->version_number }}', 'Current Version', '{{ $previousVersion->created_at->format('M j, Y \a\t g:i A') }}', '{{ $snippet->updated_at->format('M j, Y \a\t g:i A') }}', '{{ $previousVersion->creator->name }}', '{{ $snippet->creator->name }}')">
+                @else
+                    <div class="border border-indigo-200 dark:border-indigo-600 bg-indigo-50 dark:bg-indigo-900/50 rounded-lg p-4 cursor-not-allowed opacity-60 transition-colors duration-200">
+                @endif
                     <div class="flex items-center justify-between mb-2">
                         <span class="text-sm font-medium text-indigo-800 dark:text-indigo-200 transition-colors duration-200">Current Version</span>
                         <span class="text-xs text-indigo-600 dark:text-indigo-300 bg-indigo-200 dark:bg-indigo-700 px-2 py-1 rounded transition-colors duration-200">Latest</span>
@@ -361,15 +374,23 @@
                 </div>
 
                 @php
-                    // Get all versions except the latest one (which is the same as current)
-                    $latestVersion = $snippet->versions->max('version_number');
-                    $historicalVersions = $snippet->versions->where('version_number', '<', $latestVersion)->sortByDesc('created_at');
+                    // Exclude the latest version from historical versions since it's already shown as "Current Version"
+                    $historicalVersions = $allVersions->where('version_number', '<', $latestVersionNumber);
                 @endphp
 
                 @if($historicalVersions->count() > 0)
                     @foreach($historicalVersions as $version)
-                        <div class="border border-gray-200 dark:border-gray-600 rounded-lg p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200"
-                             onclick="selectVersion('{{ $version->id }}', {{ Js::from($version->content) }}, 'Version {{ $version->version_number }}', '{{ $version->created_at->format('M j, Y \a\t g:i A') }}', '{{ $version->creator->name }}')">
+                        @php
+                            // Get the previous version (one version number lower)
+                            $prevVersion = $allVersions->where('version_number', '<', $version->version_number)->sortByDesc('version_number')->first();
+                        @endphp
+                        @if($prevVersion)
+                            <div class="border border-gray-200 dark:border-gray-600 rounded-lg p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200"
+                                 onclick="selectVersion('{{ $version->id }}', {{ Js::from($prevVersion->content) }}, {{ Js::from($version->content) }}, 'Version {{ $prevVersion->version_number }}', 'Version {{ $version->version_number }}', '{{ $prevVersion->created_at->format('M j, Y \a\t g:i A') }}', '{{ $version->created_at->format('M j, Y \a\t g:i A') }}', '{{ $prevVersion->creator->name }}', '{{ $version->creator->name }}')">
+                        @else
+                            <div class="border border-gray-200 dark:border-gray-600 rounded-lg p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200"
+                                 onclick="selectVersion('{{ $version->id }}', '', {{ Js::from($version->content) }}, 'Initial', 'Version {{ $version->version_number }}', '', '{{ $version->created_at->format('M j, Y \a\t g:i A') }}', '', '{{ $version->creator->name }}')">
+                        @endif
                             <div class="flex items-center justify-between mb-2">
                                 <span class="text-sm font-medium text-gray-900 dark:text-gray-100 transition-colors duration-200">Version {{ $version->version_number }}</span>
                                 <span class="text-xs text-gray-500 dark:text-gray-400 transition-colors duration-200">{{ $version->created_at->diffForHumans() }}</span>
@@ -408,12 +429,18 @@
 
                 <div class="grid grid-cols-2 gap-4 mb-4">
                     <div class="bg-red-50 dark:bg-red-900/50 border border-red-200 dark:border-red-600 rounded-lg p-3 transition-colors duration-200">
-                        <h4 class="font-medium text-red-800 dark:text-red-200 mb-1 transition-colors duration-200" id="comparison-old-title">Previous Version</h4>
-                        <p class="text-xs text-red-600 dark:text-red-300 transition-colors duration-200" id="comparison-old-meta">Metadata</p>
+                        <h4 class="font-medium text-red-800 dark:text-red-200 mb-2 transition-colors duration-200">Previous Version</h4>
+                        <select id="comparison-old-select" onchange="updateComparison()"
+                                class="w-full px-3 py-2 text-sm border border-red-300 dark:border-red-700 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 dark:focus:ring-red-400 transition-colors duration-200">
+                        </select>
+                        <p class="text-xs text-red-600 dark:text-red-300 mt-2 transition-colors duration-200" id="comparison-old-meta">Metadata</p>
                     </div>
                     <div class="bg-green-50 dark:bg-green-900/50 border border-green-200 dark:border-green-600 rounded-lg p-3 transition-colors duration-200">
-                        <h4 class="font-medium text-green-800 dark:text-green-200 mb-1 transition-colors duration-200" id="comparison-new-title">Current Version</h4>
-                        <p class="text-xs text-green-600 dark:text-green-300 transition-colors duration-200" id="comparison-new-meta">Metadata</p>
+                        <h4 class="font-medium text-green-800 dark:text-green-200 mb-2 transition-colors duration-200">Compare With</h4>
+                        <select id="comparison-new-select" onchange="updateComparison()"
+                                class="w-full px-3 py-2 text-sm border border-green-300 dark:border-green-700 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 dark:focus:ring-green-400 transition-colors duration-200">
+                        </select>
+                        <p class="text-xs text-green-600 dark:text-green-300 mt-2 transition-colors duration-200" id="comparison-new-meta">Metadata</p>
                     </div>
                 </div>
 
@@ -506,6 +533,7 @@
 
 <!-- Monaco Editor -->
 <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.54.0/min/vs/loader.js"></script>
+@include('partials.monaco-theme-loader')
 
 <script>
 function copyToClipboard() {
@@ -688,10 +716,11 @@ function updateShareUI(isShared, uuid = null) {
     const shareUrl = document.getElementById('share-url');
     const shareStatus = document.getElementById('share-status');
     const toggleBtn = document.getElementById('toggle-share-btn');
+    const shareUrlSection = document.getElementById('share-url-section');
 
     // Add null checks to prevent errors
-    if (!shareUrl || !shareStatus || !toggleBtn) {
-        console.warn('Share UI elements not found:', { shareUrl: !!shareUrl, shareStatus: !!shareStatus, toggleBtn: !!toggleBtn });
+    if (!shareUrl || !shareStatus || !toggleBtn || !shareUrlSection) {
+        console.warn('Share UI elements not found:', { shareUrl: !!shareUrl, shareStatus: !!shareStatus, toggleBtn: !!toggleBtn, shareUrlSection: !!shareUrlSection });
         return;
     }
 
@@ -701,12 +730,14 @@ function updateShareUI(isShared, uuid = null) {
         shareStatus.textContent = 'Enabled';
         toggleBtn.classList.remove('bg-gray-100', 'hover:bg-gray-200', 'text-gray-700');
         toggleBtn.classList.add('bg-green-100', 'hover:bg-green-200', 'text-green-700');
+        shareUrlSection.classList.remove('hidden');
     } else {
         console.log('Setting UI to disabled state');
-        shareUrl.value = 'Public sharing is disabled';
+        shareUrl.value = '';
         shareStatus.textContent = 'Disabled';
         toggleBtn.classList.remove('bg-green-100', 'hover:bg-green-200', 'text-green-700');
         toggleBtn.classList.add('bg-gray-100', 'hover:bg-gray-200', 'text-gray-700');
+        shareUrlSection.classList.add('hidden');
     }
 }
 
@@ -800,14 +831,49 @@ function toggleHistory() {
 
 let diffEditor;
 let selectedVersion = null;
+let allVersionsData = [];
 
-function selectVersion(versionId, content, title, date, author) {
+// Initialize versions data
+document.addEventListener('DOMContentLoaded', function() {
+    @php
+        $latestVersionNumber = $snippet->versions->max('version_number');
+        $historicalVersionsForDropdown = $snippet->versions->where('version_number', '<', $latestVersionNumber)->sortByDesc('version_number');
+    @endphp
+
+    // Build versions array from PHP data (exclude latest version as it matches current)
+    allVersionsData = [
+        {
+            id: 'current',
+            number: 'Current',
+            content: {{ Js::from($snippet->content) }},
+            date: '{{ $snippet->updated_at->format('M j, Y \a\t g:i A') }}',
+            author: '{{ $snippet->creator->name }}',
+            title: 'Current Version'
+        },
+        @foreach($historicalVersionsForDropdown as $version)
+        {
+            id: '{{ $version->id }}',
+            number: {{ $version->version_number }},
+            content: {{ Js::from($version->content) }},
+            date: '{{ $version->created_at->format('M j, Y \a\t g:i A') }}',
+            author: '{{ $version->creator->name }}',
+            title: 'Version {{ $version->version_number }}'
+        },
+        @endforeach
+    ];
+});
+
+function selectVersion(versionId, oldContent, newContent, oldTitle, newTitle, oldDate, newDate, oldAuthor, newAuthor) {
     selectedVersion = {
         id: versionId,
-        content: content,
-        title: title,
-        date: date,
-        author: author
+        oldContent: oldContent,
+        newContent: newContent,
+        oldTitle: oldTitle,
+        newTitle: newTitle,
+        oldDate: oldDate,
+        newDate: newDate,
+        oldAuthor: oldAuthor,
+        newAuthor: newAuthor
     };
 
     showComparison();
@@ -817,25 +883,78 @@ function showComparison() {
     if (!selectedVersion) return;
 
     const modal = document.getElementById('comparison-modal');
-    const currentContent = window.monacoEditor ? window.monacoEditor.getValue() : {{ Js::from($snippet->content) }};
 
-    // Update comparison headers
-    document.getElementById('comparison-old-title').textContent = selectedVersion.title;
-    document.getElementById('comparison-old-meta').textContent = `${selectedVersion.date} by ${selectedVersion.author}`;
-    document.getElementById('comparison-new-title').textContent = 'Current Version';
-    document.getElementById('comparison-new-meta').textContent = `{{ $snippet->updated_at->format('M j, Y \a\t g:i A') }} by {{ $snippet->creator->name }}`;
+    // Populate dropdowns
+    populateVersionDropdowns();
+
+    // Set initial selections based on selectedVersion
+    setInitialDropdownSelections();
 
     modal.classList.remove('hidden');
 
     // Initialize diff editor with a check for Monaco availability
     setTimeout(() => {
         if (typeof monaco !== 'undefined') {
-            initializeDiffEditor(selectedVersion.content, currentContent);
+            updateComparison();
         } else {
             console.error('Monaco editor is not available for diff view');
-            // Could show an error message to the user here
         }
     }, 100);
+}
+
+function populateVersionDropdowns() {
+    const oldSelect = document.getElementById('comparison-old-select');
+    const newSelect = document.getElementById('comparison-new-select');
+
+    // Clear existing options
+    oldSelect.innerHTML = '';
+    newSelect.innerHTML = '';
+
+    // Populate both dropdowns with all versions
+    allVersionsData.forEach(version => {
+        const option1 = new Option(version.title, version.id);
+        const option2 = new Option(version.title, version.id);
+        oldSelect.add(option1);
+        newSelect.add(option2);
+    });
+}
+
+function setInitialDropdownSelections() {
+    // Find which versions match the selected comparison
+    const oldSelect = document.getElementById('comparison-old-select');
+    const newSelect = document.getElementById('comparison-new-select');
+
+    // Try to match by content or title
+    for (let i = 0; i < allVersionsData.length; i++) {
+        if (allVersionsData[i].content === selectedVersion.oldContent) {
+            oldSelect.selectedIndex = i;
+        }
+        if (allVersionsData[i].content === selectedVersion.newContent) {
+            newSelect.selectedIndex = i;
+        }
+    }
+}
+
+function updateComparison() {
+    const oldSelect = document.getElementById('comparison-old-select');
+    const newSelect = document.getElementById('comparison-new-select');
+
+    const oldVersionId = oldSelect.value;
+    const newVersionId = newSelect.value;
+
+    const oldVersion = allVersionsData.find(v => v.id == oldVersionId);
+    const newVersion = allVersionsData.find(v => v.id == newVersionId);
+
+    if (!oldVersion || !newVersion) return;
+
+    // Update metadata displays
+    document.getElementById('comparison-old-meta').textContent = oldVersion.date ? `${oldVersion.date} by ${oldVersion.author}` : 'Initial version';
+    document.getElementById('comparison-new-meta').textContent = `${newVersion.date} by ${newVersion.author}`;
+
+    // Update diff editor
+    if (typeof monaco !== 'undefined') {
+        initializeDiffEditor(oldVersion.content, newVersion.content);
+    }
 }
 
 function closeComparison() {
@@ -848,7 +967,7 @@ function closeComparison() {
     }
 }
 
-function initializeDiffEditor(originalContent, modifiedContent) {
+async function initializeDiffEditor(originalContent, modifiedContent) {
     // Check if Monaco is available
     if (typeof monaco === 'undefined') {
         console.error('Monaco editor is not loaded yet');
@@ -889,13 +1008,16 @@ function initializeDiffEditor(originalContent, modifiedContent) {
 
     const monacoLanguage = languageMap[currentLanguage] || 'plaintext';
 
-    // Function to detect current dark mode state
-    function getCurrentTheme() {
-        return document.documentElement.classList.contains('dark') ? 'vs-dark' : 'vs';
+    // Function to load user's preferred theme
+    async function getUserTheme() {
+        const themeName = await loadMonacoTheme(userMonacoTheme);
+        return themeName;
     }
 
+    const diffTheme = await getUserTheme();
+
     diffEditor = monaco.editor.createDiffEditor(document.getElementById('diff-editor'), {
-        theme: getCurrentTheme(),
+        theme: diffTheme,
         automaticLayout: true,
         fontSize: 14,
         minimap: { enabled: false },
@@ -914,6 +1036,9 @@ function initializeDiffEditor(originalContent, modifiedContent) {
         mouseWheelZoom: false,
         fastScrollSensitivity: 5
     });
+
+    // Explicitly set theme for diff editor
+    monaco.editor.setTheme(diffTheme);
 
     const originalModel = monaco.editor.createModel(originalContent, monacoLanguage);
     const modifiedModel = monaco.editor.createModel(modifiedContent, monacoLanguage);
@@ -1010,7 +1135,7 @@ function initializeMonaco() {
     if (typeof require !== 'undefined') {
         require.config({ paths: { 'vs': 'https://cdn.jsdelivr.net/npm/monaco-editor@0.54.0/min/vs' }});
 
-        require(['vs/editor/editor.main'], function() {
+        require(['vs/editor/editor.main'], async function() {
             const snippetContent = {{ Js::from($snippet->content) }};
             const currentLanguage = '{{ $snippet->language }}';
 
@@ -1042,15 +1167,13 @@ function initializeMonaco() {
 
             const monacoLanguage = languageMap[currentLanguage] || 'plaintext';
 
-            // Function to detect current dark mode state
-            function getCurrentTheme() {
-                return document.documentElement.classList.contains('dark') ? 'vs-dark' : 'vs';
-            }
+            // Load user's preferred theme
+            const themeName = await loadMonacoTheme(userMonacoTheme);
 
             window.monacoEditor = monaco.editor.create(document.getElementById('monaco-editor'), {
             value: snippetContent,
             language: monacoLanguage,
-            theme: getCurrentTheme(),
+            theme: themeName,
             readOnly: true,
             automaticLayout: true,
             fontSize: 14,
@@ -1069,6 +1192,9 @@ function initializeMonaco() {
             mouseWheelZoom: false,
             fastScrollSensitivity: 5
         });
+
+        // Explicitly set theme after editor creation
+        monaco.editor.setTheme(themeName);
 
         // Listen for theme changes and update Monaco editor
         const observer = new MutationObserver(function(mutations) {

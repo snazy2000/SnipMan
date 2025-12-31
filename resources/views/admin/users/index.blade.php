@@ -8,8 +8,10 @@
         <div class="mb-8 flex items-center justify-between">
             <div>
                 <div class="flex items-center space-x-3 mb-2">
-                    <a href="{{ route('admin.index') }}" class="text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors duration-200">
-                        <i class="fas fa-arrow-left"></i>
+                    <a href="{{ route('admin.index') }}" class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-colors duration-200">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                        </svg>
                     </a>
                     <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100 transition-colors duration-200">
                         <i class="fas fa-users mr-3 text-indigo-600 dark:text-indigo-400"></i>User Management
@@ -19,6 +21,11 @@
                     Manage user accounts and permissions
                 </p>
             </div>
+            <a href="{{ route('admin.users.create') }}"
+               class="inline-flex items-center px-4 py-2 bg-indigo-600 dark:bg-indigo-500 hover:bg-indigo-700 dark:hover:bg-indigo-600 text-white font-semibold rounded-lg shadow-md transition-colors duration-200">
+                <i class="fas fa-user-plus mr-2"></i>
+                New User
+            </a>
         </div>
 
         <!-- Users Table -->
@@ -27,6 +34,7 @@
                 <thead class="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 transition-colors duration-200">
                     <tr>
                         <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">User</th>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Status</th>
                         <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Role</th>
                         <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Teams</th>
                         <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Snippets</th>
@@ -49,12 +57,27 @@
                                 </div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                @if($user->is_super_admin)
-                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200">
-                                        <i class="fas fa-shield-alt mr-1"></i> Super Admin
+                                @if($user->invitation_token)
+                                    <span class="px-3 inline-flex items-center text-xs leading-5 font-semibold rounded-full bg-yellow-600 text-white">
+                                        <i class="fas fa-clock mr-1.5"></i>Pending
+                                    </span>
+                                @elseif($user->invitation_accepted_at)
+                                    <span class="px-3 inline-flex items-center text-xs leading-5 font-semibold rounded-full bg-green-600 text-white">
+                                        <i class="fas fa-check mr-1.5"></i>Active
                                     </span>
                                 @else
-                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
+                                    <span class="px-3 inline-flex items-center text-xs leading-5 font-semibold rounded-full bg-green-600 text-white">
+                                        <i class="fas fa-check mr-1.5"></i>Active
+                                    </span>
+                                @endif
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                @if($user->is_super_admin)
+                                    <span class="px-3 inline-flex items-center text-xs leading-5 font-semibold rounded-full bg-purple-600 text-white">
+                                        <i class="fas fa-shield-alt mr-1.5"></i>Super Admin
+                                    </span>
+                                @else
+                                    <span class="px-3 inline-flex items-center text-xs leading-5 font-semibold rounded-full bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
                                         User
                                     </span>
                                 @endif
@@ -70,8 +93,17 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                 <div class="flex justify-end items-center space-x-2">
+                                    @if($user->invitation_token)
+                                        <form action="{{ route('admin.users.resendInvitation', $user) }}" method="POST" class="inline">
+                                            @csrf
+                                            <button type="submit" class="inline-flex items-center px-3 py-1.5 bg-blue-600 dark:bg-blue-500 text-white hover:bg-blue-700 dark:hover:bg-blue-600 rounded-lg shadow-sm transition-colors duration-200">
+                                                <i class="fas fa-envelope mr-1.5 text-xs"></i>
+                                                <span class="text-xs font-medium">Resend</span>
+                                            </button>
+                                        </form>
+                                    @endif
                                     <a href="{{ route('admin.users.edit', $user) }}"
-                                       class="inline-flex items-center px-3 py-1.5 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-200 dark:hover:bg-indigo-900/50 rounded-lg transition-colors duration-200">
+                                       class="inline-flex items-center px-3 py-1.5 bg-indigo-600 dark:bg-indigo-500 text-white hover:bg-indigo-700 dark:hover:bg-indigo-600 rounded-lg shadow-sm transition-colors duration-200">
                                         <i class="fas fa-edit mr-1.5 text-xs"></i>
                                         <span class="text-xs font-medium">Edit</span>
                                     </a>
@@ -80,7 +112,7 @@
                                               onsubmit="return confirm('Are you sure you want to delete this user? This action cannot be undone.');">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit" class="inline-flex items-center px-3 py-1.5 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-900/50 rounded-lg transition-colors duration-200">
+                                            <button type="submit" class="inline-flex items-center px-3 py-1.5 bg-red-600 dark:bg-red-500 text-white hover:bg-red-700 dark:hover:bg-red-600 rounded-lg shadow-sm transition-colors duration-200">
                                                 <i class="fas fa-trash mr-1.5 text-xs"></i>
                                                 <span class="text-xs font-medium">Delete</span>
                                             </button>

@@ -36,7 +36,7 @@
                     <p class="text-sm text-yellow-800 dark:text-yellow-200">
                         <i class="fas fa-exclamation-triangle mr-2"></i>{{ __('Your email address is unverified.') }}
                     </p>
-                    <button form="send-verification" class="mt-2 inline-flex items-center px-3 py-1.5 bg-yellow-100 dark:bg-yellow-900/50 text-yellow-700 dark:text-yellow-300 hover:bg-yellow-200 dark:hover:bg-yellow-900/70 rounded-lg transition-colors duration-200 text-sm">
+                    <button form="send-verification" class="mt-2 inline-flex items-center px-3 py-1.5 border border-transparent shadow-sm text-sm font-medium rounded-md bg-yellow-100 dark:bg-yellow-900/50 text-yellow-700 dark:text-yellow-300 hover:bg-yellow-200 dark:hover:bg-yellow-900/70 transition-colors duration-200">
                         <i class="fas fa-envelope mr-2"></i>{{ __('Click here to re-send the verification email.') }}
                     </button>
 
@@ -51,7 +51,7 @@
 
         <div class="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
             <div class="flex items-center gap-4">
-                <button type="submit" class="inline-flex items-center px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white font-medium rounded-lg transition-colors duration-200 shadow-sm">
+                <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 dark:bg-indigo-500 hover:bg-indigo-700 dark:hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-gray-800 focus:ring-indigo-500 transition-colors duration-200">
                     <i class="fas fa-save mr-2"></i>{{ __('Save Changes') }}
                 </button>
 

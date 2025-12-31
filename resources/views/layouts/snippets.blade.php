@@ -5,7 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <title>@yield('title', 'Snippet Manager') - {{ config('app.name', 'Laravel') }}</title>
+        <title>@yield('title', config('app.name', 'Snippet Manager')) - {{ config('app.name', 'Snippet Manager') }}</title>
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
@@ -23,6 +23,78 @@
         <!-- Alpine.js Cloak Style -->
         <style>
             [x-cloak] { display: none !important; }
+
+            /* Toast Notifications */
+            .toast-container {
+                position: fixed;
+                top: 5rem;
+                right: 1.5rem;
+                z-index: 9999;
+                display: flex;
+                flex-direction: column;
+                gap: 0.75rem;
+                max-width: 24rem;
+            }
+
+            .toast {
+                padding: 1rem 1.25rem;
+                border-radius: 0.5rem;
+                box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+                display: flex;
+                align-items: start;
+                gap: 0.75rem;
+                animation: slideIn 0.3s ease-out;
+            }
+
+            .toast.toast-error {
+                background-color: #fef2f2;
+                border-left: 4px solid #ef4444;
+                color: #991b1b;
+            }
+
+            .dark .toast.toast-error {
+                background-color: #7f1d1d;
+                border-left-color: #dc2626;
+                color: #fecaca;
+            }
+
+            .toast.toast-success {
+                background-color: #f0fdf4;
+                border-left: 4px solid #22c55e;
+                color: #14532d;
+            }
+
+            .dark .toast.toast-success {
+                background-color: #14532d;
+                border-left-color: #16a34a;
+                color: #bbf7d0;
+            }
+
+            @keyframes slideIn {
+                from {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+
+            @keyframes slideOut {
+                from {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+                to {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+            }
+
+            .toast.removing {
+                animation: slideOut 0.3s ease-in forwards;
+            }
         </style>
 
         <!-- Dark Mode Script -->
@@ -40,6 +112,78 @@
 
         <!-- Tree View and Drag & Drop Styles -->
         <style>
+            /* Custom Scrollbar for Sidebar */
+            #sidebar-tree::-webkit-scrollbar {
+                width: 8px;
+            }
+
+            #sidebar-tree::-webkit-scrollbar-track {
+                background: transparent;
+            }
+
+            #sidebar-tree::-webkit-scrollbar-thumb {
+                background: #9ca3af;
+                border-radius: 4px;
+            }
+
+            #sidebar-tree::-webkit-scrollbar-thumb:hover {
+                background: #6b7280;
+            }
+
+            .dark #sidebar-tree::-webkit-scrollbar-thumb {
+                background: #4b5563;
+            }
+
+            .dark #sidebar-tree::-webkit-scrollbar-thumb:hover {
+                background: #6b7280;
+            }
+
+            /* Firefox */
+            #sidebar-tree {
+                scrollbar-width: thin;
+                scrollbar-color: #9ca3af transparent;
+            }
+
+            .dark #sidebar-tree {
+                scrollbar-color: #4b5563 transparent;
+            }
+
+            /* Custom Scrollbar for Main Content */
+            .main-content::-webkit-scrollbar {
+                width: 10px;
+            }
+
+            .main-content::-webkit-scrollbar-track {
+                background: transparent;
+            }
+
+            .main-content::-webkit-scrollbar-thumb {
+                background: #9ca3af;
+                border-radius: 5px;
+            }
+
+            .main-content::-webkit-scrollbar-thumb:hover {
+                background: #6b7280;
+            }
+
+            .dark .main-content::-webkit-scrollbar-thumb {
+                background: #4b5563;
+            }
+
+            .dark .main-content::-webkit-scrollbar-thumb:hover {
+                background: #6b7280;
+            }
+
+            /* Firefox */
+            .main-content {
+                scrollbar-width: thin;
+                scrollbar-color: #9ca3af transparent;
+            }
+
+            .dark .main-content {
+                scrollbar-color: #4b5563 transparent;
+            }
+
             .tree-container {
                 user-select: none;
             }
@@ -125,142 +269,165 @@
 
         </style>
     </head>
-    <body class="font-sans antialiased bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
+    <body class="font-sans antialiased bg-gray-50 dark:bg-gray-900 transition-colors duration-200"
+          x-data="{ sidebarOpen: window.innerWidth >= 768 }"
+          @resize.window="if (window.innerWidth >= 768) sidebarOpen = true">
+        <!-- Toast Notification Container -->
+        <div id="toast-container" class="toast-container"></div>
+
         <div class="min-h-screen">
             <!-- Top Navigation Bar -->
             <nav class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 fixed w-full top-0 z-50 transition-colors duration-200">
-                <div class="px-6 lg:px-8">
-                    <div class="flex justify-between h-16">
+                <div class="px-3 md:px-6 lg:px-8">
+                    <div class="flex justify-between h-14 md:h-16">
                         <div class="flex items-center">
+                            <!-- Mobile menu button -->
+                            <button @click="sidebarOpen = !sidebarOpen" class="md:hidden p-2 mr-3 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                                </svg>
+                            </button>
+
                             <div class="flex items-center">
-                                <svg class="w-6 h-6 mr-3 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg class="w-6 h-6 md:w-7 md:h-7 mr-2 md:mr-3 text-indigo-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
                                 </svg>
-                                <h1 class="text-xl font-semibold text-gray-900 dark:text-white transition-colors duration-200">Snippet Manager</h1>
+                                <h1 class="hidden lg:block text-base md:text-xl font-semibold text-gray-900 dark:text-white transition-colors duration-200 whitespace-nowrap">{{ config('app.name', 'Snippet Manager') }}</h1>
                             </div>
 
                             <!-- Main Navigation Links -->
-                            <div class="hidden md:flex items-center ml-8 space-x-6">
-                                <a href="{{ route('snippets.index') }}" class="text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 px-3 py-2 text-sm font-medium transition-colors duration-200 {{ request()->routeIs('snippets.index') ? 'text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-600 dark:border-indigo-400' : '' }}">
+                            <div class="hidden md:flex items-center ml-4 lg:ml-8 space-x-3 lg:space-x-6">
+                                <a href="{{ route('snippets.index') }}" class="text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 px-2 lg:px-3 py-2 text-sm font-medium transition-colors duration-200 whitespace-nowrap {{ request()->routeIs('snippets.index') ? 'text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-600 dark:border-indigo-400' : '' }}">
                                     Snippets
                                 </a>
-                                <a href="{{ route('snippets.sharedList') }}" class="text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 px-3 py-2 text-sm font-medium transition-colors duration-200 {{ request()->routeIs('snippets.sharedList') ? 'text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-600 dark:border-indigo-400' : '' }}">
+                                <a href="{{ route('snippets.sharedList') }}" class="text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 px-2 lg:px-3 py-2 text-sm font-medium transition-colors duration-200 whitespace-nowrap {{ request()->routeIs('snippets.sharedList') ? 'text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-600 dark:border-indigo-400' : '' }}">
                                     Shared
                                 </a>
-                                <a href="{{ route('folders.index') }}" class="text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 px-3 py-2 text-sm font-medium transition-colors duration-200 {{ request()->routeIs('folders.*') ? 'text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-600 dark:border-indigo-400' : '' }}">
+                                <a href="{{ route('folders.index') }}" class="text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 px-2 lg:px-3 py-2 text-sm font-medium transition-colors duration-200 whitespace-nowrap {{ request()->routeIs('folders.*') ? 'text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-600 dark:border-indigo-400' : '' }}">
                                     Folders
                                 </a>
-                                <a href="{{ route('teams.index') }}" class="text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 px-3 py-2 text-sm font-medium transition-colors duration-200 {{ request()->routeIs('teams.*') ? 'text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-600 dark:border-indigo-400' : '' }}">
+                                <a href="{{ route('teams.index') }}" class="text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 px-2 lg:px-3 py-2 text-sm font-medium transition-colors duration-200 whitespace-nowrap {{ request()->routeIs('teams.*') ? 'text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-600 dark:border-indigo-400' : '' }}">
                                     Teams
                                 </a>
                                 @if(auth()->user()->isSuperAdmin())
-                                    <a href="{{ route('admin.index') }}" class="text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 px-3 py-2 text-sm font-medium transition-colors duration-200 {{ request()->routeIs('admin.*') ? 'text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-600 dark:border-indigo-400' : '' }}">
-                                        <i class="fas fa-shield-alt mr-1"></i>Admin
+                                    <a href="{{ route('admin.index') }}" class="text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 px-2 lg:px-3 py-2 text-sm font-medium transition-colors duration-200 flex items-center whitespace-nowrap {{ request()->routeIs('admin.*') ? 'text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-600 dark:border-indigo-400' : '' }}">
+                                        <i class="fas fa-shield-alt mr-1.5 text-xs"></i><span>Admin</span>
                                     </a>
                                 @endif
                             </div>
                         </div>
 
-                        <div class="flex items-center space-x-6">
+                        <div class="flex items-center space-x-2 md:space-x-3 lg:space-x-4 flex-shrink-0">
                             <!-- Search -->
                             <div class="relative" x-data="searchComponent()">
-                                <input type="text"
-                                       placeholder="Search snippets, folders"
-                                       x-model="searchQuery"
-                                       @input="search"
-                                       @focus="showResults = true"
-                                       @keydown.escape="hideResults"
-                                       class="w-96 pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors duration-200">
-                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <svg class="h-4 w-4 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <!-- Search Button (All Screens) -->
+                                <button @click="showResults = true; $nextTick(() => $refs.searchInput.focus())"
+                                        class="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors flex-shrink-0"
+                                        title="Search snippets, folders">
+                                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                                     </svg>
-                                </div>
+                                </button>
 
-                                <!-- Search Results Dropdown -->
-                                <div x-show="showResults && searchQuery.length > 1"
+                                <!-- Search Modal (All Screens) -->
+                                <div x-show="showResults"
                                      x-cloak
                                      @click.away="hideResults"
-                                     x-transition:enter="transition ease-out duration-100"
-                                     x-transition:enter-start="transform opacity-0 scale-95"
-                                     x-transition:enter-end="transform opacity-100 scale-100"
-                                     x-transition:leave="transition ease-in duration-75"
-                                     x-transition:leave-start="transform opacity-100 scale-100"
-                                     x-transition:leave-end="transform opacity-0 scale-95"
-                                     class="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50 max-h-96 overflow-y-auto transition-colors duration-200">
-
-                                    <!-- Loading State -->
-                                    <div x-show="loading" x-cloak class="p-4 text-center">
-                                        <div class="inline-flex items-center">
-                                            <svg class="animate-spin -ml-1 mr-3 h-4 w-4 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                            </svg>
-                                            <span class="text-sm text-gray-600 dark:text-gray-400">Searching...</span>
+                                     class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-start justify-center pt-4"
+                                     x-transition:enter="transition ease-out duration-200"
+                                     x-transition:enter-start="opacity-0"
+                                     x-transition:enter-end="opacity-100"
+                                     x-transition:leave="transition ease-in duration-150"
+                                     x-transition:leave-start="opacity-100"
+                                     x-transition:leave-end="opacity-0">
+                                    <div @click.stop class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-11/12 max-w-2xl mx-auto transition-colors duration-200">
+                                        <div class="p-4 border-b border-gray-200 dark:border-gray-700 transition-colors duration-200">
+                                            <div class="relative">
+                                                <input type="text"
+                                                       x-ref="searchInput"
+                                                       placeholder="Search snippets, folders"
+                                                       x-model="searchQuery"
+                                                       @input="search"
+                                                       @keydown.escape="hideResults"
+                                                       class="w-full pl-10 pr-10 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors duration-200">
+                                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                    <svg class="h-4 w-4 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                                    </svg>
+                                                </div>
+                                                <button @click="hideResults" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                                                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                                    </svg>
+                                                </button>
+                                            </div>
                                         </div>
-                                    </div>
+                                        <div class="max-h-96 overflow-y-auto">
+                                            <!-- Loading State -->
+                                            <div x-show="loading" x-cloak class="p-4 text-center">
+                                                <div class="inline-flex items-center">
+                                                    <svg class="animate-spin -ml-1 mr-3 h-4 w-4 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                    </svg>
+                                                    <span class="text-sm text-gray-600 dark:text-gray-400">Searching...</span>
+                                                </div>
+                                            </div>
 
-                                    <!-- Results -->
-                                    <div x-show="!loading" x-cloak>
-                                        <!-- Snippets -->
-                                        <template x-if="results.snippets && results.snippets.length > 0">
-                                            <div class="p-2">
-                                                <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider px-3 py-2 transition-colors duration-200">Snippets</h3>
-                                                <template x-for="snippet in results.snippets" :key="snippet.id">
-                                                    <a :href="snippet.url"
-                                                       class="block px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-md transition-colors duration-200">
-                                                        <div class="flex items-center justify-between">
-                                                            <div class="flex items-center space-x-2">
-                                                                <div class="w-6 h-6 rounded text-xs flex items-center justify-center font-medium"
-                                                                     x-html="getLanguageIcon(snippet.language)">
-                                                                </div>
-                                                                <div>
-                                                                    <p class="text-sm font-medium text-gray-900 dark:text-gray-100 transition-colors duration-200" x-text="snippet.title"></p>
-                                                                    <p class="text-xs text-gray-500 dark:text-gray-400 transition-colors duration-200">
-                                                                        <span x-text="snippet.folder || 'No folder'"></span>
-                                                                        <span> • </span>
-                                                                        <span x-text="snippet.updated_at"></span>
-                                                                    </p>
-                                                                </div>
-                                                            </div>
+                                            <!-- Results -->
+                                            <div x-show="!loading" x-cloak>
+                                                <!-- Snippets Results -->
+                                                <template x-if="results.snippets && results.snippets.length > 0">
+                                                    <div class="border-b border-gray-100 dark:border-gray-700 last:border-0">
+                                                        <div class="px-4 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-900/50">
+                                                            Snippets
                                                         </div>
-                                                    </a>
+                                                        <template x-for="snippet in results.snippets" :key="snippet.id">
+                                                            <a :href="`/snippets/${snippet.id}`"
+                                                               @click="hideResults"
+                                                               class="block px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-150 border-b border-gray-50 dark:border-gray-700/50 last:border-0">
+                                                                <div class="flex items-start justify-between">
+                                                                    <div class="flex-1 min-w-0">
+                                                                        <p class="text-sm font-medium text-gray-900 dark:text-white truncate" x-text="snippet.title"></p>
+                                                                        <p class="text-xs text-gray-500 dark:text-gray-400 truncate mt-1" x-text="snippet.description || 'No description'"></p>
+                                                                    </div>
+                                                                    <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+                                                                          x-text="snippet.language"></span>
+                                                                </div>
+                                                            </a>
+                                                        </template>
+                                                    </div>
                                                 </template>
-                                            </div>
-                                        </template>
 
-                                        <!-- Folders -->
-                                        <template x-if="results.folders && results.folders.length > 0">
-                                            <div class="p-2 border-t border-gray-100 dark:border-gray-600 transition-colors duration-200">
-                                                <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider px-3 py-2 transition-colors duration-200">Folders</h3>
-                                                <template x-for="folder in results.folders" :key="folder.id">
-                                                    <a :href="folder.url"
-                                                       class="block px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-md transition-colors duration-200">
-                                                        <div class="flex items-center space-x-2">
-                                                            <svg class="w-5 h-5 text-gray-400 dark:text-gray-500 transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-5l-2-2H5a2 2 0 00-2 2z"></path>
-                                                            </svg>
-                                                            <div>
-                                                                <p class="text-sm font-medium text-gray-900 dark:text-gray-100 transition-colors duration-200" x-text="folder.name"></p>
-                                                                <p class="text-xs text-gray-500 dark:text-gray-400 transition-colors duration-200">
-                                                                    <span x-text="folder.snippet_count"></span>
-                                                                    <span x-text="folder.snippet_count === 1 ? ' snippet' : ' snippets'"></span>
-                                                                    <span> • </span>
-                                                                    <span x-text="folder.updated_at"></span>
-                                                                </p>
-                                                            </div>
+                                                <!-- Folders Results -->
+                                                <template x-if="results.folders && results.folders.length > 0">
+                                                    <div>
+                                                        <div class="px-4 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-900/50">
+                                                            Folders
                                                         </div>
-                                                    </a>
+                                                        <template x-for="folder in results.folders" :key="folder.id">
+                                                            <a :href="`/folders/${folder.id}`"
+                                                               @click="hideResults"
+                                                               class="block px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-150 border-b border-gray-50 dark:border-gray-700/50 last:border-0">
+                                                                <div class="flex items-center">
+                                                                    <svg class="w-4 h-4 mr-2 text-yellow-500 dark:text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                                                                        <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"></path>
+                                                                    </svg>
+                                                                    <span class="text-sm text-gray-900 dark:text-white" x-text="folder.name"></span>
+                                                                </div>
+                                                            </a>
+                                                        </template>
+                                                    </div>
                                                 </template>
-                                            </div>
-                                        </template>
 
-                                        <!-- No Results -->
-                                        <template x-if="searchQuery.length > 1 && !loading && (!results.snippets || results.snippets.length === 0) && (!results.folders || results.folders.length === 0)">
-                                            <div class="p-4 text-center">
-                                                <p class="text-sm text-gray-500">No results found for "<span x-text="searchQuery"></span>"</p>
+                                                <!-- No Results -->
+                                                <div x-show="searchQuery.length > 1 && (!results.snippets || results.snippets.length === 0) && (!results.folders || results.folders.length === 0)"
+                                                     x-cloak
+                                                     class="p-4 text-center text-sm text-gray-500 dark:text-gray-400">
+                                                    No results found for "<span x-text="searchQuery"></span>"
+                                                </div>
                                             </div>
-                                        </template>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -297,22 +464,22 @@
                             </div>
 
                             <!-- NEW SNIPPET Button -->
-                            <a href="{{ route('snippets.create') }}" class="bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center transition-colors duration-200">
-                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <a href="{{ route('snippets.create') }}" class="bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white px-3 lg:px-4 py-2 rounded-lg text-sm font-medium flex items-center justify-center transition-colors duration-200 whitespace-nowrap flex-shrink-0">
+                                <svg class="w-4 h-4 md:mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                                 </svg>
-                                NEW SNIPPET
+                                <span class="hidden md:inline">NEW SNIPPET</span>
                             </a>
 
                             <!-- User Menu -->
                             <div class="relative" x-data="{ open: false }">
                                 <button @click="open = !open" class="flex items-center text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                                     <span class="sr-only">Open user menu</span>
-                                    <div class="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center">
-                                        <span class="text-sm font-medium text-indigo-600">{{ substr(Auth::user()->name, 0, 1) }}</span>
+                                    <div class="w-8 h-8 bg-indigo-100 dark:bg-indigo-900 rounded-full flex items-center justify-center">
+                                        <span class="text-sm font-medium text-indigo-600 dark:text-indigo-300">{{ substr(Auth::user()->name, 0, 1) }}</span>
                                     </div>
-                                    <span class="ml-2 text-gray-700 dark:text-gray-200">{{ Auth::user()->name }}</span>
-                                    <svg class="ml-1 w-4 h-4 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <span class="hidden md:inline ml-2 text-gray-700 dark:text-gray-200">{{ Auth::user()->name }}</span>
+                                    <svg class="ml-1 w-4 h-4 text-gray-400 dark:text-gray-500 hidden md:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                                     </svg>
                                 </button>
@@ -339,16 +506,33 @@
                 </div>
             </nav>
 
-            <div class="flex h-screen pt-16"> <!-- pt-16 to account for top navigation -->
-                <!-- Sidebar -->
-                <div class="w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col transition-colors duration-200">
+            <div class="flex h-screen pt-14 md:pt-16"> <!-- pt-14 on mobile, pt-16 on desktop to account for top navigation -->
+                <!-- Mobile sidebar backdrop -->
+                <div x-show="sidebarOpen && window.innerWidth < 768"
+                     x-cloak
+                     @click="sidebarOpen = false"
+                     class="fixed inset-0 bg-black bg-opacity-50 z-20 md:hidden"
+                     x-transition:enter="transition-opacity ease-linear duration-300"
+                     x-transition:enter-start="opacity-0"
+                     x-transition:enter-end="opacity-100"
+                     x-transition:leave="transition-opacity ease-linear duration-300"
+                     x-transition:leave-start="opacity-100"
+                     x-transition:leave-end="opacity-0"></div>
+
+                <!-- Resizable Sidebar -->
+                <div id="sidebar"
+                     x-show="sidebarOpen || window.innerWidth >= 768"
+                     class="bg-gray-50 dark:bg-gray-900 border-r-2 border-gray-300 dark:border-gray-600 flex flex-col transition-colors duration-200 relative"
+                     :class="window.innerWidth < 768 ? 'fixed inset-y-0 left-0 z-30' : ''"
+                     style="width: 280px; min-width: 200px;"
+                     :style="window.innerWidth < 768 ? 'max-width: 80vw' : 'max-width: 600px'">
                     <!-- Folders Section -->
                     <div class="flex-1 overflow-y-auto p-4" id="sidebar-tree">
-                        <div class="flex items-center justify-between mb-3">
-                            <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">FOLDERS</h3>
-                            <button class="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300" title="Add Folder">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider">FOLDERS</h3>
+                            <button class="text-indigo-500 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors" title="Add Folder">
                                 <a href="{{ route('folders.create') }}">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                                     </svg>
                                 </a>
@@ -377,7 +561,7 @@
 
                         <!-- Team Folders Tree -->
                         <div class="team-folders mt-6">
-                            <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">TEAM FOLDERS</h3>
+                            <h3 class="text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider mb-4">TEAM FOLDERS</h3>
                             @if(Auth::user()->teams->isEmpty())
                                 <div class="text-center py-4">
                                     <p class="text-sm text-gray-500 dark:text-gray-400">No team folders yet</p>
@@ -417,7 +601,7 @@
 
                         <!-- No Folder Section -->
                         <div class="mt-6">
-                            <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">NO FOLDER - PERSONAL</h3>
+                            <h3 class="text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider mb-4">NO FOLDER - PERSONAL</h3>
                             <div class="drop-zone border-2 border-dashed border-gray-200 rounded-lg p-2 min-h-[40px] transition-colors personal-folders"
                                  data-folder-id="null" data-drop-type="snippets">
                                 @php
@@ -447,7 +631,7 @@
                                 @endforelse
                             </div>
 
-                            <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 mt-6">NO FOLDER - TEAM</h3>
+                            <h3 class="text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider mb-4 mt-6">NO FOLDER - TEAM</h3>
                             @foreach(Auth::user()->teams as $team)
                                 @php
                                     $unfoldered = Auth::user()->snippets()
@@ -485,10 +669,17 @@
                             @endforeach
                         </div>
                     </div>
+
+                    <!-- Resize Handle (Desktop Only) -->
+                    <div id="sidebar-resize-handle"
+                         class="hidden md:block absolute top-0 -right-1 w-2 h-full cursor-ew-resize hover:bg-indigo-400/30 transition-colors group z-10"
+                         title="Drag to resize">
+                        <div class="absolute top-1/2 right-0 transform translate-x-1/2 -translate-y-1/2 w-1 h-20 bg-gray-400 dark:bg-gray-500 group-hover:bg-indigo-500 group-hover:w-1.5 rounded-full transition-all"></div>
+                    </div>
                 </div>
 
                 <!-- Main Content Area -->
-                <div class="flex-1 flex flex-col overflow-hidden bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
+                <div class="flex-1 flex flex-col overflow-hidden bg-gray-50 dark:bg-gray-900 transition-colors duration-200 main-content">
                     <!-- Flash Messages -->
                     @if(session('success'))
                         <div class="bg-green-50 dark:bg-green-900/50 border-l-4 border-green-400 dark:border-green-500 p-4" role="alert">
@@ -889,12 +1080,12 @@
                         // Reload the page to update the sidebar
                         window.location.reload();
                     } else {
-                        alert('Failed to move snippet: ' + (data.message || 'Unknown error'));
+                        showToast('Failed to move snippet: ' + (data.message || 'Unknown error'), 'error');
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    alert('An error occurred while moving the snippet.');
+                    showToast('An error occurred while moving the snippet.', 'error');
                 });
             }
 
@@ -918,17 +1109,48 @@
                         // Reload the page to update the sidebar
                         window.location.reload();
                     } else {
-                        alert('Failed to move folder: ' + (data.message || 'Unknown error'));
+                        showToast('Failed to move folder: ' + (data.message || 'Unknown error'), 'error');
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    alert('An error occurred while moving the folder.');
+                    showToast('An error occurred while moving the folder.', 'error');
                 });
             }
         </script>
 
         <script>
+            // Toast Notification System
+            function showToast(message, type = 'error') {
+                const container = document.getElementById('toast-container');
+                const toast = document.createElement('div');
+                toast.className = `toast toast-${type}`;
+
+                const icon = type === 'error'
+                    ? '<svg class="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/></svg>'
+                    : '<svg class="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>';
+
+                toast.innerHTML = `
+                    ${icon}
+                    <div class="flex-1">
+                        <p class="text-sm font-medium">${message}</p>
+                    </div>
+                    <button onclick="this.parentElement.remove()" class="flex-shrink-0 text-current opacity-70 hover:opacity-100 transition-opacity">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                        </svg>
+                    </button>
+                `;
+
+                container.appendChild(toast);
+
+                // Auto remove after 5 seconds
+                setTimeout(() => {
+                    toast.classList.add('removing');
+                    setTimeout(() => toast.remove(), 300);
+                }, 5000);
+            }
+
             function searchComponent() {
                 return {
                     searchQuery: '',
@@ -1058,6 +1280,58 @@
                     }
                 }
             }
+        </script>
+
+        <script>
+            // Sidebar resizing functionality
+            document.addEventListener('DOMContentLoaded', function() {
+                const sidebar = document.getElementById('sidebar');
+                const resizeHandle = document.getElementById('sidebar-resize-handle');
+                let isResizing = false;
+                let startX = 0;
+                let startWidth = 0;
+
+                // Load saved width from localStorage
+                const savedWidth = localStorage.getItem('sidebarWidth');
+                if (savedWidth) {
+                    sidebar.style.width = savedWidth + 'px';
+                }
+
+                resizeHandle.addEventListener('mousedown', function(e) {
+                    // Only allow resizing on desktop
+                    if (window.innerWidth < 768) return;
+
+                    isResizing = true;
+                    startX = e.clientX;
+                    startWidth = sidebar.offsetWidth;
+                    document.body.style.cursor = 'ew-resize';
+                    document.body.style.userSelect = 'none';
+                    e.preventDefault();
+                });
+
+                document.addEventListener('mousemove', function(e) {
+                    if (!isResizing) return;
+
+                    const deltaX = e.clientX - startX;
+                    const newWidth = startWidth + deltaX;
+                    const minWidth = parseInt(getComputedStyle(sidebar).minWidth);
+                    const maxWidth = parseInt(getComputedStyle(sidebar).maxWidth);
+
+                    if (newWidth >= minWidth && newWidth <= maxWidth) {
+                        sidebar.style.width = newWidth + 'px';
+                    }
+                });
+
+                document.addEventListener('mouseup', function() {
+                    if (isResizing) {
+                        isResizing = false;
+                        document.body.style.cursor = '';
+                        document.body.style.userSelect = '';
+                        // Save width to localStorage
+                        localStorage.setItem('sidebarWidth', sidebar.offsetWidth);
+                    }
+                });
+            });
         </script>
     </body>
 </html>

@@ -38,6 +38,38 @@ class ProfileController extends Controller
     }
 
     /**
+     * Update the user's editor theme preference.
+     */
+    public function updateTheme(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'monaco_theme' => ['required', 'string', 'max:50'],
+        ]);
+
+        $request->user()->update([
+            'monaco_theme' => $validated['monaco_theme'],
+        ]);
+
+        return Redirect::route('profile.edit')->with('status', 'theme-updated');
+    }
+
+    /**
+     * Update the user's default language preference.
+     */
+    public function updateLanguage(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'monaco_language' => ['required', 'string', 'max:50'],
+        ]);
+
+        $request->user()->update([
+            'monaco_language' => $validated['monaco_language'],
+        ]);
+
+        return Redirect::route('profile.edit')->with('status', 'language-updated');
+    }
+
+    /**
      * Delete the user's account.
      */
     public function destroy(Request $request): RedirectResponse
