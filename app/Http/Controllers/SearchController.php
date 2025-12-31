@@ -47,9 +47,9 @@ class SearchController extends Controller
 
         // Apply search filter - search only existing fields (case-insensitive)
         $snippets = $snippetsQuery->where(function ($q) use ($query) {
-            $q->where('title', 'ILIKE', "%{$query}%")
-                ->orWhere('language', 'ILIKE', "%{$query}%")
-                ->orWhere('content', 'ILIKE', "%{$query}%");
+            $q->where('title', 'LIKE', "%{$query}%")
+                ->orWhere('language', 'LIKE', "%{$query}%")
+                ->orWhere('content', 'LIKE', "%{$query}%");
         })
             ->with(['folder', 'creator'])
             ->orderBy('updated_at', 'desc')
@@ -85,7 +85,7 @@ class SearchController extends Controller
             }
         });
 
-        $folders = $foldersQuery->where('name', 'ILIKE', "%{$query}%")
+        $folders = $foldersQuery->where('name', 'LIKE', "%{$query}%")
             ->with(['snippets'])
             ->orderBy('updated_at', 'desc')
             ->limit(10)

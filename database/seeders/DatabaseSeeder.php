@@ -15,11 +15,12 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        // Seed AI settings
+        $this->call(AISettingsSeeder::class);
+
+        // For local development, you can uncomment this to create test users:
         // User::factory(10)->create();
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        // To create a super admin, use: php artisan make:superadmin
     }
 }

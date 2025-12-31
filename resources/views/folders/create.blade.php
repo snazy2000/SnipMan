@@ -72,10 +72,6 @@
                                    onchange="updateOwnerOptions()">
                             <span class="ml-2 text-sm text-gray-700 dark:text-gray-300 transition-colors duration-200">Team Folder</span>
                         </label>
-                    @else
-                        <div class="text-sm text-gray-500 dark:text-gray-400 italic transition-colors duration-200">
-                            You don't have create permissions for any teams.
-                        </div>
                     @endif
                 </div>
                 @error('owner_type')

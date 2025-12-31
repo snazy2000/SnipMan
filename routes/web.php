@@ -72,10 +72,14 @@ Route::middleware(['auth', 'super_admin'])->prefix('admin')->name('admin.')->gro
     Route::get('/users', [AdminController::class, 'users'])->name('users');
     Route::get('/users/create', [AdminController::class, 'createUser'])->name('users.create');
     Route::post('/users', [AdminController::class, 'storeUser'])->name('users.store');
+    Route::get('/users/{user}', [AdminController::class, 'showUser'])->name('users.show');
     Route::get('/users/{user}/edit', [AdminController::class, 'editUser'])->name('users.edit');
     Route::patch('/users/{user}', [AdminController::class, 'updateUser'])->name('users.update');
     Route::delete('/users/{user}', [AdminController::class, 'destroyUser'])->name('users.destroy');
     Route::post('/users/{user}/resend', [AdminController::class, 'resendUserInvitation'])->name('users.resendInvitation');
+    Route::post('/users/{user}/disable', [AdminController::class, 'disableUser'])->name('users.disable');
+    Route::post('/users/{user}/enable', [AdminController::class, 'enableUser'])->name('users.enable');
+    Route::get('/users/{user}/team-members', [AdminController::class, 'getUserTeamMembers'])->name('users.teamMembers');
 
     // Team management
     Route::get('/teams', [AdminController::class, 'teams'])->name('teams');

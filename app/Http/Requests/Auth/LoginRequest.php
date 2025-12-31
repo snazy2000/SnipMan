@@ -50,6 +50,24 @@ class LoginRequest extends FormRequest
             ]);
         }
 
+        // Check if the user is soft deleted or disabled
+        $user = Auth::user();
+        if ($user) {
+            if ($user->trashed()) {
+                Auth::logout();
+                throw ValidationException::withMessages([
+                    'email' => trans('auth.failed'),
+                ]);
+            }
+
+            if ($user->is_disabled) {
+                Auth::logout();
+                throw ValidationException::withMessages([
+                    'email' => 'This account has been disabled. Please contact an administrator.',
+                ]);
+            }
+        }
+
         RateLimiter::clear($this->throttleKey());
     }
 
