@@ -238,9 +238,9 @@ class AdminController extends Controller
         // Strip sensitive data and mark as disabled
         // Use unique placeholder to avoid unique constraint issues
         $user->email = "deleted_{$user->id}_".time().'@deleted.local';
-        $user->password = null;
-        $user->remember_token = null;
-        $user->invitation_token = null;
+        $user->password = Hash::make(Str::random(60)); // Invalidate password with random hash
+        $user->remember_token = Str::random(60); // Invalidate remember token
+        $user->invitation_token = null; // This can be null
         $user->is_disabled = true;
         $user->save();
 
