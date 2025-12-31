@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Team;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 
 class TeamController extends Controller
 {
@@ -110,7 +109,7 @@ class TeamController extends Controller
 
         $request->validate([
             'email' => 'required|email',
-            'role' => 'required|in:owner,editor,viewer'
+            'role' => 'required|in:owner,editor,viewer',
         ]);
 
         $user = \App\Models\User::where('email', $request->email)->first();
@@ -131,7 +130,7 @@ class TeamController extends Controller
         $hashedToken = hash('sha256', $token);
 
         // If user doesn't exist, create a pending user account
-        if (!$user) {
+        if (! $user) {
             $isNewUser = true;
             $user = \App\Models\User::create([
                 'name' => explode('@', $request->email)[0], // Temporary name
@@ -163,10 +162,10 @@ class TeamController extends Controller
         $this->authorize('manageMembers', $team);
 
         $request->validate([
-            'role' => 'required|in:owner,editor,viewer'
+            'role' => 'required|in:owner,editor,viewer',
         ]);
 
-        if (!$team->members()->where('user_id', $user->id)->exists()) {
+        if (! $team->members()->where('user_id', $user->id)->exists()) {
             return back()->withErrors(['error' => 'User is not a member of this team.']);
         }
 
@@ -197,7 +196,7 @@ class TeamController extends Controller
     {
         $this->authorize('manageMembers', $team);
 
-        if (!$team->members()->where('user_id', $user->id)->exists()) {
+        if (! $team->members()->where('user_id', $user->id)->exists()) {
             return back()->withErrors(['error' => 'User is not a member of this team.']);
         }
 
@@ -232,7 +231,7 @@ class TeamController extends Controller
             ->where('invitation_status', 'pending')
             ->first();
 
-        if (!$membership) {
+        if (! $membership) {
             return redirect()->route('login')->with('error', 'This invitation link is invalid or has already been used.');
         }
 
@@ -256,7 +255,7 @@ class TeamController extends Controller
 
         \Auth::login($user);
 
-        return redirect()->route('teams.show', $team)->with('success', 'Welcome to ' . $team->name . '!');
+        return redirect()->route('teams.show', $team)->with('success', 'Welcome to '.$team->name.'!');
     }
 
     /**
@@ -268,7 +267,7 @@ class TeamController extends Controller
 
         $membership = $team->members()->where('user_id', $user->id)->first();
 
-        if (!$membership || $membership->pivot->invitation_status !== 'pending') {
+        if (! $membership || $membership->pivot->invitation_status !== 'pending') {
             return back()->withErrors(['error' => 'No pending invitation found for this user.']);
         }
 
@@ -286,6 +285,6 @@ class TeamController extends Controller
         $isNewUser = $user->invitation_token !== null;
         $user->notify(new \App\Notifications\TeamInvitation($team, $membership->pivot->role, $token, $isNewUser));
 
-        return back()->with('success', 'Invitation resent to ' . $user->email);
+        return back()->with('success', 'Invitation resent to '.$user->email);
     }
 }

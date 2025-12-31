@@ -13,7 +13,7 @@ class AppServiceProvider extends ServiceProvider
     {
         // Register AI Service as singleton
         $this->app->singleton(\App\Services\AIService::class, function ($app) {
-            return new \App\Services\AIService();
+            return new \App\Services\AIService;
         });
     }
 
@@ -22,8 +22,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        if(env('APP_ENV') !== 'local')
-        {
+        if (env('APP_ENV') !== 'local') {
             \URL::forceScheme('https');
         }
     }

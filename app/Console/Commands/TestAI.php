@@ -63,9 +63,9 @@ class TestAI extends Command
             $config = $aiService->getProviderConfig();
             $this->table(
                 ['Setting', 'Value'],
-                collect($config)->map(fn($value, $key) => [
+                collect($config)->map(fn ($value, $key) => [
                     $key,
-                    $key === 'api_key' ? (empty($value) ? '❌ Not set' : '✅ Set') : $value
+                    $key === 'api_key' ? (empty($value) ? '❌ Not set' : '✅ Set') : $value,
                 ])->toArray()
             );
 
@@ -75,6 +75,7 @@ class TestAI extends Command
                 $this->info('✅ Provider is available');
             } else {
                 $this->error('❌ Provider is not available');
+
                 return 1;
             }
 
@@ -115,7 +116,8 @@ class TestAI extends Command
             return 0;
 
         } catch (\Exception $e) {
-            $this->error("❌ Error testing {$provider}: " . $e->getMessage());
+            $this->error("❌ Error testing {$provider}: ".$e->getMessage());
+
             return 1;
         }
     }

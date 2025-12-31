@@ -4,13 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Models\Folder;
 use App\Models\Team;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class FolderController extends Controller
 {
     use AuthorizesRequests;
+
     /**
      * Display a listing of the resource.
      */
@@ -199,7 +200,7 @@ class FolderController extends Controller
             if ($this->isDescendant($folder, $parent)) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Cannot move folder to its own descendant.'
+                    'message' => 'Cannot move folder to its own descendant.',
                 ], 400);
             }
 
@@ -211,7 +212,7 @@ class FolderController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Folder moved successfully.'
+            'message' => 'Folder moved successfully.',
         ]);
     }
 

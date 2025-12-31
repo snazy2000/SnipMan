@@ -4,7 +4,6 @@ namespace App\Policies;
 
 use App\Models\Snippet;
 use App\Models\User;
-use Illuminate\Auth\Access\Response;
 
 class SnippetPolicy
 {
@@ -34,9 +33,10 @@ class SnippetPolicy
         // User can view if it belongs to a team they're a member of
         if ($snippet->owner_type === 'App\Models\Team') {
             $team = $snippet->owner;
-            if (!$team) {
+            if (! $team) {
                 return false;
             }
+
             return $team->members->contains($user);
         }
 
@@ -54,7 +54,7 @@ class SnippetPolicy
         }
 
         // If no folder specified, user can at least try to create (will be validated later)
-        if (!$folder) {
+        if (! $folder) {
             return true;
         }
 
@@ -66,21 +66,21 @@ class SnippetPolicy
         // Check if user can create in team folder (must be owner or editor)
         if ($folder->owner_type === 'App\Models\Team') {
             $team = $folder->owner;
-            if (!$team) {
+            if (! $team) {
                 return false;
             }
 
             // Check if members are loaded, if so use the collection
             if ($team->relationLoaded('members')) {
                 $member = $team->members->firstWhere('id', $user->id);
-                if (!$member) {
+                if (! $member) {
                     return false;
                 }
                 $role = $member->pivot->role ?? null;
             } else {
                 // Fall back to query if not loaded
                 $membership = $team->members()->where('user_id', $user->id)->first();
-                if (!$membership) {
+                if (! $membership) {
                     return false;
                 }
                 $role = $membership->pivot->role ?? null;
@@ -110,21 +110,21 @@ class SnippetPolicy
         // User can update if it belongs to a team and they have editor+ role
         if ($snippet->owner_type === 'App\Models\Team') {
             $team = $snippet->owner;
-            if (!$team) {
+            if (! $team) {
                 return false;
             }
 
             // Check if members are loaded, if so use the collection
             if ($team->relationLoaded('members')) {
                 $member = $team->members->firstWhere('id', $user->id);
-                if (!$member) {
+                if (! $member) {
                     return false;
                 }
                 $role = $member->pivot->role ?? null;
             } else {
                 // Fall back to query if not loaded
                 $membership = $team->members()->where('user_id', $user->id)->first();
-                if (!$membership) {
+                if (! $membership) {
                     return false;
                 }
                 $role = $membership->pivot->role ?? null;
@@ -178,21 +178,21 @@ class SnippetPolicy
         // User can share team snippets only if they have editor+ role
         if ($snippet->owner_type === 'App\Models\Team') {
             $team = $snippet->owner;
-            if (!$team) {
+            if (! $team) {
                 return false;
             }
 
             // Check if members are loaded, if so use the collection
             if ($team->relationLoaded('members')) {
                 $member = $team->members->firstWhere('id', $user->id);
-                if (!$member) {
+                if (! $member) {
                     return false;
                 }
                 $role = $member->pivot->role ?? null;
             } else {
                 // Fall back to query if not loaded
                 $membership = $team->members()->where('user_id', $user->id)->first();
-                if (!$membership) {
+                if (! $membership) {
                     return false;
                 }
                 $role = $membership->pivot->role ?? null;

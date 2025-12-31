@@ -2,20 +2,21 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\ProcessSnippetAI;
 use App\Models\AISetting;
 use App\Models\Folder;
 use App\Models\Snippet;
 use App\Models\SnippetVersion;
 use App\Models\Team;
-use App\Jobs\ProcessSnippetAI;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class SnippetController extends Controller
 {
     use AuthorizesRequests;
+
     /**
      * Display a listing of the resource.
      */
@@ -106,11 +107,11 @@ class SnippetController extends Controller
             $team = $folder->owner;
             $membership = $team->members()->where('user_id', Auth::id())->first();
 
-            if (!$membership) {
+            if (! $membership) {
                 return back()->withErrors(['folder_id' => 'You do not have permission to create snippets in this team.'])->withInput();
             }
 
-            if (!in_array($membership->pivot->role, ['owner', 'editor'])) {
+            if (! in_array($membership->pivot->role, ['owner', 'editor'])) {
                 return back()->withErrors(['folder_id' => 'You do not have permission to create snippets in this team. Only owners and editors can create snippets.'])->withInput();
             }
             } elseif ($folder->owner_type === 'App\Models\User' && $folder->owner_id !== Auth::id()) {
@@ -198,7 +199,7 @@ class SnippetController extends Controller
         // Get folders for cloning modal
         $cloneFoldersData = [
             'personal' => $user->folders()->select('id', 'name')->get()->toArray(),
-            'teams' => []
+            'teams' => [],
         ];
 
         foreach ($availableTeams as $team) {
@@ -269,7 +270,6 @@ class SnippetController extends Controller
 
         $this->authorize('update', $snippet);
 
-
         $request->validate([
             'title' => 'required|string|max:255',
             'language' => 'required|string|max:50',
@@ -287,7 +287,7 @@ class SnippetController extends Controller
                 $team = $folder->owner;
                 $membership = $team->members()->where('user_id', Auth::id())->first();
 
-                if (!$membership || !in_array($membership->pivot->role, ['owner', 'editor'])) {
+                if (! $membership || ! in_array($membership->pivot->role, ['owner', 'editor'])) {
                     return back()->withErrors(['folder_id' => 'You do not have permission to move snippets to this folder.'])->withInput();
                 }
             } elseif ($folder->owner_type === 'App\\Models\\User' && $folder->owner_id !== Auth::id()) {
@@ -375,7 +375,7 @@ class SnippetController extends Controller
 
             // Check if user can create snippets in this team
             $membership = $team->members()->where('user_id', $user->id)->first();
-            if (!$membership || !in_array($membership->pivot->role, ['owner', 'editor'])) {
+            if (! $membership || ! in_array($membership->pivot->role, ['owner', 'editor'])) {
                 abort(403, 'You do not have permission to create snippets in this team.');
             }
 
@@ -449,31 +449,31 @@ class SnippetController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Snippet moved successfully.'
+                'message' => 'Snippet moved successfully.',
             ]);
 
         } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'You do not have permission to move this snippet.'
+                'message' => 'You do not have permission to move this snippet.',
             ], 403);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Invalid folder specified.',
-                'errors' => $e->errors()
+                'errors' => $e->errors(),
             ], 422);
         } catch (\Exception $e) {
-            Log::error('Error moving snippet: ' . $e->getMessage(), [
+            Log::error('Error moving snippet: '.$e->getMessage(), [
                 'snippet_id' => $snippet->id,
                 'folder_id' => $request->folder_id,
                 'user_id' => Auth::id(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'An error occurred while moving the snippet. Please try again.'
+                'message' => 'An error occurred while moving the snippet. Please try again.',
             ], 500);
         }
     }
@@ -492,14 +492,14 @@ class SnippetController extends Controller
                 'success' => true,
                 'shared' => true,
                 'share_url' => $share->getPublicUrl(),
-                'uuid' => $share->uuid
+                'uuid' => $share->uuid,
             ]);
         } else {
             return response()->json([
                 'success' => true,
                 'shared' => false,
                 'share_url' => null,
-                'uuid' => null
+                'uuid' => null,
             ]);
         }
     }
@@ -514,7 +514,7 @@ class SnippetController extends Controller
         // Check if an active share already exists
         $share = $snippet->activeShares()->first();
 
-        if (!$share) {
+        if (! $share) {
             $share = $snippet->shares()->create([
                 'is_active' => true,
                 'views' => 0,
@@ -524,7 +524,7 @@ class SnippetController extends Controller
         return response()->json([
             'success' => true,
             'share_url' => $share->getPublicUrl(),
-            'uuid' => $share->uuid
+            'uuid' => $share->uuid,
         ]);
     }
 
@@ -539,21 +539,23 @@ class SnippetController extends Controller
 
         if ($share) {
             $share->update(['is_active' => false]);
+
             return response()->json([
                 'success' => true,
                 'shared' => false,
-                'message' => 'Public sharing disabled'
+                'message' => 'Public sharing disabled',
             ]);
         } else {
             $share = $snippet->shares()->create([
                 'is_active' => true,
                 'views' => 0,
             ]);
+
             return response()->json([
                 'success' => true,
                 'shared' => true,
                 'share_url' => $share->getPublicUrl(),
-                'uuid' => $share->uuid
+                'uuid' => $share->uuid,
             ]);
         }
     }
@@ -564,7 +566,7 @@ class SnippetController extends Controller
     public function viewShared($uuid)
     {
         // Validate UUID format
-        if (!preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $uuid)) {
+        if (! preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $uuid)) {
             abort(404, 'Invalid share link');
         }
 
@@ -578,7 +580,7 @@ class SnippetController extends Controller
 
         $snippet = $share->snippet()->with(['creator', 'folder'])->first();
 
-        if (!$snippet) {
+        if (! $snippet) {
             abort(404, 'Snippet not found');
         }
 
@@ -599,25 +601,25 @@ class SnippetController extends Controller
         $userTeamIds = $user->teams()->pluck('teams.id')->toArray();
 
         // Get all snippets owned by the user or their teams that have active shares
-        $sharedSnippets = Snippet::where(function($query) use ($user, $userTeamIds) {
+        $sharedSnippets = Snippet::where(function ($query) use ($user, $userTeamIds) {
             // User's own snippets
-            $query->where(function($q) use ($user) {
+            $query->where(function ($q) use ($user) {
                 $q->where('owner_type', 'App\Models\User')
-                  ->where('owner_id', $user->id);
+                    ->where('owner_id', $user->id);
             });
 
             // Team snippets where user is a member
-            if (!empty($userTeamIds)) {
-                $query->orWhere(function($q) use ($userTeamIds) {
+            if (! empty($userTeamIds)) {
+                $query->orWhere(function ($q) use ($userTeamIds) {
                     $q->where('owner_type', 'App\Models\Team')
-                      ->whereIn('owner_id', $userTeamIds);
+                        ->whereIn('owner_id', $userTeamIds);
                 });
             }
         })
-        ->whereHas('activeShares')
-        ->with(['activeShares', 'folder', 'creator'])
-        ->orderBy('updated_at', 'desc')
-        ->paginate(10);
+            ->whereHas('activeShares')
+            ->with(['activeShares', 'folder', 'creator'])
+            ->orderBy('updated_at', 'desc')
+            ->paginate(10);
 
         return view('snippets.shared-list', compact('sharedSnippets'));
     }
@@ -633,7 +635,7 @@ class SnippetController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Sharing revoked successfully'
+            'message' => 'Sharing revoked successfully',
         ]);
     }
 
@@ -652,10 +654,10 @@ class SnippetController extends Controller
             'user_name' => auth()->user()->name,
             'content_length' => strlen($snippet->content),
             'current_ai_status' => [
-                'has_ai_description' => !empty($snippet->ai_description),
+                'has_ai_description' => ! empty($snippet->ai_description),
                 'ai_processed_at' => $snippet->ai_processed_at,
                 'ai_processing_failed' => $snippet->ai_processing_failed,
-            ]
+            ],
         ]);
 
         try {
@@ -664,24 +666,24 @@ class SnippetController extends Controller
 
             Log::info('AI processing job dispatched successfully', [
                 'snippet_id' => $snippet->id,
-                'queue_name' => config('ai.processing.queue', 'default')
+                'queue_name' => config('ai.processing.queue', 'default'),
             ]);
 
             return response()->json([
                 'success' => true,
-                'message' => 'AI analysis started. Results will appear shortly.'
+                'message' => 'AI analysis started. Results will appear shortly.',
             ]);
 
         } catch (\Exception $e) {
             Log::error('Failed to dispatch AI processing job', [
                 'snippet_id' => $snippet->id,
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to start AI analysis. Please try again.'
+                'message' => 'Failed to start AI analysis. Please try again.',
             ], 500);
         }
     }

@@ -121,7 +121,7 @@ class AdminController extends Controller
         // Send invitation email
         $user->notify(new \App\Notifications\UserInvitation($token));
 
-        return redirect()->route('admin.users')->with('success', 'User created successfully. An invitation email has been sent to ' . $user->email);
+        return redirect()->route('admin.users')->with('success', 'User created successfully. An invitation email has been sent to '.$user->email);
     }
 
     /**
@@ -160,7 +160,7 @@ class AdminController extends Controller
             $user->is_super_admin = $request->has('is_super_admin');
         }
 
-        if (!empty($validated['password'])) {
+        if (! empty($validated['password'])) {
             $user->password = Hash::make($validated['password']);
         }
 
@@ -174,7 +174,7 @@ class AdminController extends Controller
      */
     public function resendUserInvitation(User $user)
     {
-        if (!$user->invitation_token) {
+        if (! $user->invitation_token) {
             return redirect()->route('admin.users')->with('error', 'This user has already activated their account.');
         }
 
@@ -186,7 +186,7 @@ class AdminController extends Controller
         // Resend invitation email
         $user->notify(new \App\Notifications\UserInvitation($token));
 
-        return redirect()->route('admin.users')->with('success', 'Invitation resent to ' . $user->email);
+        return redirect()->route('admin.users')->with('success', 'Invitation resent to '.$user->email);
     }
 
     /**

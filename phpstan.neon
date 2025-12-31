@@ -1,0 +1,23 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+
+parameters:
+    paths:
+        - app
+        - config
+        - routes
+
+    level: 3
+
+    ignoreErrors:
+        # Ignore env() calls outside config (will fix gradually)
+        - '#Called .env. outside of the config directory#'
+        # Ignore dynamic model properties (eloquent magic)
+        - '#Access to an undefined property (App\\Models|Illuminate\\Database\\Eloquent)#'
+        - '#Call to an undefined method (App\\Models|Illuminate\\Database\\Eloquent)#'
+
+    excludePaths:
+        - database/migrations/*.php
+
+
+

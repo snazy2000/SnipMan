@@ -3,7 +3,6 @@
 namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
@@ -39,7 +38,7 @@ class UserInvitation extends Notification
         $url = url(route('invitation.show', ['token' => $this->token], false));
 
         return (new MailMessage)
-            ->subject('Welcome to ' . config('app.name') . ' - Complete Your Account Setup')
+            ->subject('Welcome to '.config('app.name').' - Complete Your Account Setup')
             ->markdown('emails.invitation', [
                 'user' => $notifiable,
                 'url' => $url,

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -9,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class Snippet extends Model
 {
+    use HasFactory;
 
     protected $fillable = [
         'folder_id',
@@ -91,7 +93,7 @@ class Snippet extends Model
      */
     public function hasAIAnalysis(): bool
     {
-        return $this->ai_processed_at && !$this->ai_processing_failed;
+        return $this->ai_processed_at && ! $this->ai_processing_failed;
     }
 
     /**
@@ -99,7 +101,7 @@ class Snippet extends Model
      */
     public function isAIProcessing(): bool
     {
-        return !$this->ai_processed_at && !$this->ai_processing_failed;
+        return ! $this->ai_processed_at && ! $this->ai_processing_failed;
     }
 
     /**

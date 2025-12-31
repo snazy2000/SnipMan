@@ -4,19 +4,21 @@ namespace App\Jobs;
 
 use App\Models\Snippet;
 use App\Services\AIService;
+use Exception;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
-use Exception;
 
 class ProcessSnippetAI implements ShouldQueue
 {
-    use Queueable, InteractsWithQueue, SerializesModels;
+    use InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 3;
+
     public int $maxExceptions = 3;
+
     public int $backoff = 60; // seconds
 
     /**
@@ -47,16 +49,17 @@ class ProcessSnippetAI implements ShouldQueue
                 'current_ai_status' => [
                     'ai_processed_at' => $this->snippet->ai_processed_at,
                     'ai_processing_failed' => $this->snippet->ai_processing_failed,
-                    'has_description' => !empty($this->snippet->ai_description),
-                ]
+                    'has_description' => ! empty($this->snippet->ai_description),
+                ],
             ]);
 
             // Skip if already processed and not forcing reprocess
-            if (!$this->forceReprocess && $this->snippet->ai_processed_at && !$this->snippet->ai_processing_failed) {
+            if (! $this->forceReprocess && $this->snippet->ai_processed_at && ! $this->snippet->ai_processing_failed) {
                 Log::info('Snippet already processed, skipping', [
                     'snippet_id' => $this->snippet->id,
-                    'ai_processed_at' => $this->snippet->ai_processed_at
+                    'ai_processed_at' => $this->snippet->ai_processed_at,
                 ]);
+
                 return;
             }
 
@@ -64,21 +67,22 @@ class ProcessSnippetAI implements ShouldQueue
             Log::info('Checking AI service availability', [
                 'snippet_id' => $this->snippet->id,
                 'provider' => $aiService->getProviderName(),
-                'provider_config' => $aiService->getProviderConfig()
+                'provider_config' => $aiService->getProviderConfig(),
             ]);
 
-            if (!$aiService->isAvailable()) {
+            if (! $aiService->isAvailable()) {
                 Log::warning('AI service not available', [
                     'snippet_id' => $this->snippet->id,
-                    'provider' => $aiService->getProviderName()
+                    'provider' => $aiService->getProviderName(),
                 ]);
                 $this->markAsFailed('AI service not available');
+
                 return;
             }
 
             Log::info('AI service is available, starting code analysis', [
                 'snippet_id' => $this->snippet->id,
-                'provider' => $aiService->getProviderName()
+                'provider' => $aiService->getProviderName(),
             ]);
 
             // Analyze the code
@@ -90,10 +94,10 @@ class ProcessSnippetAI implements ShouldQueue
                 'snippet_id' => $this->snippet->id,
                 'processing_time_seconds' => round($processingTime, 2),
                 'results_summary' => [
-                    'has_description' => !empty($results['description']),
-                    'description_length' => !empty($results['description']) ? strlen($results['description']) : 0,
+                    'has_description' => ! empty($results['description']),
+                    'description_length' => ! empty($results['description']) ? strlen($results['description']) : 0,
                     'processed_at' => $results['processed_at'] ?? null,
-                ]
+                ],
             ]);
 
             // Update the snippet with AI results
@@ -105,7 +109,7 @@ class ProcessSnippetAI implements ShouldQueue
 
             Log::info('Snippet updated with AI results successfully', [
                 'snippet_id' => $this->snippet->id,
-                'has_description' => !empty($results['description']),
+                'has_description' => ! empty($results['description']),
             ]);
 
         } catch (Exception $e) {
@@ -122,7 +126,7 @@ class ProcessSnippetAI implements ShouldQueue
                 'attempts' => $this->attempts(),
                 'provider' => $aiService ? $aiService->getProviderName() : 'unknown',
                 'is_rate_limited' => $isRateLimited,
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
 
             // For rate limiting, provide specific guidance
@@ -130,15 +134,15 @@ class ProcessSnippetAI implements ShouldQueue
                 $advice = $aiService->getProvider()->getRateLimitAdvice();
                 Log::info('Rate limit advice for snippet processing', [
                     'snippet_id' => $this->snippet->id,
-                    'advice' => $advice
+                    'advice' => $advice,
                 ]);
 
                 // Set a more helpful error message for rate limiting
-                $helpfulMessage = "Rate limited by AI provider. ";
+                $helpfulMessage = 'Rate limited by AI provider. ';
                 if (isset($advice['is_free_model']) && $advice['is_free_model']) {
-                    $helpfulMessage .= "Consider switching to a paid model (like anthropic/claude-3.5-sonnet) or adding your own API key for better reliability.";
+                    $helpfulMessage .= 'Consider switching to a paid model (like anthropic/claude-3.5-sonnet) or adding your own API key for better reliability.';
                 } else {
-                    $helpfulMessage .= "Please wait a moment and try again.";
+                    $helpfulMessage .= 'Please wait a moment and try again.';
                 }
 
                 $this->markAsFailed($helpfulMessage);
@@ -158,7 +162,7 @@ class ProcessSnippetAI implements ShouldQueue
         Log::error('AI processing job failed permanently', [
             'snippet_id' => $this->snippet->id,
             'error' => $exception->getMessage(),
-            'attempts' => $this->attempts()
+            'attempts' => $this->attempts(),
         ]);
 
         $this->markAsFailed($exception->getMessage());
@@ -176,7 +180,7 @@ class ProcessSnippetAI implements ShouldQueue
 
         Log::warning('Marked snippet as AI processing failed', [
             'snippet_id' => $this->snippet->id,
-            'reason' => $reason
+            'reason' => $reason,
         ]);
     }
 

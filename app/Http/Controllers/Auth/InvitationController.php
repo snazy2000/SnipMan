@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 
@@ -23,7 +22,7 @@ class InvitationController extends Controller
             ->whereNull('invitation_accepted_at')
             ->first();
 
-        if (!$user) {
+        if (! $user) {
             return redirect()->route('login')->with('error', 'This invitation link is invalid or has already been used.');
         }
 
@@ -41,7 +40,7 @@ class InvitationController extends Controller
             ->whereNull('invitation_accepted_at')
             ->first();
 
-        if (!$user) {
+        if (! $user) {
             return redirect()->route('login')->with('error', 'This invitation link is invalid or has already been used.');
         }
 
@@ -71,6 +70,6 @@ class InvitationController extends Controller
         // Log the user in
         Auth::login($user);
 
-        return redirect()->route('snippets.index')->with('success', 'Welcome to ' . config('app.name') . '! Your account has been successfully set up.');
+        return redirect()->route('snippets.index')->with('success', 'Welcome to '.config('app.name').'! Your account has been successfully set up.');
     }
 }
