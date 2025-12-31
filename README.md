@@ -150,60 +150,15 @@ Pre-built images are available on GitHub Container Registry:
 
 ```bash
 # Pull and run pre-built images
-docker pull ghcr.io/yourusername/snippetman-web:latest
-docker pull ghcr.io/yourusername/snippetman-queue:latest
+docker pull ghcr.io/snazy2000/snippetman-web:latest
+docker pull ghcr.io/snazy2000/snippetman-queue:latest
 
 # Or use in docker-compose.yml
 services:
   web:
-    image: ghcr.io/yourusername/snippetman-web:latest
+    image: ghcr.io/snazy2000/snippetman-web:latest
   queue:
-    image: ghcr.io/yourusername/snippetman-queue:latest
-```
-
-#### Development with Docker
-
-For development with hot reload:
-
-```bash
-# Mount source code for live changes
-docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d
-
-# Install dependencies in container
-docker-compose exec web composer install
-docker-compose exec web npm install
-docker-compose exec web npm run dev
-```
-
-#### Production Deployment
-
-For production:
-
-1. **Environment variables**: Set all required environment variables
-2. **Database**: Ensure PostgreSQL is available and accessible
-3. **SSL/TLS**: Configure SSL certificates if needed
-4. **Backups**: Set up database backups
-5. **Monitoring**: Configure logging and monitoring
-
-#### Troubleshooting
-
-**Common issues:**
-
-- **Port conflicts**: Change port mapping in `docker-compose.yml`
-- **Database connection**: Verify PostgreSQL credentials and network access
-- **Permissions**: Ensure proper file permissions for storage directories
-- **Assets not loading**: Run `npm run build` and check public/build directory
-
-**Logs:**
-```bash
-# Check application logs
-docker-compose logs web
-
-# Check queue worker logs
-docker-compose logs queue
-
-# Follow logs in real-time
-docker-compose logs -f
+    image: ghcr.io/snazy2000/snippetman-queue:latest
 ```
 
 ## 🧪 Testing
