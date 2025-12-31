@@ -31,13 +31,11 @@
                 Edit Team
             </a>
             @can('delete', $team)
-                <form method="POST" action="{{ route('teams.destroy', $team) }}" class="inline" onsubmit="return confirm('Are you sure you want to delete this team?')">
-                    @csrf
-                    @method('DELETE')
-                    <button type="submit" class="bg-red-600 dark:bg-red-500 hover:bg-red-700 dark:hover:bg-red-600 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200">
-                        Delete Team
-                    </button>
-                </form>
+                <button type="button"
+                        @click="$dispatch('open-delete-team-modal')"
+                        class="bg-red-600 dark:bg-red-500 hover:bg-red-700 dark:hover:bg-red-600 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200">
+                    Delete Team
+                </button>
             @endcan
         </div>
     @endcan
@@ -298,7 +296,7 @@
                                         </p>
                                     </div>
                                     <span class="text-xs text-gray-400 dark:text-gray-500 transition-colors duration-200">
-                                        {{ $snippet->folder->name }}
+                                        {{ $snippet->folder ? $snippet->folder->name : 'No folder' }}
                                     </span>
                                 </div>
                             </div>
@@ -333,4 +331,93 @@ function toggleAddMemberForm() {
     }
 }
 </script>
+
+<!-- Delete Team Confirmation Modal -->
+<div x-data="{
+        showModal: false,
+        confirmText: '',
+        canDelete: false,
+        teamName: '{{ $team->name }}',
+        memberCount: {{ $team->members->count() }},
+        snippetCount: {{ $team->snippets->count() }}
+    }"
+     @open-delete-team-modal.window="showModal = true; confirmText = ''; canDelete = false;"
+     @keydown.escape.window="showModal = false">
+
+    <!-- Modal Overlay -->
+    <div x-show="showModal"
+         x-cloak
+         class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0">
+
+        <!-- Modal Content -->
+        <div @click.away="showModal = false"
+             class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-lg w-full p-6"
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0 scale-95"
+             x-transition:enter-end="opacity-100 scale-100"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100 scale-100"
+             x-transition:leave-end="opacity-0 scale-95">
+
+            <!-- Warning Icon -->
+            <div class="flex items-center justify-center w-12 h-12 mx-auto mb-4 bg-red-100 dark:bg-red-900/30 rounded-full">
+                <svg class="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                </svg>
+            </div>
+
+            <!-- Title -->
+            <h3 class="text-xl font-bold text-center text-gray-900 dark:text-gray-100 mb-2">Delete Team</h3>
+
+            <!-- Warning Message -->
+            <div class="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                <p class="text-sm text-red-800 dark:text-red-200 font-semibold mb-2">⚠️ This is a destructive action that cannot be undone!</p>
+                <p class="text-sm text-red-700 dark:text-red-300 mb-3">Deleting this team will permanently:</p>
+                <ul class="text-sm text-red-700 dark:text-red-300 space-y-1 ml-4">
+                    <li>• Delete the team "<span class="font-semibold" x-text="teamName"></span>"</li>
+                    <li>• Remove <span x-text="memberCount"></span> member(s) from the team (users will NOT be deleted)</li>
+                    <li>• Delete <span x-text="snippetCount"></span> snippet(s) and all associated folders</li>
+                    <li>• Remove all team data and history</li>
+                </ul>
+            </div>
+
+            <!-- Confirmation Input -->
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    To confirm, type the team name: <span class="font-bold" x-text="teamName"></span>
+                </label>
+                <input type="text"
+                       x-model="confirmText"
+                       @input="canDelete = (confirmText === teamName)"
+                       class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                       placeholder="Type team name here">
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex justify-end space-x-3">
+                <button @click="showModal = false"
+                        type="button"
+                        class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors">
+                    Cancel
+                </button>
+                <form action="{{ route('teams.destroy', $team) }}" method="POST" class="inline">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit"
+                            :disabled="!canDelete"
+                            :class="canDelete ? 'bg-red-600 hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600 cursor-pointer' : 'bg-gray-400 dark:bg-gray-600 cursor-not-allowed'"
+                            class="px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors">
+                        Delete Team
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection

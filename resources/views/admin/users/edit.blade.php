@@ -58,22 +58,24 @@
                 </div>
 
                 <!-- Super Admin -->
-                <div class="mb-6">
-                    <div class="flex items-center">
-                        <input type="checkbox"
-                               id="is_super_admin"
-                               name="is_super_admin"
-                               value="1"
-                               {{ old('is_super_admin', $user->is_super_admin) ? 'checked' : '' }}
-                               class="h-4 w-4 text-indigo-600 dark:text-indigo-400 focus:ring-indigo-500 dark:focus:ring-indigo-400 border-gray-300 dark:border-gray-600 rounded">
-                        <label for="is_super_admin" class="ml-2 block text-sm text-gray-700 dark:text-gray-300 transition-colors duration-200">
-                            <i class="fas fa-shield-alt mr-1 text-purple-600 dark:text-purple-400"></i>Super Administrator
-                        </label>
+                @if($user->id !== auth()->id())
+                    <div class="mb-6">
+                        <div class="flex items-center">
+                            <input type="checkbox"
+                                   id="is_super_admin"
+                                   name="is_super_admin"
+                                   value="1"
+                                   {{ old('is_super_admin', $user->is_super_admin) ? 'checked' : '' }}
+                                   class="h-4 w-4 text-indigo-600 dark:text-indigo-400 focus:ring-indigo-500 dark:focus:ring-indigo-400 border-gray-300 dark:border-gray-600 rounded">
+                            <label for="is_super_admin" class="ml-2 block text-sm text-gray-700 dark:text-gray-300 transition-colors duration-200">
+                                <i class="fas fa-shield-alt mr-1 text-purple-600 dark:text-purple-400"></i>Super Administrator
+                            </label>
+                        </div>
+                        <p class="mt-1 ml-6 text-xs text-gray-500 dark:text-gray-400">
+                            Super admins have full access to all system features including user and team management.
+                        </p>
                     </div>
-                    <p class="mt-1 ml-6 text-xs text-gray-500 dark:text-gray-400">
-                        Super admins have full access to all system features including user and team management.
-                    </p>
-                </div>
+                @endif
 
                 <!-- Password Section -->
                 <div class="border-t border-gray-200 dark:border-gray-700 pt-6 mb-6">

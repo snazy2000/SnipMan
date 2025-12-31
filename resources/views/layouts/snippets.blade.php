@@ -270,8 +270,18 @@
         </style>
     </head>
     <body class="font-sans antialiased bg-gray-50 dark:bg-gray-900 transition-colors duration-200"
-          x-data="{ sidebarOpen: window.innerWidth >= 768 }"
-          @resize.window="if (window.innerWidth >= 768) sidebarOpen = true">
+          x-data="{
+              sidebarOpen: window.innerWidth >= 768,
+              isMobile: window.innerWidth < 768
+          }"
+          @resize.window="
+              isMobile = window.innerWidth < 768;
+              if (!isMobile) {
+                  sidebarOpen = true;
+              } else {
+                  sidebarOpen = false;
+              }
+          ">
         <!-- Toast Notification Container -->
         <div id="toast-container" class="toast-container"></div>
 
@@ -319,15 +329,30 @@
 
                         <div class="flex items-center space-x-2 md:space-x-3 lg:space-x-4 flex-shrink-0">
                             <!-- Search -->
-                            <div class="relative" x-data="searchComponent()">
-                                <!-- Search Button (All Screens) -->
+                            <div x-data="searchComponent()">
+                                <!-- Search Button (Mobile & Tablet) -->
                                 <button @click="showResults = true; $nextTick(() => $refs.searchInput.focus())"
-                                        class="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors flex-shrink-0"
+                                        class="xl:hidden p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors flex-shrink-0"
                                         title="Search snippets, folders">
                                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                                     </svg>
                                 </button>
+
+                                <!-- Search Input (Large Desktop Only) -->
+                                <div class="hidden xl:block relative">
+                                    <input type="text"
+                                           @focus="showResults = true"
+                                           placeholder="Search snippets, folders..."
+                                           x-model="searchQuery"
+                                           @input="search"
+                                           class="w-64 pl-9 pr-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors duration-200">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <svg class="h-4 w-4 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                        </svg>
+                                    </div>
+                                </div>
 
                                 <!-- Search Modal (All Screens) -->
                                 <div x-show="showResults"
@@ -464,11 +489,11 @@
                             </div>
 
                             <!-- NEW SNIPPET Button -->
-                            <a href="{{ route('snippets.create') }}" class="bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white px-3 lg:px-4 py-2 rounded-lg text-sm font-medium flex items-center justify-center transition-colors duration-200 whitespace-nowrap flex-shrink-0">
-                                <svg class="w-4 h-4 md:mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <a href="{{ route('snippets.create') }}" class="bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white px-3 xl:px-4 py-2 rounded-lg text-sm font-medium flex items-center justify-center transition-colors duration-200 whitespace-nowrap flex-shrink-0">
+                                <svg class="w-4 h-4 xl:mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                                 </svg>
-                                <span class="hidden md:inline">NEW SNIPPET</span>
+                                <span class="hidden xl:inline">NEW SNIPPET</span>
                             </a>
 
                             <!-- User Menu -->
@@ -503,12 +528,14 @@
                             </div>
                         </div>
                     </div>
+
+
                 </div>
             </nav>
 
             <div class="flex h-screen pt-14 md:pt-16"> <!-- pt-14 on mobile, pt-16 on desktop to account for top navigation -->
                 <!-- Mobile sidebar backdrop -->
-                <div x-show="sidebarOpen && window.innerWidth < 768"
+                <div x-show="sidebarOpen && isMobile"
                      x-cloak
                      @click="sidebarOpen = false"
                      class="fixed inset-0 bg-black bg-opacity-50 z-20 md:hidden"
@@ -521,11 +548,33 @@
 
                 <!-- Resizable Sidebar -->
                 <div id="sidebar"
-                     x-show="sidebarOpen || window.innerWidth >= 768"
+                     x-show="sidebarOpen || !isMobile"
                      class="bg-gray-50 dark:bg-gray-900 border-r-2 border-gray-300 dark:border-gray-600 flex flex-col transition-colors duration-200 relative"
-                     :class="window.innerWidth < 768 ? 'fixed inset-y-0 left-0 z-30' : ''"
-                     style="width: 280px; min-width: 200px;"
-                     :style="window.innerWidth < 768 ? 'max-width: 80vw' : 'max-width: 600px'">
+                     :class="isMobile ? 'fixed inset-y-0 left-0 z-30' : ''"
+                     style="min-width: 200px;"
+                     x-init="$el.style.width = localStorage.getItem('sidebarWidth') ? localStorage.getItem('sidebarWidth') + 'px' : '280px'; $el.style.maxWidth = isMobile ? '80vw' : '600px'">
+
+                    <!-- Navigation Buttons (Mobile Only) -->
+                    <div class="md:hidden border-b border-gray-200 dark:border-gray-700 p-3 space-y-1">
+                        <a href="{{ route('snippets.index') }}" class="block px-3 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-gray-100 dark:hover:bg-gray-800 {{ request()->routeIs('snippets.index') ? 'bg-indigo-50 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400' : '' }}">
+                            Snippets
+                        </a>
+                        <a href="{{ route('snippets.sharedList') }}" class="block px-3 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-gray-100 dark:hover:bg-gray-800 {{ request()->routeIs('snippets.sharedList') ? 'bg-indigo-50 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400' : '' }}">
+                            Shared
+                        </a>
+                        <a href="{{ route('folders.index') }}" class="block px-3 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-gray-100 dark:hover:bg-gray-800 {{ request()->routeIs('folders.*') ? 'bg-indigo-50 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400' : '' }}">
+                            Folders
+                        </a>
+                        <a href="{{ route('teams.index') }}" class="block px-3 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-gray-100 dark:hover:bg-gray-800 {{ request()->routeIs('teams.*') ? 'bg-indigo-50 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400' : '' }}">
+                            Teams
+                        </a>
+                        @if(auth()->user()->isSuperAdmin())
+                            <a href="{{ route('admin.index') }}" class="block px-3 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-gray-100 dark:hover:bg-gray-800 {{ request()->routeIs('admin.*') ? 'bg-indigo-50 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400' : '' }}">
+                                <i class="fas fa-shield-alt mr-1.5 text-xs"></i>Admin
+                            </a>
+                        @endif
+                    </div>
+
                     <!-- Folders Section -->
                     <div class="flex-1 overflow-y-auto p-4" id="sidebar-tree">
                         <div class="flex items-center justify-between mb-4">
@@ -653,7 +702,7 @@
 
                     <!-- Resize Handle (Desktop Only) -->
                     <div id="sidebar-resize-handle"
-                         class="hidden md:block absolute top-0 -right-1 w-2 h-full cursor-ew-resize hover:bg-indigo-400/30 transition-colors group z-10"
+                         class="hidden md:block absolute top-0 -right-1 w-2 h-full cursor-ew-resize hover:bg-indigo-400/30 transition-colors group z-40"
                          title="Drag to resize">
                         <div class="absolute top-1/2 right-0 transform translate-x-1/2 -translate-y-1/2 w-1 h-20 bg-gray-400 dark:bg-gray-500 group-hover:bg-indigo-500 group-hover:w-1.5 rounded-full transition-all"></div>
                     </div>
@@ -1272,12 +1321,6 @@
                 let startX = 0;
                 let startWidth = 0;
 
-                // Load saved width from localStorage
-                const savedWidth = localStorage.getItem('sidebarWidth');
-                if (savedWidth) {
-                    sidebar.style.width = savedWidth + 'px';
-                }
-
                 resizeHandle.addEventListener('mousedown', function(e) {
                     // Only allow resizing on desktop
                     if (window.innerWidth < 768) return;
@@ -1295,8 +1338,8 @@
 
                     const deltaX = e.clientX - startX;
                     const newWidth = startWidth + deltaX;
-                    const minWidth = parseInt(getComputedStyle(sidebar).minWidth);
-                    const maxWidth = parseInt(getComputedStyle(sidebar).maxWidth);
+                    const minWidth = 200; // Match min-width in style
+                    const maxWidth = 600; // Match max-width
 
                     if (newWidth >= minWidth && newWidth <= maxWidth) {
                         sidebar.style.width = newWidth + 'px';

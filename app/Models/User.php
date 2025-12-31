@@ -7,13 +7,14 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, SoftDeletes;
 
     /**
      * The attributes that are mass assignable.
@@ -52,6 +53,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_super_admin' => 'boolean',
+            'is_disabled' => 'boolean',
         ];
     }
 
@@ -61,6 +63,22 @@ class User extends Authenticatable
     public function isSuperAdmin(): bool
     {
         return $this->is_super_admin === true;
+    }
+
+    /**
+     * Scope a query to only include active users (not disabled or deleted).
+     */
+    public function scopeActive($query)
+    {
+        return $query->where('is_disabled', false)->whereNull('deleted_at');
+    }
+
+    /**
+     * Check if user is active (not disabled).
+     */
+    public function isActive(): bool
+    {
+        return !$this->is_disabled && !$this->trashed();
     }
 
     /**

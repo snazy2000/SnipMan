@@ -116,6 +116,11 @@ class TeamController extends Controller
         $user = \App\Models\User::where('email', $request->email)->first();
         $isNewUser = false;
 
+        // Check if user is disabled
+        if ($user && $user->is_disabled) {
+            return back()->withErrors(['email' => 'This user account is disabled and cannot be added to teams.']);
+        }
+
         // Check if already a member
         if ($user && $team->members()->where('user_id', $user->id)->exists()) {
             return back()->withErrors(['email' => 'This user is already a member of the team.']);
