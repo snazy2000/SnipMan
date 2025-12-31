@@ -96,7 +96,7 @@ class CreateSuperAdmin extends Command
 
             return 0;
         } catch (\Exception $e) {
-            $this->error('Failed to create super admin user: ' . $e->getMessage());
+            $this->error('Failed to create super admin user: '.$e->getMessage());
 
             return 1;
         }

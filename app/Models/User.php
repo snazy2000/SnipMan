@@ -78,7 +78,7 @@ class User extends Authenticatable
      */
     public function isActive(): bool
     {
-        return !$this->is_disabled && !$this->trashed();
+        return ! $this->is_disabled && ! $this->trashed();
     }
 
     /**

@@ -114,7 +114,7 @@ class FolderController extends Controller
                     'name' => $folder->name,
                     'owner_type' => $folder->owner_type,
                     'owner_id' => $folder->owner_id,
-                ]
+                ],
             ]);
         }
 

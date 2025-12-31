@@ -59,7 +59,7 @@ class SnippetController extends Controller
         // Get personal folders with hierarchy (recursive loading)
         $personalFolders = $user->folders()
             ->whereNull('parent_id')
-            ->with(['children' => function($query) {
+            ->with(['children' => function ($query) {
                 $query->with('children');
             }, 'snippets'])
             ->get();
@@ -69,7 +69,7 @@ class SnippetController extends Controller
         foreach ($teams as $team) {
             $folders = $team->folders()
                 ->whereNull('parent_id')
-                ->with(['children' => function($query) {
+                ->with(['children' => function ($query) {
                     $query->with('children');
                 }, 'snippets'])
                 ->get();
@@ -104,16 +104,16 @@ class SnippetController extends Controller
 
             // Check if user can create snippets in this folder
             if ($folder->owner_type === 'App\Models\Team') {
-            $team = $folder->owner;
-            $membership = $team->members()->where('user_id', Auth::id())->first();
+                $team = $folder->owner;
+                $membership = $team->members()->where('user_id', Auth::id())->first();
 
-            if (! $membership) {
-                return back()->withErrors(['folder_id' => 'You do not have permission to create snippets in this team.'])->withInput();
-            }
+                if (! $membership) {
+                    return back()->withErrors(['folder_id' => 'You do not have permission to create snippets in this team.'])->withInput();
+                }
 
-            if (! in_array($membership->pivot->role, ['owner', 'editor'])) {
-                return back()->withErrors(['folder_id' => 'You do not have permission to create snippets in this team. Only owners and editors can create snippets.'])->withInput();
-            }
+                if (! in_array($membership->pivot->role, ['owner', 'editor'])) {
+                    return back()->withErrors(['folder_id' => 'You do not have permission to create snippets in this team. Only owners and editors can create snippets.'])->withInput();
+                }
             } elseif ($folder->owner_type === 'App\Models\User' && $folder->owner_id !== Auth::id()) {
                 return back()->withErrors(['folder_id' => 'You do not have permission to create snippets in this folder.'])->withInput();
             }
@@ -231,7 +231,7 @@ class SnippetController extends Controller
         // Get personal folders with hierarchy (recursive loading)
         $personalFolders = $user->folders()
             ->whereNull('parent_id')
-            ->with(['children' => function($query) {
+            ->with(['children' => function ($query) {
                 $query->with('children');
             }, 'snippets'])
             ->get();
@@ -242,7 +242,7 @@ class SnippetController extends Controller
             if (in_array($team->pivot->role, ['owner', 'editor'])) {
                 $folders = $team->folders()
                     ->whereNull('parent_id')
-                    ->with(['children' => function($query) {
+                    ->with(['children' => function ($query) {
                         $query->with('children');
                     }, 'snippets'])
                     ->get();

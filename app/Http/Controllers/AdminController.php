@@ -35,9 +35,9 @@ class AdminController extends Controller
         // Search
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->whereRaw('LOWER(name) LIKE ?', ['%'.strtolower($search).'%'])
-                  ->orWhereRaw('LOWER(email) LIKE ?', ['%'.strtolower($search).'%']);
+                    ->orWhereRaw('LOWER(email) LIKE ?', ['%'.strtolower($search).'%']);
             });
         }
 
@@ -46,8 +46,8 @@ class AdminController extends Controller
             switch ($request->status) {
                 case 'active':
                     $query->where('is_disabled', false)
-                          ->whereNull('invitation_token')
-                          ->whereNull('deleted_at');
+                        ->whereNull('invitation_token')
+                        ->whereNull('deleted_at');
                     break;
                 case 'disabled':
                     $query->where('is_disabled', true);
@@ -69,9 +69,9 @@ class AdminController extends Controller
 
         // Only load team data when needed (for delete modal)
         // Don't eager load all members/snippets/folders - too expensive
-        $users = $query->with(['ownedTeams' => function($q) {
-                $q->withCount(['members', 'snippets', 'folders']);
-            }])
+        $users = $query->with(['ownedTeams' => function ($q) {
+            $q->withCount(['members', 'snippets', 'folders']);
+        }])
             ->withCount(['teams', 'snippets'])
             ->orderBy('created_at', 'desc')
             ->paginate(20)
@@ -101,7 +101,7 @@ class AdminController extends Controller
                 'max:255',
                 // Only check uniqueness among non-deleted users
                 // Soft-deleted users have email set to null, so they won't conflict
-                'unique:users,email,NULL,id,deleted_at,NULL'
+                'unique:users,email,NULL,id,deleted_at,NULL',
             ],
             'is_super_admin' => ['boolean'],
         ]);
@@ -213,7 +213,7 @@ class AdminController extends Controller
                         $team->save();
 
                         // Ensure new owner is a member of the team
-                        if (!$team->members()->where('user_id', $newOwner->id)->exists()) {
+                        if (! $team->members()->where('user_id', $newOwner->id)->exists()) {
                             $team->members()->attach($newOwner->id, ['role' => 'owner']);
                         } else {
                             $team->members()->updateExistingPivot($newOwner->id, ['role' => 'owner']);
@@ -221,7 +221,7 @@ class AdminController extends Controller
                     }
                 } else {
                     // No new owner specified, delete the team and all its content
-                    $team->snippets()->each(function($snippet) {
+                    $team->snippets()->each(function ($snippet) {
                         $snippet->versions()->delete();
                         $snippet->delete();
                     });
@@ -237,7 +237,7 @@ class AdminController extends Controller
 
         // Strip sensitive data and mark as disabled
         // Use unique placeholder to avoid unique constraint issues
-        $user->email = "deleted_{$user->id}_" . time() . "@deleted.local";
+        $user->email = "deleted_{$user->id}_".time().'@deleted.local';
         $user->password = null;
         $user->remember_token = null;
         $user->invitation_token = null;
@@ -256,18 +256,18 @@ class AdminController extends Controller
     public function getUserTeamMembers(User $user)
     {
         $teams = $user->ownedTeams()
-            ->with(['members' => function($query) use ($user) {
+            ->with(['members' => function ($query) use ($user) {
                 $query->where('user_id', '!=', $user->id)
-                      ->select('users.id', 'users.name');
+                    ->select('users.id', 'users.name');
             }])
             ->get()
-            ->map(function($team) {
+            ->map(function ($team) {
                 return [
                     'id' => $team->id,
-                    'members' => $team->members->map(fn($m) => [
+                    'members' => $team->members->map(fn ($m) => [
                         'id' => $m->id,
-                        'name' => $m->name
-                    ])
+                        'name' => $m->name,
+                    ]),
                 ];
             });
 

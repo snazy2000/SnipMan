@@ -1,7 +1,6 @@
 <?php
 
 use App\Models\Folder;
-use App\Models\Snippet;
 use App\Models\Team;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;

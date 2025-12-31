@@ -27,7 +27,7 @@ test('search returns matching snippets by title', function () {
 
     $response = $this
         ->actingAs($user)
-        ->get(route('search') . '?q=PHP');
+        ->get(route('search').'?q=PHP');
 
     $response->assertOk();
     $response->assertSee('PHP Array Functions');
@@ -46,7 +46,7 @@ test('search returns matching snippets by content', function () {
 
     $response = $this
         ->actingAs($user)
-        ->get(route('search') . '?q=calculateTotal');
+        ->get(route('search').'?q=calculateTotal');
 
     $response->assertOk();
     $response->assertSee('Test Snippet');
@@ -63,7 +63,7 @@ test('search is case insensitive', function () {
 
     $response = $this
         ->actingAs($user)
-        ->get(route('search') . '?q=laravel');
+        ->get(route('search').'?q=laravel');
 
     $response->assertOk();
     $response->assertSee('Laravel Helper Functions');
@@ -89,7 +89,7 @@ test('search only returns users own snippets and team snippets', function () {
 
     $response = $this
         ->actingAs($user)
-        ->get(route('search') . '?q=Snippet');
+        ->get(route('search').'?q=Snippet');
 
     $response->assertOk();
     $response->assertSee('My Snippet');
@@ -107,7 +107,7 @@ test('autocomplete returns json results', function () {
 
     $response = $this
         ->actingAs($user)
-        ->get(route('search') . '?q=Test');
+        ->get(route('search').'?q=Test');
 
     $response->assertOk();
     $response->assertJsonFragment([
@@ -120,7 +120,7 @@ test('search returns empty results for non-matching query', function () {
 
     $response = $this
         ->actingAs($user)
-        ->get(route('search') . '?q=nonexistent');
+        ->get(route('search').'?q=nonexistent');
 
     $response->assertOk();
     $response->assertJson([
