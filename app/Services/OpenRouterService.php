@@ -30,7 +30,7 @@ class OpenRouterService
         $this->temperature = $config['temperature'] ?? Config::get('ai.openrouter.temperature', 0.1);
         $this->topP = $config['top_p'] ?? Config::get('ai.openrouter.top_p', 0.9);
         $this->siteUrl = $config['site_url'] ?? Config::get('ai.openrouter.site_url', Config::get('app.url', 'http://localhost'));
-        $this->siteName = $config['site_name'] ?? Config::get('ai.openrouter.site_name', Config::get('app.name', 'Laravel'));
+        $this->siteName = $config['site_name'] ?? Config::get('ai.openrouter.site_name', Config::get('app.name', 'Snippet Manager'));
     }
 
     /**

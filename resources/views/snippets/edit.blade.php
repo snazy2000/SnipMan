@@ -265,6 +265,7 @@ function confirmDelete() {
 
 <!-- Monaco Editor -->
 <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.54.0/min/vs/loader.js"></script>
+@include('partials.monaco-theme-loader')
 <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 
 <script>
@@ -330,7 +331,7 @@ function initializeMonaco() {
     if (typeof require !== 'undefined') {
         require.config({ paths: { 'vs': 'https://cdn.jsdelivr.net/npm/monaco-editor@0.54.0/min/vs' }});
 
-        require(['vs/editor/editor.main'], function() {
+        require(['vs/editor/editor.main'], async function() {
             const snippetContent = {{ Js::from($snippet->content) }};
             const currentLanguage = '{{ $snippet->language }}';
 
@@ -362,15 +363,13 @@ function initializeMonaco() {
 
             const monacoLanguage = languageMap[currentLanguage] || 'plaintext';
 
-            // Function to detect current dark mode state
-            function getCurrentTheme() {
-                return document.documentElement.classList.contains('dark') ? 'vs-dark' : 'vs';
-            }
+            // Load user's preferred theme
+            const themeName = await loadMonacoTheme(userMonacoTheme);
 
             monacoEditor = monaco.editor.create(document.getElementById('monaco-editor'), {
                 value: snippetContent,
                 language: monacoLanguage,
-                theme: getCurrentTheme(),
+                theme: themeName,
                 automaticLayout: true,
                 fontSize: 14,
                 minimap: { enabled: false },
@@ -389,6 +388,9 @@ function initializeMonaco() {
                 mouseWheelZoom: false,
                 fastScrollSensitivity: 5
             });
+
+            // Explicitly set theme after editor creation
+            monaco.editor.setTheme(themeName);
 
             // Listen for theme changes and update Monaco editor
             const observer = new MutationObserver(function(mutations) {

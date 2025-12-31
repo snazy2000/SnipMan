@@ -91,7 +91,7 @@
 
             <!-- Footer -->
             <div class="mt-8 text-center text-sm text-gray-500">
-                <p>Powered by <span class="font-medium text-indigo-600">Snippet Manager</span></p>
+                <p>Powered by <span class="font-medium text-indigo-600">{{ config('app.name', 'Snippet Manager') }}</span></p>
             </div>
         </main>
     </div>

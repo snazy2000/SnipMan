@@ -62,8 +62,13 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                 <div class="flex justify-end items-center space-x-2">
+                                    <a href="{{ route('admin.teams.show', $team) }}"
+                                       class="inline-flex items-center px-3 py-1.5 bg-blue-600 dark:bg-blue-500 text-white hover:bg-blue-700 dark:hover:bg-blue-600 rounded-lg shadow-sm transition-colors duration-200">
+                                        <i class="fas fa-users mr-1.5 text-xs"></i>
+                                        <span class="text-xs font-medium">Members</span>
+                                    </a>
                                     <a href="{{ route('admin.teams.edit', $team) }}"
-                                       class="inline-flex items-center px-3 py-1.5 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-200 dark:hover:bg-indigo-900/50 rounded-lg transition-colors duration-200">
+                                       class="inline-flex items-center px-3 py-1.5 bg-indigo-600 dark:bg-indigo-500 text-white hover:bg-indigo-700 dark:hover:bg-indigo-600 rounded-lg shadow-sm transition-colors duration-200">
                                         <i class="fas fa-edit mr-1.5 text-xs"></i>
                                         <span class="text-xs font-medium">Edit</span>
                                     </a>
@@ -71,7 +76,7 @@
                                           onsubmit="return confirm('Are you sure you want to delete this team? This action cannot be undone.');">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="inline-flex items-center px-3 py-1.5 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-900/50 rounded-lg transition-colors duration-200">
+                                        <button type="submit" class="inline-flex items-center px-3 py-1.5 bg-red-600 dark:bg-red-500 text-white hover:bg-red-700 dark:hover:bg-red-600 rounded-lg shadow-sm transition-colors duration-200">
                                             <i class="fas fa-trash mr-1.5 text-xs"></i>
                                             <span class="text-xs font-medium">Delete</span>
                                         </button>

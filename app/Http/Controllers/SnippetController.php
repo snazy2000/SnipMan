@@ -51,7 +51,9 @@ class SnippetController extends Controller
     public function create()
     {
         $user = Auth::user();
-        $teams = $user->teams;
+
+        // Only get teams where user has editor or owner role (can create snippets)
+        $teams = $user->teams()->wherePivotIn('role', ['owner', 'editor'])->get();
 
         // Get personal folders with hierarchy
         $personalFolders = $user->folders()
@@ -61,17 +63,15 @@ class SnippetController extends Controller
 
         // Get team folders with hierarchy
         $teamFolders = collect();
-        foreach ($user->teams as $team) {
-            if (in_array($team->pivot->role, ['owner', 'editor'])) {
-                $folders = $team->folders()
-                    ->whereNull('parent_id')
-                    ->with(['children.children', 'snippets'])
-                    ->get();
-                foreach ($folders as $folder) {
-                    $folder->team_name = $team->name;
-                }
-                $teamFolders = $teamFolders->merge($folders);
+        foreach ($teams as $team) {
+            $folders = $team->folders()
+                ->whereNull('parent_id')
+                ->with(['children.children', 'snippets'])
+                ->get();
+            foreach ($folders as $folder) {
+                $folder->team_name = $team->name;
             }
+            $teamFolders = $teamFolders->merge($folders);
         }
 
         return view('snippets.create', compact('teams', 'personalFolders', 'teamFolders'));
@@ -92,6 +92,25 @@ class SnippetController extends Controller
             'team_id' => 'nullable|required_if:owner_type,team|exists:teams,id',
             'user_tags' => 'nullable',
         ]);
+
+        // Validate folder permissions
+        $folder = Folder::findOrFail($request->folder_id);
+
+        // Check if user can create snippets in this folder
+        if ($folder->owner_type === 'App\Models\Team') {
+            $team = $folder->owner;
+            $membership = $team->members()->where('user_id', Auth::id())->first();
+
+            if (!$membership) {
+                return back()->withErrors(['folder_id' => 'You do not have permission to create snippets in this team.'])->withInput();
+            }
+
+            if (!in_array($membership->pivot->role, ['owner', 'editor'])) {
+                return back()->withErrors(['folder_id' => 'You do not have permission to create snippets in this team. Only owners and editors can create snippets.'])->withInput();
+            }
+        } elseif ($folder->owner_type === 'App\Models\User' && $folder->owner_id !== Auth::id()) {
+            return back()->withErrors(['folder_id' => 'You do not have permission to create snippets in this folder.'])->withInput();
+        }
 
         // Parse user_tags from JSON string to array
         $userTags = [];
@@ -156,7 +175,15 @@ class SnippetController extends Controller
     {
         $this->authorize('view', $snippet);
 
+        // Eager load relationships
         $snippet->load(['folder', 'creator', 'versions.creator', 'shares', 'activeShares']);
+        
+        // Only load members relationship if the owner is a Team
+        if ($snippet->owner_type === 'App\Models\Team') {
+            $snippet->load('owner.members');
+        } else {
+            $snippet->load('owner');
+        }
 
         // Get teams where user can create snippets (for cloning)
         $user = Auth::user();
@@ -183,6 +210,13 @@ class SnippetController extends Controller
      */
     public function edit(Snippet $snippet)
     {
+        // Eager load the owner with members for proper authorization (only for teams)
+        if ($snippet->owner_type === 'App\Models\Team') {
+            $snippet->load('owner.members');
+        } else {
+            $snippet->load('owner');
+        }
+
         $this->authorize('update', $snippet);
 
         $user = Auth::user();
@@ -216,6 +250,13 @@ class SnippetController extends Controller
      */
     public function update(Request $request, Snippet $snippet)
     {
+        // Eager load the owner with members for proper authorization (only for teams)
+        if ($snippet->owner_type === 'App\Models\Team') {
+            $snippet->load('owner.members');
+        } else {
+            $snippet->load('owner');
+        }
+
         $this->authorize('update', $snippet);
 
 
@@ -226,6 +267,23 @@ class SnippetController extends Controller
             'folder_id' => 'required|exists:folders,id',
             'user_tags' => 'nullable',
         ]);
+
+        // Validate folder permissions if folder is being changed
+        if ($request->folder_id != $snippet->folder_id) {
+            $folder = Folder::findOrFail($request->folder_id);
+
+            // Check if user can move to this folder
+            if ($folder->owner_type === 'App\\Models\\Team') {
+                $team = $folder->owner;
+                $membership = $team->members()->where('user_id', Auth::id())->first();
+
+                if (!$membership || !in_array($membership->pivot->role, ['owner', 'editor'])) {
+                    return back()->withErrors(['folder_id' => 'You do not have permission to move snippets to this folder.'])->withInput();
+                }
+            } elseif ($folder->owner_type === 'App\\Models\\User' && $folder->owner_id !== Auth::id()) {
+                return back()->withErrors(['folder_id' => 'You do not have permission to move snippets to this folder.'])->withInput();
+            }
+        }
 
         // Parse user_tags from JSON string to array
         $userTags = [];
@@ -269,6 +327,13 @@ class SnippetController extends Controller
      */
     public function destroy(Snippet $snippet)
     {
+        // Eager load the owner with members for proper authorization (only for teams)
+        if ($snippet->owner_type === 'App\Models\Team') {
+            $snippet->load('owner.members');
+        } else {
+            $snippet->load('owner');
+        }
+
         $this->authorize('delete', $snippet);
 
         $snippet->delete();
@@ -434,7 +499,7 @@ class SnippetController extends Controller
      */
     public function createShare(Snippet $snippet)
     {
-        $this->authorize('view', $snippet);
+        $this->authorize('share', $snippet);
 
         // Check if an active share already exists
         $share = $snippet->activeShares()->first();
@@ -458,7 +523,7 @@ class SnippetController extends Controller
      */
     public function toggleShare(Snippet $snippet)
     {
-        $this->authorize('view', $snippet);
+        $this->authorize('share', $snippet);
 
         $share = $snippet->activeShares()->first();
 
@@ -488,9 +553,18 @@ class SnippetController extends Controller
      */
     public function viewShared($uuid)
     {
-        $share = \App\Models\SnippetShare::where('uuid', $uuid)
-            ->where('is_active', true)
-            ->firstOrFail();
+        // Validate UUID format
+        if (!preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $uuid)) {
+            abort(404, 'Invalid share link');
+        }
+
+        try {
+            $share = \App\Models\SnippetShare::where('uuid', $uuid)
+                ->where('is_active', true)
+                ->firstOrFail();
+        } catch (\Exception $e) {
+            abort(404, 'Share not found');
+        }
 
         $snippet = $share->snippet()->with(['creator', 'folder'])->first();
 

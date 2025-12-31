@@ -38,7 +38,7 @@
 
         <div class="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
             <div class="flex items-center gap-4">
-                <button type="submit" class="inline-flex items-center px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white font-medium rounded-lg transition-colors duration-200 shadow-sm">
+                <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 dark:bg-indigo-500 hover:bg-indigo-700 dark:hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-gray-800 focus:ring-indigo-500 transition-colors duration-200">
                     <i class="fas fa-save mr-2"></i>{{ __('Update Password') }}
                 </button>
 
