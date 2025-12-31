@@ -39,7 +39,7 @@ class AISettingsController extends Controller
                     'rate_limit_advice' => $provider->getRateLimitAdvice(),
                     'recommended_models' => $provider->getRecommendedModels(),
                     'current_model' => $currentModel,
-                    'is_free_model' => $provider->isUsingFreeModel($currentModel)
+                    'is_free_model' => $provider->isUsingFreeModel($currentModel),
                 ];
             }
         }
@@ -67,7 +67,7 @@ class AISettingsController extends Controller
             $formFieldName = str_replace('.', '_', $setting->key);
             if ($request->has($formFieldName)) {
                 $rules = $setting->validation_rules ?? [];
-                if (!empty($rules)) {
+                if (! empty($rules)) {
                     $validationRules[$formFieldName] = $rules;
                 }
             }
@@ -122,15 +122,15 @@ class AISettingsController extends Controller
             Log::info('Queue restart signal sent after AI settings update');
         } catch (\Exception $e) {
             Log::warning('Failed to send queue restart signal after AI settings update', [
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
         }
 
         $message = "Updated {$updated} AI settings successfully.";
         if ($queueRestarted) {
-            $message .= " Queue workers will restart automatically to apply changes.";
+            $message .= ' Queue workers will restart automatically to apply changes.';
         } else {
-            $message .= " Please manually restart your queue workers to apply changes.";
+            $message .= ' Please manually restart your queue workers to apply changes.';
         }
 
         return redirect()->back()->with('success', $message);
@@ -160,7 +160,7 @@ class AISettingsController extends Controller
                 Log::info('Queue restart signal sent after AI settings reset');
             } catch (\Exception $e) {
                 Log::warning('Failed to send queue restart signal after AI settings reset', [
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ]);
             }
 
@@ -174,7 +174,7 @@ class AISettingsController extends Controller
             return redirect()->back()->with('success', $message);
 
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Failed to reset settings: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Failed to reset settings: '.$e->getMessage());
         }
     }
 
@@ -199,9 +199,10 @@ class AISettingsController extends Controller
 
         } catch (\Exception $e) {
             Log::error('Failed to clear AI settings caches', [
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
-            return redirect()->back()->with('error', 'Failed to clear caches: ' . $e->getMessage());
+
+            return redirect()->back()->with('error', 'Failed to clear caches: '.$e->getMessage());
         }
     }
 }

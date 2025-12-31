@@ -2,8 +2,8 @@
 
 namespace App\Console\Commands;
 
-use App\Models\Snippet;
 use App\Jobs\ProcessSnippetAI;
+use App\Models\Snippet;
 use Illuminate\Console\Command;
 
 class ProcessAllSnippetsAI extends Command
@@ -35,14 +35,15 @@ class ProcessAllSnippetsAI extends Command
             $snippets = Snippet::limit($limit)->get();
         } else {
             $this->info('🤖 Processing snippets without AI analysis...');
-            $snippets = Snippet::where(function($query) {
+            $snippets = Snippet::where(function ($query) {
                 $query->whereNull('ai_processed_at')
-                      ->orWhere('ai_processing_failed', true);
+                    ->orWhere('ai_processing_failed', true);
             })->limit($limit)->get();
         }
 
         if ($snippets->count() === 0) {
             $this->info('✅ No snippets need AI processing!');
+
             return Command::SUCCESS;
         }
 
@@ -54,7 +55,7 @@ class ProcessAllSnippetsAI extends Command
         foreach ($snippets as $snippet) {
             ProcessSnippetAI::dispatch($snippet, $force);
             $bar->advance();
-            
+
             // Small delay to prevent overwhelming the queue
             usleep(100000); // 0.1 second
         }

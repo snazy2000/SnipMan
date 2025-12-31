@@ -2,17 +2,20 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Config;
 use App\Models\AISetting;
 use Exception;
+use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class LocalAIService
 {
     private string $baseUrl;
+
     private string $model;
+
     private int $timeout;
+
     private int $maxTokens;
 
     public function __construct(array $config = [])
@@ -44,7 +47,7 @@ class LocalAIService
     {
         // Check if feature is enabled in database first, then config
         $enabled = $this->getConfigValue('ai.features.auto_description', Config::get('ai.features.auto_description'));
-        if (!$enabled) {
+        if (! $enabled) {
             return null;
         }
 
@@ -64,9 +67,11 @@ class LocalAIService
     {
         try {
             $response = Http::timeout(5)->get("{$this->baseUrl}/api/tags");
+
             return $response->successful();
         } catch (Exception $e) {
             Log::warning('Ollama connection failed', ['error' => $e->getMessage()]);
+
             return false;
         }
     }
@@ -79,16 +84,18 @@ class LocalAIService
         try {
             $response = Http::timeout(10)->get("{$this->baseUrl}/api/tags");
 
-            if (!$response->successful()) {
+            if (! $response->successful()) {
                 return [];
             }
 
             $data = $response->json();
+
             return collect($data['models'] ?? [])
                 ->pluck('name')
                 ->toArray();
         } catch (Exception $e) {
             Log::warning('Failed to fetch Ollama models', ['error' => $e->getMessage()]);
+
             return [];
         }
     }
@@ -101,7 +108,7 @@ class LocalAIService
         try {
             Log::info('Making AI request', [
                 'model' => $this->model,
-                'prompt_length' => strlen($prompt)
+                'prompt_length' => strlen($prompt),
             ]);
 
             $response = Http::timeout($this->timeout)
@@ -113,14 +120,15 @@ class LocalAIService
                         'num_predict' => $this->maxTokens,
                         'temperature' => 0.1, // Lower temperature for more consistent results
                         'top_p' => 0.9,
-                    ]
+                    ],
                 ]);
 
-            if (!$response->successful()) {
+            if (! $response->successful()) {
                 Log::error('Ollama API request failed', [
                     'status' => $response->status(),
-                    'body' => $response->body()
+                    'body' => $response->body(),
                 ]);
+
                 return null;
             }
 
@@ -129,16 +137,17 @@ class LocalAIService
 
             Log::info('AI request completed', [
                 'response_length' => strlen($result),
-                'done' => $data['done'] ?? false
+                'done' => $data['done'] ?? false,
             ]);
 
-            return !empty($result) ? $result : null;
+            return ! empty($result) ? $result : null;
 
         } catch (Exception $e) {
             Log::error('AI request exception', [
                 'error' => $e->getMessage(),
-                'model' => $this->model
+                'model' => $this->model,
             ]);
+
             return null;
         }
     }
@@ -154,7 +163,7 @@ class LocalAIService
             'model' => $this->model,
             'features_enabled' => [
                 'auto_description' => $this->getConfigValue('ai.features.auto_description', Config::get('ai.features.auto_description')),
-            ]
+            ],
         ]);
 
         $results = [
@@ -163,11 +172,12 @@ class LocalAIService
         ];
 
         // Only proceed if Ollama is available
-        if (!$this->isAvailable()) {
+        if (! $this->isAvailable()) {
             Log::warning('LocalAIService: Ollama not available for code analysis', [
                 'base_url' => $this->baseUrl,
-                'model' => $this->model
+                'model' => $this->model,
             ]);
+
             return $results;
         }
 
@@ -180,8 +190,8 @@ class LocalAIService
 
         Log::info('LocalAIService: Description generation completed', [
             'time_seconds' => round($descriptionTime, 2),
-            'has_description' => !empty($results['description']),
-            'description_length' => !empty($results['description']) ? strlen($results['description']) : 0
+            'has_description' => ! empty($results['description']),
+            'description_length' => ! empty($results['description']) ? strlen($results['description']) : 0,
         ]);
 
         return $results;

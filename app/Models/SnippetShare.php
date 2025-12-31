@@ -26,7 +26,7 @@ class SnippetShare extends Model
         parent::boot();
 
         static::creating(function ($model) {
-            if (!$model->uuid) {
+            if (! $model->uuid) {
                 $model->uuid = (string) Str::uuid();
             }
         });

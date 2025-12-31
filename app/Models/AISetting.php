@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Database\Eloquent\Casts\Attribute;
 
 class AISetting extends Model
 {
@@ -64,6 +64,7 @@ class AISetting extends Model
 
         return Cache::remember($cacheKey, 3600, function () use ($key, $default) {
             $setting = static::where('key', $key)->first();
+
             return $setting ? $setting->value : $default;
         });
     }
@@ -109,7 +110,7 @@ class AISetting extends Model
         return Cache::remember('ai_settings_all', 3600, function () {
             return static::all()
                 ->keyBy('key')
-                ->map(fn($setting) => $setting->value)
+                ->map(fn ($setting) => $setting->value)
                 ->toArray();
         });
     }
@@ -149,11 +150,12 @@ class AISetting extends Model
      */
     public function getDisplayValueAttribute(): string
     {
-        if ($this->is_sensitive && !empty($this->value)) {
+        if ($this->is_sensitive && ! empty($this->value)) {
             if (strlen($this->value) <= 8) {
                 return str_repeat('*', strlen($this->value));
             }
-            return str_repeat('*', 8) . substr($this->value, -4);
+
+            return str_repeat('*', 8).substr($this->value, -4);
         }
 
         return match ($this->type) {

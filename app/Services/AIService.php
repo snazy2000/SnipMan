@@ -2,15 +2,14 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\Config;
-use App\Services\LocalAIService;
-use App\Services\OpenRouterService;
 use App\Models\AISetting;
+use Illuminate\Support\Facades\Config;
 use InvalidArgumentException;
 
 class AIService
 {
     private LocalAIService|OpenRouterService $provider;
+
     private string $providerName;
 
     public function __construct()

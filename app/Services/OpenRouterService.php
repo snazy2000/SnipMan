@@ -2,22 +2,30 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Config;
 use App\Models\AISetting;
 use Exception;
+use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class OpenRouterService
 {
     private ?string $apiKey;
+
     private string $baseUrl;
+
     private string $model;
+
     private int $timeout;
+
     private int $maxTokens;
+
     private float $temperature;
+
     private float $topP;
+
     private string $siteUrl;
+
     private string $siteName;
 
     public function __construct(array $config = [])
@@ -54,7 +62,7 @@ class OpenRouterService
     {
         // Check if feature is enabled in database first, then config
         $enabled = $this->getConfigValue('ai.features.auto_description', Config::get('ai.features.auto_description'));
-        if (!$enabled) {
+        if (! $enabled) {
             return null;
         }
 
@@ -77,13 +85,14 @@ class OpenRouterService
                 'api_key_length' => $this->apiKey ? strlen($this->apiKey) : 0,
                 'base_url' => $this->baseUrl,
             ]);
+
             return false;
         }
 
         try {
             Log::info('Testing OpenRouter connection', [
                 'url' => "{$this->baseUrl}/models",
-                'api_key_prefix' => substr($this->apiKey, 0, 10) . '...',
+                'api_key_prefix' => substr($this->apiKey, 0, 10).'...',
                 'timeout' => 5,
                 'environment' => app()->environment(),
             ]);
@@ -91,7 +100,7 @@ class OpenRouterService
             // Create HTTP client with SSL options for Windows development
             $httpClient = Http::timeout(5)
                 ->withHeaders([
-                    'Authorization' => 'Bearer ' . $this->apiKey,
+                    'Authorization' => 'Bearer '.$this->apiKey,
                     'Content-Type' => 'application/json',
                 ]);
 
@@ -103,7 +112,7 @@ class OpenRouterService
                     'curl' => [
                         CURLOPT_SSL_VERIFYPEER => false,
                         CURLOPT_SSL_VERIFYHOST => false,
-                    ]
+                    ],
                 ]);
             }
 
@@ -119,7 +128,7 @@ class OpenRouterService
                 'response_body_preview' => substr($response->body(), 0, 200),
             ]);
 
-            if (!$success) {
+            if (! $success) {
                 Log::warning('OpenRouter connection failed - HTTP error', [
                     'status' => $response->status(),
                     'body' => $response->body(),
@@ -133,10 +142,11 @@ class OpenRouterService
                 'error' => $e->getMessage(),
                 'error_code' => $e->getCode(),
                 'error_class' => get_class($e),
-                'api_key_set' => !empty($this->apiKey),
+                'api_key_set' => ! empty($this->apiKey),
                 'base_url' => $this->baseUrl,
                 'stack_trace' => $e->getTraceAsString(),
             ]);
+
             return false;
         }
     }
@@ -148,6 +158,7 @@ class OpenRouterService
     {
         if (empty($this->apiKey)) {
             Log::info('OpenRouter getAvailableModels: API key is empty');
+
             return [];
         }
 
@@ -160,7 +171,7 @@ class OpenRouterService
             // Create HTTP client with SSL options for Windows development
             $httpClient = Http::timeout(10)
                 ->withHeaders([
-                    'Authorization' => 'Bearer ' . $this->apiKey,
+                    'Authorization' => 'Bearer '.$this->apiKey,
                     'Content-Type' => 'application/json',
                 ]);
 
@@ -172,17 +183,18 @@ class OpenRouterService
                     'curl' => [
                         CURLOPT_SSL_VERIFYPEER => false,
                         CURLOPT_SSL_VERIFYHOST => false,
-                    ]
+                    ],
                 ]);
             }
 
             $response = $httpClient->get("{$this->baseUrl}/models");
 
-            if (!$response->successful()) {
+            if (! $response->successful()) {
                 Log::warning('OpenRouter models fetch failed', [
                     'status' => $response->status(),
                     'body' => $response->body(),
                 ]);
+
                 return [];
             }
 
@@ -201,6 +213,7 @@ class OpenRouterService
                 'error_code' => $e->getCode(),
                 'error_class' => get_class($e),
             ]);
+
             return [];
         }
     }
@@ -212,19 +225,20 @@ class OpenRouterService
     {
         if (empty($this->apiKey)) {
             Log::error('OpenRouter API key not configured');
+
             return null;
         }
 
         try {
             Log::info('Making OpenRouter AI request', [
                 'model' => $this->model,
-                'prompt_length' => strlen($prompt)
+                'prompt_length' => strlen($prompt),
             ]);
 
             // Create HTTP client with SSL options for Windows development
             $httpClient = Http::timeout($this->timeout)
                 ->withHeaders([
-                    'Authorization' => 'Bearer ' . $this->apiKey,
+                    'Authorization' => 'Bearer '.$this->apiKey,
                     'Content-Type' => 'application/json',
                     'HTTP-Referer' => $this->siteUrl,
                     'X-Title' => $this->siteName,
@@ -238,7 +252,7 @@ class OpenRouterService
                     'curl' => [
                         CURLOPT_SSL_VERIFYPEER => false,
                         CURLOPT_SSL_VERIFYHOST => false,
-                    ]
+                    ],
                 ]);
             }
 
@@ -248,7 +262,7 @@ class OpenRouterService
                     [
                         'role' => 'user',
                         'content' => $prompt,
-                    ]
+                    ],
                 ],
                 'max_tokens' => $this->maxTokens,
                 'temperature' => $this->temperature,
@@ -256,7 +270,7 @@ class OpenRouterService
                 'stream' => false,
             ]);
 
-            if (!$response->successful()) {
+            if (! $response->successful()) {
                 $statusCode = $response->status();
                 $responseBody = $response->body();
 
@@ -266,7 +280,7 @@ class OpenRouterService
                         'model' => $this->model,
                         'status' => $statusCode,
                         'response' => $responseBody,
-                        'retry_suggestion' => 'Model is temporarily rate-limited. Consider switching to a different model or adding your own API key.'
+                        'retry_suggestion' => 'Model is temporarily rate-limited. Consider switching to a different model or adding your own API key.',
                     ]);
 
                     // Throw exception for rate limits to trigger job failure/retry
@@ -275,7 +289,7 @@ class OpenRouterService
                     Log::error('OpenRouter API request failed', [
                         'model' => $this->model,
                         'status' => $statusCode,
-                        'body' => $responseBody
+                        'body' => $responseBody,
                     ]);
 
                     // Throw exception for other HTTP errors too
@@ -288,17 +302,17 @@ class OpenRouterService
 
             Log::info('OpenRouter AI request completed', [
                 'response_length' => strlen($result),
-                'usage' => $data['usage'] ?? null
+                'usage' => $data['usage'] ?? null,
             ]);
 
-            return !empty($result) ? $result : null;
+            return ! empty($result) ? $result : null;
 
         } catch (Exception $e) {
             Log::error('OpenRouter AI request exception', [
                 'error' => $e->getMessage(),
                 'model' => $this->model,
                 'code' => $e->getCode(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
 
             // Re-throw the exception so the job can handle it properly
@@ -317,7 +331,7 @@ class OpenRouterService
             'model' => $this->model,
             'features_enabled' => [
                 'auto_description' => $this->getConfigValue('ai.features.auto_description', Config::get('ai.features.auto_description')),
-            ]
+            ],
         ]);
 
         $results = [
@@ -326,12 +340,13 @@ class OpenRouterService
         ];
 
         // Only proceed if OpenRouter is available
-        if (!$this->isAvailable()) {
+        if (! $this->isAvailable()) {
             Log::warning('OpenRouterService: OpenRouter not available for code analysis', [
                 'base_url' => $this->baseUrl,
                 'model' => $this->model,
-                'has_api_key' => !empty($this->apiKey)
+                'has_api_key' => ! empty($this->apiKey),
             ]);
+
             return $results;
         }
 
@@ -344,8 +359,8 @@ class OpenRouterService
 
         Log::info('OpenRouterService: Description generation completed', [
             'time_seconds' => round($descriptionTime, 2),
-            'has_description' => !empty($results['description']),
-            'description_length' => !empty($results['description']) ? strlen($results['description']) : 0
+            'has_description' => ! empty($results['description']),
+            'description_length' => ! empty($results['description']) ? strlen($results['description']) : 0,
         ]);
 
         return $results;
@@ -362,32 +377,32 @@ class OpenRouterService
                 'name' => 'Claude 3.5 Haiku',
                 'type' => 'paid',
                 'reliability' => 'high',
-                'cost' => 'low'
+                'cost' => 'low',
             ],
             'openai/gpt-4o-mini' => [
                 'name' => 'GPT-4o Mini',
                 'type' => 'paid',
                 'reliability' => 'high',
-                'cost' => 'low'
+                'cost' => 'low',
             ],
             'anthropic/claude-3-haiku' => [
                 'name' => 'Claude 3 Haiku',
                 'type' => 'paid',
                 'reliability' => 'high',
-                'cost' => 'low'
+                'cost' => 'low',
             ],
             // Free models (can be rate-limited)
             'microsoft/phi-3-mini-128k-instruct:free' => [
                 'name' => 'Phi-3 Mini (Free)',
                 'type' => 'free',
                 'reliability' => 'medium',
-                'cost' => 'free'
+                'cost' => 'free',
             ],
             'qwen/qwen-2-7b-instruct:free' => [
                 'name' => 'Qwen 2 7B (Free)',
                 'type' => 'free',
                 'reliability' => 'medium',
-                'cost' => 'free'
+                'cost' => 'free',
             ],
         ];
     }
@@ -417,7 +432,7 @@ class OpenRouterService
         $advice = [
             'is_free_model' => $this->isUsingFreeModel(),
             'current_model' => $this->model,
-            'recommended_actions' => []
+            'recommended_actions' => [],
         ];
 
         if ($this->isUsingFreeModel()) {
@@ -425,13 +440,13 @@ class OpenRouterService
                 'Switch to a paid model like "anthropic/claude-3.5-haiku" for better reliability',
                 'Add your own API key at https://openrouter.ai/settings/integrations',
                 'Wait a few minutes and try again',
-                'Consider using fewer AI features to reduce API calls'
+                'Consider using fewer AI features to reduce API calls',
             ];
         } else {
             $advice['recommended_actions'] = [
                 'Check your OpenRouter account balance',
                 'Verify your API key is active',
-                'Wait a moment and try again'
+                'Wait a moment and try again',
             ];
         }
 

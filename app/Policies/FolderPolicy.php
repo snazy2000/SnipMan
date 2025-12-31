@@ -4,7 +4,6 @@ namespace App\Policies;
 
 use App\Models\Folder;
 use App\Models\User;
-use Illuminate\Auth\Access\Response;
 
 class FolderPolicy
 {
@@ -29,6 +28,7 @@ class FolderPolicy
         // User can view if it belongs to a team they're a member of
         if ($folder->owner_type === 'App\Models\Team') {
             $team = $folder->owner;
+
             return $team->members->contains($user);
         }
 
@@ -57,6 +57,7 @@ class FolderPolicy
         if ($folder->owner_type === 'App\Models\Team') {
             $team = $folder->owner;
             $membership = $team->members()->where('user_id', $user->id)->first();
+
             return $membership && in_array($membership->pivot->role, ['owner', 'editor']);
         }
 

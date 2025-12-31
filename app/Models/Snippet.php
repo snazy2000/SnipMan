@@ -9,7 +9,6 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class Snippet extends Model
 {
-
     protected $fillable = [
         'folder_id',
         'owner_id',
@@ -91,7 +90,7 @@ class Snippet extends Model
      */
     public function hasAIAnalysis(): bool
     {
-        return $this->ai_processed_at && !$this->ai_processing_failed;
+        return $this->ai_processed_at && ! $this->ai_processing_failed;
     }
 
     /**
@@ -99,7 +98,7 @@ class Snippet extends Model
      */
     public function isAIProcessing(): bool
     {
-        return !$this->ai_processed_at && !$this->ai_processing_failed;
+        return ! $this->ai_processed_at && ! $this->ai_processing_failed;
     }
 
     /**
