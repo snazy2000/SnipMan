@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
 
@@ -118,7 +119,7 @@ class AISetting extends Model
     /**
      * Get settings by group
      */
-    public static function getByGroup(string $group): \Illuminate\Database\Eloquent\Collection
+    public static function getByGroup(string $group): Collection
     {
         return Cache::remember("ai_settings_group_{$group}", 3600, function () use ($group) {
             return static::where('group', $group)

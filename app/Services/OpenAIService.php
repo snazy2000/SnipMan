@@ -39,7 +39,7 @@ class OpenAIService
     {
         try {
             return AISetting::get($key, $default);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return $default;
         }
     }
@@ -188,7 +188,7 @@ class OpenAIService
                 $statusCode = $response->status();
                 $responseBody = $response->body();
 
-                throw new \Exception("OpenAI API request failed (HTTP {$statusCode}): {$responseBody}", $statusCode);
+                throw new Exception("OpenAI API request failed (HTTP {$statusCode}): {$responseBody}", $statusCode);
             }
 
             $data = $response->json();

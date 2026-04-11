@@ -3,11 +3,12 @@
 namespace Database\Factories;
 
 use App\Models\Folder;
+use App\Models\Snippet;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Snippet>
+ * @extends Factory<Snippet>
  */
 class SnippetFactory extends Factory
 {

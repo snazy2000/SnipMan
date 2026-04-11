@@ -41,7 +41,7 @@ test('users can logout', function () {
 });
 
 test('disabled users cannot login', function () {
-    $user = \App\Models\User::factory()->create([
+    $user = User::factory()->create([
         'is_disabled' => true,
         'password' => bcrypt('password'),
     ]);
@@ -59,7 +59,7 @@ test('disabled users cannot login', function () {
 });
 
 test('login is rate limited after 5 failed attempts', function () {
-    $user = \App\Models\User::factory()->create([
+    $user = User::factory()->create([
         'password' => bcrypt('password'),
     ]);
 

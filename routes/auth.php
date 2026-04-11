@@ -4,11 +4,13 @@ use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\ConfirmablePasswordController;
 use App\Http\Controllers\Auth\EmailVerificationNotificationController;
 use App\Http\Controllers\Auth\EmailVerificationPromptController;
+use App\Http\Controllers\Auth\InvitationController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Auth\VerifyEmailController;
+use App\Http\Controllers\TeamController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
@@ -23,13 +25,13 @@ Route::middleware('guest')->group(function () {
     Route::post('login', [AuthenticatedSessionController::class, 'store']);
 
     // Invitation routes
-    Route::get('invitation/{token}', [\App\Http\Controllers\Auth\InvitationController::class, 'show'])
+    Route::get('invitation/{token}', [InvitationController::class, 'show'])
         ->name('invitation.show');
 
-    Route::post('invitation/{token}', [\App\Http\Controllers\Auth\InvitationController::class, 'accept'])
+    Route::post('invitation/{token}', [InvitationController::class, 'accept'])
         ->name('invitation.accept');
 
-    Route::get('teams/invitation/{token}', [\App\Http\Controllers\TeamController::class, 'acceptInvitation'])
+    Route::get('teams/invitation/{token}', [TeamController::class, 'acceptInvitation'])
         ->name('teams.acceptInvitation');
 
     Route::get('forgot-password', [PasswordResetLinkController::class, 'create'])

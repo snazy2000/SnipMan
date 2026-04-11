@@ -49,7 +49,7 @@ class OpenRouterService
         try {
             // Try to get from database first
             return AISetting::get($key, $default);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             // If database is not available or table doesn't exist, use default
             return $default;
         }
@@ -284,7 +284,7 @@ class OpenRouterService
                     ]);
 
                     // Throw exception for rate limits to trigger job failure/retry
-                    throw new \Exception("OpenRouter API rate limited (HTTP 429): {$responseBody}", 429);
+                    throw new Exception("OpenRouter API rate limited (HTTP 429): {$responseBody}", 429);
                 } else {
                     Log::error('OpenRouter API request failed', [
                         'model' => $this->model,
@@ -293,7 +293,7 @@ class OpenRouterService
                     ]);
 
                     // Throw exception for other HTTP errors too
-                    throw new \Exception("OpenRouter API request failed (HTTP {$statusCode}): {$responseBody}", $statusCode);
+                    throw new Exception("OpenRouter API request failed (HTTP {$statusCode}): {$responseBody}", $statusCode);
                 }
             }
 

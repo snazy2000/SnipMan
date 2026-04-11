@@ -1,9 +1,11 @@
 <?php
 
 use App\Models\User;
+use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Str;
 
 uses(RefreshDatabase::class);
 
@@ -39,11 +41,11 @@ test('email verification notification can be resent', function () {
         ->actingAs($user)
         ->post('/email/verification-notification');
 
-    Notification::assertSentTo($user, \Illuminate\Auth\Notifications\VerifyEmail::class);
+    Notification::assertSentTo($user, VerifyEmail::class);
 });
 
 test('user can accept invitation and set password', function () {
-    $token = \Illuminate\Support\Str::random(64);
+    $token = Str::random(64);
     $user = User::factory()->create([
         'name' => 'Test User',
         'invitation_token' => hash('sha256', $token),

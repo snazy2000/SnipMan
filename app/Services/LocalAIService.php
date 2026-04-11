@@ -34,7 +34,7 @@ class LocalAIService
         try {
             // Try to get from database first
             return AISetting::get($key, $default);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             // If database is not available or table doesn't exist, use default
             return $default;
         }
