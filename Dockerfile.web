@@ -1,6 +1,6 @@
 
 # --- Build Stage: Node for assets ---
-FROM node:20-alpine as build-assets
+FROM node:20-alpine AS build-assets
 WORKDIR /app
 COPY package*.json ./
 COPY resources/ ./resources/
@@ -10,7 +10,7 @@ COPY . .
 RUN npm run build
 
 # --- Final Stage: PHP-Nginx ---
-FROM trafex/php-nginx:latest
+FROM trafex/php-nginx:3.10.0
 USER root
 RUN apk --no-cache add \
 	php84-pdo \
@@ -30,7 +30,8 @@ COPY . .
 # Install composer and dependencies
 RUN apk --no-cache add curl git && \
 	curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer && \
-	composer install --no-dev --optimize-autoloader
+	git config --global --add safe.directory /var/www/html && \
+	composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
 COPY --from=build-assets /app/public/build ./public/build
 # Set permissions for Laravel writable directories
 RUN chown -R nobody:nobody storage bootstrap/cache && \
