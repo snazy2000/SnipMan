@@ -7,7 +7,7 @@ return [
     |--------------------------------------------------------------------------
     |
     | This option controls the AI provider used for code analysis.
-    | Supported providers: 'ollama', 'openrouter'
+    | Supported providers: 'ollama', 'openrouter', 'openai'
     |
     */
 
@@ -48,6 +48,25 @@ return [
         'top_p' => env('OPENROUTER_TOP_P', 0.9),
         'site_url' => env('APP_URL', 'http://localhost'),
         'site_name' => env('APP_NAME', config('app.name', 'Snippet Manager')),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | OpenAI Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Configuration for OpenAI API integration
+    |
+    */
+
+    'openai' => [
+        'api_key' => env('OPENAI_API_KEY'),
+        'base_url' => env('OPENAI_URL', 'https://api.openai.com/v1'),
+        'model' => env('OPENAI_MODEL', 'gpt-4o-mini'),
+        'timeout' => env('OPENAI_TIMEOUT', 30),
+        'max_tokens' => env('OPENAI_MAX_TOKENS', 512),
+        'temperature' => env('OPENAI_TEMPERATURE', 0.1),
+        'disable_ssl_verify' => env('OPENAI_DISABLE_SSL_VERIFY', false),
     ],
 
     /*

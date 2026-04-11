@@ -120,6 +120,12 @@
                             OpenRouter Settings
                         </button>
                         <button type="button"
+                                @click="activeTab = 'openai'"
+                                :class="{ 'border-blue-500 text-blue-600 dark:text-blue-400': activeTab === 'openai', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300': activeTab !== 'openai' }"
+                                class="whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                            OpenAI Settings
+                        </button>
+                        <button type="button"
                                 @click="activeTab = 'features'"
                                 :class="{ 'border-blue-500 text-blue-600 dark:text-blue-400': activeTab === 'features', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300': activeTab !== 'features' }"
                                 class="whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
@@ -200,7 +206,19 @@
                             @include('ai.partials.setting-field', ['setting' => $setting])
                         @endforeach
                     </div>
-                </div>                <!-- Features Settings -->
+                </div>
+
+                <!-- OpenAI Settings -->
+                <div x-show="activeTab === 'openai'" class="mt-6">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">OpenAI Configuration</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        @foreach($openaiSettings as $setting)
+                            @include('ai.partials.setting-field', ['setting' => $setting])
+                        @endforeach
+                    </div>
+                </div>
+
+                <!-- Features Settings -->
                 <div x-show="activeTab === 'features'" class="mt-6">
                     <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">AI Features</h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
