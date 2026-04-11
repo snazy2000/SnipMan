@@ -1,7 +1,11 @@
 <?php
 
+use App\Models\Folder;
+use App\Models\Snippet;
+use App\Models\SnippetVersion;
 use App\Models\Team;
 use App\Models\User;
+use App\Notifications\UserInvitation;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 
@@ -96,7 +100,7 @@ test('admin can create user with invitation', function () {
     $user = User::where('email', 'newuser@example.com')->first();
     $this->assertNotNull($user->invitation_token);
 
-    Notification::assertSentTo($user, \App\Notifications\UserInvitation::class);
+    Notification::assertSentTo($user, UserInvitation::class);
 });
 
 test('admin can update user', function () {
@@ -142,7 +146,7 @@ test('admin can resend user invitation', function () {
     $response->assertRedirect(route('admin.users'));
     $response->assertSessionHas('success');
 
-    Notification::assertSentTo($user, \App\Notifications\UserInvitation::class);
+    Notification::assertSentTo($user, UserInvitation::class);
 });
 
 test('admin can delete user', function () {
@@ -247,13 +251,13 @@ test('admin can delete user and transfer team ownership to another member', func
     $team->members()->attach($newOwner->id, ['role' => 'editor']);
 
     // Create some team content with multiple versions
-    $snippet = \App\Models\Snippet::factory()->for($team, 'owner')->create([
+    $snippet = Snippet::factory()->for($team, 'owner')->create([
         'content' => 'Version 1 content',
         'created_by' => $teamOwner->id,
     ]);
 
     // Create initial version
-    \App\Models\SnippetVersion::create([
+    SnippetVersion::create([
         'snippet_id' => $snippet->id,
         'version_number' => 1,
         'content' => 'Version 1 content',
@@ -262,7 +266,7 @@ test('admin can delete user and transfer team ownership to another member', func
 
     // Update snippet to create version 2
     $snippet->update(['content' => 'Version 2 content']);
-    \App\Models\SnippetVersion::create([
+    SnippetVersion::create([
         'snippet_id' => $snippet->id,
         'version_number' => 2,
         'content' => 'Version 2 content',
@@ -271,14 +275,14 @@ test('admin can delete user and transfer team ownership to another member', func
 
     // Update snippet to create version 3
     $snippet->update(['content' => 'Version 3 content']);
-    \App\Models\SnippetVersion::create([
+    SnippetVersion::create([
         'snippet_id' => $snippet->id,
         'version_number' => 3,
         'content' => 'Version 3 content',
         'created_by' => $teamOwner->id,
     ]);
 
-    $folder = \App\Models\Folder::factory()->for($team, 'owner')->create();
+    $folder = Folder::factory()->for($team, 'owner')->create();
 
     // Verify we have 3 versions
     expect($snippet->versions()->count())->toBe(3);
@@ -303,8 +307,8 @@ test('admin can delete user and transfer team ownership to another member', func
     expect($membership->pivot->role)->toBe('owner');
 
     // Verify team content still exists
-    expect(\App\Models\Snippet::find($snippet->id))->not->toBeNull();
-    expect(\App\Models\Folder::find($folder->id))->not->toBeNull();
+    expect(Snippet::find($snippet->id))->not->toBeNull();
+    expect(Folder::find($folder->id))->not->toBeNull();
 
     // Verify all snippet versions were preserved
     $snippet->refresh();
@@ -323,13 +327,13 @@ test('admin can delete user and delete team when no ownership transfer specified
     $team->members()->attach($teamOwner->id, ['role' => 'owner']);
 
     // Create team content with multiple versions
-    $snippet = \App\Models\Snippet::factory()->for($team, 'owner')->create([
+    $snippet = Snippet::factory()->for($team, 'owner')->create([
         'content' => 'Version 1 content',
         'created_by' => $teamOwner->id,
     ]);
 
     // Create initial version
-    \App\Models\SnippetVersion::create([
+    SnippetVersion::create([
         'snippet_id' => $snippet->id,
         'version_number' => 1,
         'content' => 'Version 1 content',
@@ -338,7 +342,7 @@ test('admin can delete user and delete team when no ownership transfer specified
 
     // Update snippet to create version 2
     $snippet->update(['content' => 'Version 2 content']);
-    \App\Models\SnippetVersion::create([
+    SnippetVersion::create([
         'snippet_id' => $snippet->id,
         'version_number' => 2,
         'content' => 'Version 2 content',
@@ -347,14 +351,14 @@ test('admin can delete user and delete team when no ownership transfer specified
 
     // Update snippet to create version 3
     $snippet->update(['content' => 'Version 3 content']);
-    \App\Models\SnippetVersion::create([
+    SnippetVersion::create([
         'snippet_id' => $snippet->id,
         'version_number' => 3,
         'content' => 'Version 3 content',
         'created_by' => $teamOwner->id,
     ]);
 
-    $folder = \App\Models\Folder::factory()->for($team, 'owner')->create();
+    $folder = Folder::factory()->for($team, 'owner')->create();
 
     // Verify we have 3 versions before deletion
     expect($snippet->versions()->count())->toBe(3);
@@ -378,14 +382,14 @@ test('admin can delete user and delete team when no ownership transfer specified
     expect(Team::find($teamId))->toBeNull();
 
     // Verify team content was deleted
-    expect(\App\Models\Snippet::find($snippetId))->toBeNull();
-    expect(\App\Models\Folder::find($folderId))->toBeNull();
+    expect(Snippet::find($snippetId))->toBeNull();
+    expect(Folder::find($folderId))->toBeNull();
 
     // Verify all snippet versions were deleted
     foreach ($versionIds as $versionId) {
-        expect(\App\Models\SnippetVersion::find($versionId))->toBeNull();
+        expect(SnippetVersion::find($versionId))->toBeNull();
     }
-    expect(\App\Models\SnippetVersion::whereIn('id', $versionIds)->count())->toBe(0);
+    expect(SnippetVersion::whereIn('id', $versionIds)->count())->toBe(0);
 
     // Verify user was soft deleted
     expect($teamOwner->fresh()->trashed())->toBeTrue();

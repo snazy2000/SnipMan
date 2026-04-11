@@ -14,7 +14,7 @@ class TestAI extends Command
      * @var string
      */
     protected $signature = 'ai:test
-                            {--provider= : Specific provider to test (ollama, openrouter)}
+                            {--provider= : Specific provider to test (ollama, openrouter, openai)}
                             {--models : List available models}
                             {--code= : Test code snippet}
                             {--language=php : Programming language}';

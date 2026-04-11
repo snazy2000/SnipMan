@@ -2,6 +2,7 @@
 
 use App\Models\Team;
 use App\Models\User;
+use App\Notifications\TeamInvitation;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 
@@ -103,7 +104,7 @@ test('team owner can invite member by email', function () {
     $this->assertEquals('editor', $membership->pivot->role);
 
     // Check notification sent
-    Notification::assertSentTo($newUser, \App\Notifications\TeamInvitation::class);
+    Notification::assertSentTo($newUser, TeamInvitation::class);
 });
 
 test('team owner can invite existing user', function () {
@@ -225,7 +226,7 @@ test('team owner can resend invitation', function () {
         ->post(route('teams.resendInvitation', [$team, $pendingUser]));
 
     $response->assertSessionHas('success');
-    Notification::assertSentTo($pendingUser, \App\Notifications\TeamInvitation::class);
+    Notification::assertSentTo($pendingUser, TeamInvitation::class);
 });
 
 test('non-owner cannot manage team members', function () {

@@ -6,12 +6,16 @@ use App\Jobs\ProcessSnippetAI;
 use App\Models\AISetting;
 use App\Models\Folder;
 use App\Models\Snippet;
+use App\Models\SnippetShare;
 use App\Models\SnippetVersion;
 use App\Models\Team;
+use App\Models\User;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 
 class SnippetController extends Controller
 {
@@ -383,7 +387,7 @@ class SnippetController extends Controller
             $ownerType = Team::class;
         } else {
             $ownerId = $user->id;
-            $ownerType = \App\Models\User::class;
+            $ownerType = User::class;
         }
 
         // Validate folder belongs to the correct owner
@@ -452,12 +456,12 @@ class SnippetController extends Controller
                 'message' => 'Snippet moved successfully.',
             ]);
 
-        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+        } catch (AuthorizationException $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'You do not have permission to move this snippet.',
             ], 403);
-        } catch (\Illuminate\Validation\ValidationException $e) {
+        } catch (ValidationException $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Invalid folder specified.',
@@ -571,7 +575,7 @@ class SnippetController extends Controller
         }
 
         try {
-            $share = \App\Models\SnippetShare::where('uuid', $uuid)
+            $share = SnippetShare::where('uuid', $uuid)
                 ->where('is_active', true)
                 ->firstOrFail();
         } catch (\Exception $e) {

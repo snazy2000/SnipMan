@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Team;
 use App\Models\User;
+use App\Notifications\UserInvitation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
@@ -119,7 +120,7 @@ class AdminController extends Controller
         ]);
 
         // Send invitation email
-        $user->notify(new \App\Notifications\UserInvitation($token));
+        $user->notify(new UserInvitation($token));
 
         return redirect()->route('admin.users')->with('success', 'User created successfully. An invitation email has been sent to '.$user->email);
     }
@@ -184,7 +185,7 @@ class AdminController extends Controller
         $user->save();
 
         // Resend invitation email
-        $user->notify(new \App\Notifications\UserInvitation($token));
+        $user->notify(new UserInvitation($token));
 
         return redirect()->route('admin.users')->with('success', 'Invitation resent to '.$user->email);
     }

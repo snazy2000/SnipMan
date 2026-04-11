@@ -22,6 +22,7 @@ class AISettingsController extends Controller
         $generalSettings = AISetting::getByGroup('general');
         $ollamaSettings = AISetting::getByGroup('ollama');
         $openrouterSettings = AISetting::getByGroup('openrouter');
+        $openaiSettings = AISetting::getByGroup('openai');
         $featureSettings = AISetting::getByGroup('features');
         $processingSettings = AISetting::getByGroup('processing');
 
@@ -50,6 +51,7 @@ class AISettingsController extends Controller
             'generalSettings',
             'ollamaSettings',
             'openrouterSettings',
+            'openaiSettings',
             'featureSettings',
             'processingSettings',
             'isAvailable',

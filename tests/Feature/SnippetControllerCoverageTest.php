@@ -3,6 +3,7 @@
 use App\Models\Folder;
 use App\Models\Snippet;
 use App\Models\SnippetShare;
+use App\Models\SnippetVersion;
 use App\Models\Team;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -359,7 +360,7 @@ test('updating snippet with same content does not create new version', function 
     ]);
 
     // Create initial version
-    \App\Models\SnippetVersion::create([
+    SnippetVersion::create([
         'snippet_id' => $snippet->id,
         'version_number' => 1,
         'content' => 'Original content',
@@ -386,7 +387,7 @@ test('updating snippet with different content creates new version', function () 
     ]);
 
     // Create initial version
-    \App\Models\SnippetVersion::create([
+    SnippetVersion::create([
         'snippet_id' => $snippet->id,
         'version_number' => 1,
         'content' => 'Version 1 content',
@@ -415,13 +416,13 @@ test('deleting snippet also deletes its versions', function () {
     $snippet = Snippet::factory()->for($user, 'owner')->create();
 
     // Create multiple versions
-    \App\Models\SnippetVersion::create([
+    SnippetVersion::create([
         'snippet_id' => $snippet->id,
         'version_number' => 1,
         'content' => 'Version 1',
         'created_by' => $user->id,
     ]);
-    \App\Models\SnippetVersion::create([
+    SnippetVersion::create([
         'snippet_id' => $snippet->id,
         'version_number' => 2,
         'content' => 'Version 2',
@@ -437,5 +438,5 @@ test('deleting snippet also deletes its versions', function () {
     $response->assertRedirect();
 
     expect(Snippet::find($snippetId))->toBeNull();
-    expect(\App\Models\SnippetVersion::where('snippet_id', $snippetId)->count())->toBe(0);
+    expect(SnippetVersion::where('snippet_id', $snippetId)->count())->toBe(0);
 });

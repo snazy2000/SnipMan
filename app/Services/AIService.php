@@ -8,7 +8,7 @@ use InvalidArgumentException;
 
 class AIService
 {
-    private LocalAIService|OpenRouterService $provider;
+    private LocalAIService|OpenRouterService|OpenAIService $provider;
 
     private string $providerName;
 
@@ -35,7 +35,7 @@ class AIService
     /**
      * Create the appropriate AI provider instance
      */
-    private function createProvider(string $provider): LocalAIService|OpenRouterService
+    private function createProvider(string $provider): LocalAIService|OpenRouterService|OpenAIService
     {
         return match ($provider) {
             'ollama' => new LocalAIService([
@@ -54,6 +54,14 @@ class AIService
                 'top_p' => $this->getConfigValue('ai.openrouter.top_p', Config::get('ai.openrouter.top_p')),
                 'site_url' => $this->getConfigValue('ai.openrouter.site_url', Config::get('ai.openrouter.site_url')),
                 'site_name' => $this->getConfigValue('ai.openrouter.site_name', Config::get('ai.openrouter.site_name')),
+            ]),
+            'openai' => new OpenAIService([
+                'api_key' => $this->getConfigValue('ai.openai.api_key', Config::get('ai.openai.api_key')),
+                'base_url' => $this->getConfigValue('ai.openai.base_url', Config::get('ai.openai.base_url')),
+                'model' => $this->getConfigValue('ai.openai.model', Config::get('ai.openai.model')),
+                'timeout' => $this->getConfigValue('ai.openai.timeout', Config::get('ai.openai.timeout')),
+                'max_tokens' => $this->getConfigValue('ai.openai.max_tokens', Config::get('ai.openai.max_tokens')),
+                'temperature' => $this->getConfigValue('ai.openai.temperature', Config::get('ai.openai.temperature')),
             ]),
             default => throw new InvalidArgumentException("Unsupported AI provider: {$provider}")
         };
@@ -102,7 +110,7 @@ class AIService
     /**
      * Get the current provider instance
      */
-    public function getProvider(): LocalAIService|OpenRouterService
+    public function getProvider(): LocalAIService|OpenRouterService|OpenAIService
     {
         return $this->provider;
     }
@@ -139,6 +147,14 @@ class AIService
                 'site_url' => $this->getConfigValue('ai.openrouter.site_url', Config::get('ai.openrouter.site_url')),
                 'site_name' => $this->getConfigValue('ai.openrouter.site_name', Config::get('ai.openrouter.site_name')),
             ],
+            'openai' => [
+                'api_key' => $this->getConfigValue('ai.openai.api_key', Config::get('ai.openai.api_key')),
+                'base_url' => $this->getConfigValue('ai.openai.base_url', Config::get('ai.openai.base_url')),
+                'model' => $this->getConfigValue('ai.openai.model', Config::get('ai.openai.model')),
+                'timeout' => $this->getConfigValue('ai.openai.timeout', Config::get('ai.openai.timeout')),
+                'max_tokens' => $this->getConfigValue('ai.openai.max_tokens', Config::get('ai.openai.max_tokens')),
+                'temperature' => $this->getConfigValue('ai.openai.temperature', Config::get('ai.openai.temperature')),
+            ],
             default => []
         };
     }
@@ -166,6 +182,11 @@ class AIService
             'openrouter' => [
                 'name' => 'OpenRouter',
                 'description' => 'Cloud-based AI models via OpenRouter',
+                'requires_api_key' => true,
+            ],
+            'openai' => [
+                'name' => 'OpenAI',
+                'description' => 'OpenAI Chat Completions API integration',
                 'requires_api_key' => true,
             ],
         ];

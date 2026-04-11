@@ -2,6 +2,12 @@
 
 namespace App\Providers;
 
+use App\Models\Folder;
+use App\Models\Snippet;
+use App\Models\Team;
+use App\Policies\FolderPolicy;
+use App\Policies\SnippetPolicy;
+use App\Policies\TeamPolicy;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 
@@ -13,9 +19,9 @@ class AuthServiceProvider extends ServiceProvider
      * @var array<class-string, class-string>
      */
     protected $policies = [
-        \App\Models\Snippet::class => \App\Policies\SnippetPolicy::class,
-        \App\Models\Folder::class => \App\Policies\FolderPolicy::class,
-        \App\Models\Team::class => \App\Policies\TeamPolicy::class,
+        Snippet::class => SnippetPolicy::class,
+        Folder::class => FolderPolicy::class,
+        Team::class => TeamPolicy::class,
     ];
 
     /**

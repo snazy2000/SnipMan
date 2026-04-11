@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Jobs\ProcessSnippetAI;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -125,6 +126,6 @@ class Snippet extends Model
      */
     public function processAI(bool $forceReprocess = false): void
     {
-        \App\Jobs\ProcessSnippetAI::dispatch($this, $forceReprocess);
+        ProcessSnippetAI::dispatch($this, $forceReprocess);
     }
 }

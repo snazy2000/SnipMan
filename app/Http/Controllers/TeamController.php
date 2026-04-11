@@ -3,8 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\Team;
+use App\Models\User;
+use App\Notifications\TeamInvitation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class TeamController extends Controller
 {
@@ -112,7 +116,7 @@ class TeamController extends Controller
             'role' => 'required|in:owner,editor,viewer',
         ]);
 
-        $user = \App\Models\User::where('email', $request->email)->first();
+        $user = User::where('email', $request->email)->first();
         $isNewUser = false;
 
         // Check if user is disabled
@@ -126,16 +130,16 @@ class TeamController extends Controller
         }
 
         // Generate invitation token
-        $token = \Illuminate\Support\Str::random(64);
+        $token = Str::random(64);
         $hashedToken = hash('sha256', $token);
 
         // If user doesn't exist, create a pending user account
         if (! $user) {
             $isNewUser = true;
-            $user = \App\Models\User::create([
+            $user = User::create([
                 'name' => explode('@', $request->email)[0], // Temporary name
                 'email' => $request->email,
-                'password' => \Illuminate\Support\Facades\Hash::make(\Illuminate\Support\Str::random(32)),
+                'password' => Hash::make(Str::random(32)),
                 'invitation_token' => hash('sha256', $token),
             ]);
         }
@@ -149,7 +153,7 @@ class TeamController extends Controller
         ]);
 
         // Send invitation notification
-        $user->notify(new \App\Notifications\TeamInvitation($team, $request->role, $token, $isNewUser));
+        $user->notify(new TeamInvitation($team, $request->role, $token, $isNewUser));
 
         return back()->with('success', "Invitation sent to {$request->email}.");
     }
@@ -157,7 +161,7 @@ class TeamController extends Controller
     /**
      * Update a team member's role
      */
-    public function updateMemberRole(Request $request, Team $team, \App\Models\User $user)
+    public function updateMemberRole(Request $request, Team $team, User $user)
     {
         $this->authorize('manageMembers', $team);
 
@@ -192,7 +196,7 @@ class TeamController extends Controller
     /**
      * Remove a member from the team
      */
-    public function removeMember(Team $team, \App\Models\User $user)
+    public function removeMember(Team $team, User $user)
     {
         $this->authorize('manageMembers', $team);
 
@@ -235,7 +239,7 @@ class TeamController extends Controller
             return redirect()->route('login')->with('error', 'This invitation link is invalid or has already been used.');
         }
 
-        $user = \App\Models\User::find($membership->user_id);
+        $user = User::find($membership->user_id);
         $team = Team::find($membership->team_id);
 
         // If user hasn't accepted their account invitation yet, redirect to account setup
@@ -261,7 +265,7 @@ class TeamController extends Controller
     /**
      * Resend team invitation
      */
-    public function resendInvitation(Team $team, \App\Models\User $user)
+    public function resendInvitation(Team $team, User $user)
     {
         $this->authorize('manageMembers', $team);
 
@@ -272,7 +276,7 @@ class TeamController extends Controller
         }
 
         // Generate new token
-        $token = \Illuminate\Support\Str::random(64);
+        $token = Str::random(64);
         $hashedToken = hash('sha256', $token);
 
         // Update token
@@ -283,7 +287,7 @@ class TeamController extends Controller
 
         // Resend notification
         $isNewUser = $user->invitation_token !== null;
-        $user->notify(new \App\Notifications\TeamInvitation($team, $membership->pivot->role, $token, $isNewUser));
+        $user->notify(new TeamInvitation($team, $membership->pivot->role, $token, $isNewUser));
 
         return back()->with('success', 'Invitation resent to '.$user->email);
     }
