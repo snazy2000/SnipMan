@@ -29,6 +29,11 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile/language', [ProfileController::class, 'updateLanguage'])->name('profile.language.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
+    // API token management (for Chrome extension / API clients)
+    Route::get('/profile/tokens', [ProfileController::class, 'tokens'])->name('profile.tokens');
+    Route::post('/profile/tokens', [ProfileController::class, 'createToken'])->name('profile.tokens.create');
+    Route::delete('/profile/tokens/{tokenId}', [ProfileController::class, 'revokeToken'])->name('profile.tokens.revoke');
+
     // Sharing routes (must be before resource routes to avoid conflicts)
     Route::get('/snippets/shared-list', [SnippetController::class, 'sharedList'])->name('snippets.sharedList');
     Route::get('/snippets/{snippet}/share-status', [SnippetController::class, 'getShareStatus'])->name('snippets.shareStatus');

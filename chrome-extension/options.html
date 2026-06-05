@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>SnippetMan Settings</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #1e1e2e; --surface: #2a2a3e; --border: #3d3d5c;
+      --text: #e2e2f0; --text-muted: #8888aa; --accent: #7c6af7;
+      --green: #4ade80; --red: #f87171; --radius: 6px;
+    }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; justify-content: center; padding: 40px 20px; }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 28px; width: 100%; max-width: 480px; height: fit-content; }
+    h1 { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+    .subtitle { font-size: 13px; color: var(--text-muted); margin-bottom: 24px; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+    label { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+    input { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); font-size: 13px; padding: 8px 10px; outline: none; transition: border-color 0.15s; width: 100%; }
+    input:focus { border-color: var(--accent); }
+    .hint { font-size: 11px; color: var(--text-muted); }
+    .btn { border: none; border-radius: var(--radius); cursor: pointer; font-size: 13px; font-weight: 600; padding: 9px 20px; transition: background 0.15s; }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { background: #6a58e0; }
+    .actions { display: flex; align-items: center; gap: 12px; margin-top: 8px; }
+    .status { font-size: 12px; }
+    .status.ok { color: var(--green); }
+    .status.err { color: var(--red); }
+    .divider { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+    .help { font-size: 12px; color: var(--text-muted); line-height: 1.6; }
+    .help a { color: var(--accent); text-decoration: none; }
+    .help a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>✂️ SnippetMan Settings</h1>
+    <p class="subtitle">Connect the extension to your SnippetMan instance.</p>
+
+    <div class="form-group">
+      <label>Instance URL</label>
+      <input id="base-url" type="url" placeholder="https://snippets.example.com" />
+      <span class="hint">The root URL of your SnippetMan app (no trailing slash).</span>
+    </div>
+
+    <div class="form-group">
+      <label>API Token</label>
+      <input id="token" type="password" placeholder="Paste your token here" />
+      <span class="hint">Generate one from your profile page → API Tokens.</span>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-primary" id="save">Save & Test</button>
+      <span class="status" id="status"></span>
+    </div>
+
+    <hr class="divider" />
+
+    <p class="help">
+      To get an API token, sign in to your SnippetMan instance, go to
+      <strong>Profile → API Tokens</strong>, and generate a token named
+      <em>Chrome Extension</em>. Paste it above and click Save.
+    </p>
+  </div>
+
+  <script src="options.js"></script>
+</body>
+</html>

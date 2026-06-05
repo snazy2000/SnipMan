@@ -70,6 +70,37 @@ class ProfileController extends Controller
     }
 
     /**
+     * List the user's API tokens.
+     */
+    public function tokens(Request $request)
+    {
+        return response()->json(
+            $request->user()->tokens()->select('id', 'name', 'created_at', 'last_used_at')->get()
+        );
+    }
+
+    /**
+     * Create a new API token.
+     */
+    public function createToken(Request $request)
+    {
+        $request->validate(['name' => 'required|string|max:100']);
+        $token = $request->user()->createToken($request->name);
+
+        return response()->json(['token' => $token->plainTextToken]);
+    }
+
+    /**
+     * Revoke an API token.
+     */
+    public function revokeToken(Request $request, int $tokenId)
+    {
+        $request->user()->tokens()->where('id', $tokenId)->delete();
+
+        return response()->json(['message' => 'Token revoked']);
+    }
+
+    /**
      * Delete the user's account.
      */
     public function destroy(Request $request): RedirectResponse
