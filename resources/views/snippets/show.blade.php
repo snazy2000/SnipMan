@@ -2,31 +2,6 @@
 
 @section('title', $snippet->title)
 
-@push('styles')
-    <style>
-        .code-container {
-            position: relative;
-        }
-
-        /* History sidebar overlay */
-        #history-sidebar {
-            transform: translateX(100%);
-            transition: transform 0.3s ease-in-out;
-        }
-
-        #history-sidebar:not(.hidden) {
-            transform: translateX(0);
-        }
-
-        /* Backdrop overlay */
-        .history-backdrop {
-            position: fixed;
-            inset: 0;
-            background-color: rgba(0, 0, 0, 0.5);
-            z-index: 40;
-        }
-    </style>
-@endpush
 
 @section('content')
     <!-- Header -->
@@ -77,6 +52,16 @@
                     <i class="fas fa-copy mr-1.5"></i>
                     <span>Copy</span>
                 </button>
+
+                @can('update', $snippet)
+                <button id="pin-btn"
+                        onclick="togglePin()"
+                        class="inline-flex items-center justify-center px-4 py-2 {{ $snippet->is_pinned ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300' : 'bg-gray-100 dark:bg-gray-600 text-gray-700 dark:text-gray-200' }} hover:bg-amber-100 dark:hover:bg-amber-900/40 rounded-lg text-sm font-medium transition-colors duration-200 whitespace-nowrap"
+                        title="{{ $snippet->is_pinned ? 'Unpin snippet' : 'Pin snippet' }}">
+                    <i class="fas fa-thumbtack mr-1.5 {{ $snippet->is_pinned ? '' : 'opacity-50' }}"></i>
+                    <span>{{ $snippet->is_pinned ? 'Pinned' : 'Pin' }}</span>
+                </button>
+                @endcan
 
                 <!-- More Actions Dropdown -->
                 <div class="relative" x-data="{ open: false }">
@@ -207,6 +192,13 @@
                 </dl>
 
                 <!-- AI Analysis Section -->
+                @if($snippet->description)
+                    <div class="mt-6 p-4 bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-lg">
+                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Description</p>
+                        <p class="text-sm text-gray-800 dark:text-gray-200 leading-relaxed">{{ $snippet->description }}</p>
+                    </div>
+                @endif
+
                 @if(($snippet->hasAIAnalysis() || ($snippet->isAIProcessing() && $aiAutoDescriptionEnabled) || $snippet->hasAIProcessingFailed()) && $aiAutoDescriptionEnabled)
                     <div class="mt-8 pt-6 border-t-2 border-gradient-to-r from-indigo-200 to-purple-200 dark:from-indigo-700 dark:to-purple-700">
                         <div class="flex items-center justify-between mb-6">
@@ -536,6 +528,33 @@
 @include('partials.monaco-theme-loader')
 
 <script>
+async function togglePin() {
+    const btn = document.getElementById('pin-btn');
+    const resp = await fetch('{{ route('snippets.pin', $snippet) }}', {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            'Accept': 'application/json',
+        },
+    });
+    if (resp.ok) {
+        const data = await resp.json();
+        const icon = btn.querySelector('i');
+        const label = btn.querySelector('span');
+        if (data.is_pinned) {
+            btn.classList.remove('bg-gray-100', 'dark:bg-gray-600', 'text-gray-700', 'dark:text-gray-200');
+            btn.classList.add('bg-amber-100', 'dark:bg-amber-900/40', 'text-amber-700', 'dark:text-amber-300');
+            icon.classList.remove('opacity-50');
+            label.textContent = 'Pinned';
+        } else {
+            btn.classList.add('bg-gray-100', 'dark:bg-gray-600', 'text-gray-700', 'dark:text-gray-200');
+            btn.classList.remove('bg-amber-100', 'dark:bg-amber-900/40', 'text-amber-700', 'dark:text-amber-300');
+            icon.classList.add('opacity-50');
+            label.textContent = 'Pin';
+        }
+    }
+}
+
 function copyToClipboard() {
     let code;
 

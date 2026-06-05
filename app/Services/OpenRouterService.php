@@ -92,7 +92,7 @@ class OpenRouterService
         try {
             Log::info('Testing OpenRouter connection', [
                 'url' => "{$this->baseUrl}/models",
-                'api_key_prefix' => substr($this->apiKey, 0, 10).'...',
+                'has_api_key' => ! empty($this->apiKey),
                 'timeout' => 5,
                 'environment' => app()->environment(),
             ]);
@@ -105,7 +105,7 @@ class OpenRouterService
                 ]);
 
             // For development/Windows environments, allow bypassing SSL verification
-            if (app()->environment(['local', 'development']) || config('ai.openrouter.disable_ssl_verify', false)) {
+            if (app()->environment(['local', 'development'])) {
                 Log::info('OpenRouter: Disabling SSL verification for development environment');
                 $httpClient = $httpClient->withOptions([
                     'verify' => false,
@@ -176,7 +176,7 @@ class OpenRouterService
                 ]);
 
             // For development/Windows environments, allow bypassing SSL verification
-            if (app()->environment(['local', 'development']) || config('ai.openrouter.disable_ssl_verify', false)) {
+            if (app()->environment(['local', 'development'])) {
                 Log::info('OpenRouter getAvailableModels: Disabling SSL verification for development environment');
                 $httpClient = $httpClient->withOptions([
                     'verify' => false,
@@ -245,7 +245,7 @@ class OpenRouterService
                 ]);
 
             // For development/Windows environments, allow bypassing SSL verification
-            if (app()->environment(['local', 'development']) || config('ai.openrouter.disable_ssl_verify', false)) {
+            if (app()->environment(['local', 'development'])) {
                 Log::info('OpenRouter makeRequest: Disabling SSL verification');
                 $httpClient = $httpClient->withOptions([
                     'verify' => false,

@@ -229,10 +229,11 @@ class TeamController extends Controller
     {
         $hashedToken = hash('sha256', $token);
 
-        // Find the team invitation
+        // Find the team invitation (lock row to prevent race condition on concurrent acceptance)
         $membership = \DB::table('team_user')
             ->where('invitation_token', $hashedToken)
             ->where('invitation_status', 'pending')
+            ->lockForUpdate()
             ->first();
 
         if (! $membership) {

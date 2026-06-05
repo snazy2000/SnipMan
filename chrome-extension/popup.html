@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Snippet Manager</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <div id="app">
+    <!-- Not configured state -->
+    <div id="not-configured" class="hidden">
+      <div class="empty-state">
+        <div class="empty-icon">⚙️</div>
+        <p>Snippet Manager is not configured.</p>
+        <button id="open-options" class="btn btn-primary">Open Settings</button>
+      </div>
+    </div>
+
+    <!-- Main UI -->
+    <div id="main" class="hidden">
+      <header>
+        <div class="header-title">
+          <span class="logo">✂️</span>
+          <span>Snippet Manager</span>
+        </div>
+        <div class="header-actions">
+          <button id="btn-new" class="btn btn-sm btn-primary" title="Open Snippet Manager">+ New</button>
+          <button id="btn-settings" class="btn btn-sm btn-ghost" title="Settings">⚙️</button>
+        </div>
+      </header>
+
+      <!-- Search bar -->
+      <div class="search-wrap">
+        <input id="search" type="text" placeholder="Search snippets…" autocomplete="off" />
+        <select id="owner-filter">
+          <option value="all">All</option>
+          <option value="personal">Personal</option>
+        </select>
+      </div>
+
+      <!-- Snippet list -->
+      <div id="list-view">
+        <div id="snippet-list"></div>
+        <div id="list-empty" class="hidden empty-state">
+          <p>No snippets found.</p>
+        </div>
+        <div id="list-loading" class="loading">Loading…</div>
+      </div>
+
+      <!-- Snippet detail view -->
+      <div id="detail-view" class="hidden">
+        <div class="detail-header">
+          <button id="btn-back" class="btn btn-sm btn-ghost">← Back</button>
+          <button id="btn-copy" class="btn btn-sm btn-primary">Copy</button>
+        </div>
+        <div class="detail-meta">
+          <span id="detail-title" class="detail-title"></span>
+          <span id="detail-lang" class="badge"></span>
+        </div>
+        <div id="detail-tags" class="tags"></div>
+        <p id="detail-description" class="detail-description"></p>
+        <pre id="detail-code" class="code-block"><code></code></pre>
+      </div>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

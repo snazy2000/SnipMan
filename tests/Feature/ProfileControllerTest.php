@@ -54,12 +54,12 @@ test('user can update monaco theme preference', function () {
     $user = User::factory()->create(['monaco_theme' => 'vs-dark']);
 
     $response = $this->actingAs($user)->patch(route('profile.theme.update'), [
-        'monaco_theme' => 'vs-light',
+        'monaco_theme' => 'monokai',
     ]);
 
     $response->assertRedirect();
 
-    expect($user->fresh()->monaco_theme)->toBe('vs-light');
+    expect($user->fresh()->monaco_theme)->toBe('monokai');
 });
 
 test('user can update monaco language preference', function () {

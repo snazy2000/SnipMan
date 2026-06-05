@@ -103,8 +103,17 @@ class AISettingsController extends Controller
             }
 
             if ($shouldUpdate) {
+                $oldValue = $setting->value;
                 AISetting::set($setting->key, $newValue);
                 $updated++;
+
+                Log::info('AI setting changed', [
+                    'user_id' => auth()->id(),
+                    'user_email' => auth()->user()->email,
+                    'setting_key' => $setting->key,
+                    'old_value' => $setting->is_sensitive ? '***' : $oldValue,
+                    'new_value' => $setting->is_sensitive ? '***' : $newValue,
+                ]);
             }
         }
 
@@ -141,6 +150,11 @@ class AISettingsController extends Controller
     public function resetToDefaults()
     {
         try {
+            Log::warning('AI settings reset to defaults', [
+                'user_id' => auth()->id(),
+                'user_email' => auth()->user()->email,
+            ]);
+
             // Run the seeder to reset all settings to defaults
             Artisan::call('db:seed', ['--class' => 'AISettingsSeeder']);
 

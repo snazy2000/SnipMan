@@ -29,6 +29,7 @@ Route::middleware('guest')->group(function () {
         ->name('invitation.show');
 
     Route::post('invitation/{token}', [InvitationController::class, 'accept'])
+        ->middleware('throttle:10,1')
         ->name('invitation.accept');
 
     Route::get('teams/invitation/{token}', [TeamController::class, 'acceptInvitation'])

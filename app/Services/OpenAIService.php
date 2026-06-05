@@ -79,7 +79,7 @@ class OpenAIService
                     'Content-Type' => 'application/json',
                 ]);
 
-            if (app()->environment(['local', 'development']) || config('ai.openai.disable_ssl_verify', false)) {
+            if (app()->environment(['local', 'development'])) {
                 $httpClient = $httpClient->withOptions([
                     'verify' => false,
                     'curl' => [
@@ -115,7 +115,7 @@ class OpenAIService
                     'Content-Type' => 'application/json',
                 ]);
 
-            if (app()->environment(['local', 'development']) || config('ai.openai.disable_ssl_verify', false)) {
+            if (app()->environment(['local', 'development'])) {
                 $httpClient = $httpClient->withOptions([
                     'verify' => false,
                     'curl' => [
@@ -161,7 +161,7 @@ class OpenAIService
                     'Content-Type' => 'application/json',
                 ]);
 
-            if (app()->environment(['local', 'development']) || config('ai.openai.disable_ssl_verify', false)) {
+            if (app()->environment(['local', 'development'])) {
                 $httpClient = $httpClient->withOptions([
                     'verify' => false,
                     'curl' => [

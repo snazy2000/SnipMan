@@ -42,6 +42,21 @@
                     @enderror
                 </div>
 
+                <!-- Description -->
+                <div>
+                    <label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 transition-colors duration-200">
+                        Description <span class="text-gray-400 dark:text-gray-500 font-normal">(optional)</span>
+                    </label>
+                    <textarea id="description"
+                              name="description"
+                              rows="2"
+                              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent transition-colors duration-200 @error('description') border-red-500 @enderror"
+                              placeholder="Describe what this snippet does or when to use it…">{{ old('description', $snippet->description) }}</textarea>
+                    @error('description')
+                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                    @enderror
+                </div>
+
                 <!-- Language -->
                 <div>
                     <label for="language" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 transition-colors duration-200">
@@ -194,20 +209,22 @@
                     <template x-for="(tag, idx) in tags" :key="tag">
                         <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-200 border border-green-200 dark:border-green-700 transition-colors duration-200">
                             <span x-text="tag"></span>
-                            <button type="button" class="ml-2 text-green-700 hover:text-red-600 dark:text-green-300 dark:hover:text-red-400 focus:outline-none" @click="removeTag(idx)">
-                                &times;
-                            </button>
+                            <button type="button" class="ml-2 text-green-700 hover:text-red-600 dark:text-green-300 dark:hover:text-red-400 focus:outline-none" @click="removeTag(idx)">&times;</button>
                         </span>
                     </template>
-                    <input
-                        x-model="input"
-                        @keydown.enter.prevent="addTag()"
-                        @keydown.tab.prevent="addTag()"
-                        @keydown.",".prevent="addTag()"
-                        type="text"
-                        class="px-2 py-1 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-green-500 dark:focus:ring-green-400 transition-colors duration-200"
-                        placeholder="Add tag and press Enter, Tab, or Comma"
-                    >
+                    <div class="relative">
+                        <input x-model="input" @keydown.enter.prevent="addTag()" @keydown.tab.prevent="addTag()" @keydown.",".prevent="addTag()"
+                               @input="fetchSuggestions()" @focus="fetchSuggestions()" @blur.debounce.200ms="suggestions = []"
+                               type="text"
+                               class="px-2 py-1 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-green-500 transition-colors duration-200"
+                               placeholder="Add tag…">
+                        <ul x-show="suggestions.length > 0" class="absolute z-20 left-0 mt-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded shadow-lg text-sm max-h-40 overflow-auto">
+                            <template x-for="s in suggestions" :key="s">
+                                <li @mousedown.prevent="input = s; addTag(); suggestions = []"
+                                    class="px-3 py-1.5 cursor-pointer hover:bg-indigo-50 dark:hover:bg-indigo-900/30 text-gray-700 dark:text-gray-300" x-text="s"></li>
+                            </template>
+                        </ul>
+                    </div>
                 </div>
                 <input type="hidden" name="user_tags" :value="JSON.stringify(tags)">
                 <span class="text-xs text-gray-400 mt-1 block">Press Enter, Tab, or comma to add. Click × to remove.</span>
@@ -496,17 +513,25 @@ function tagInput(initial) {
     return {
         tags: Array.isArray(initial.tags) ? initial.tags : (typeof initial.tags === 'string' && initial.tags ? JSON.parse(initial.tags) : []),
         input: initial.input || '',
+        suggestions: [],
         addTag() {
             let tag = this.input.trim();
             if (tag.endsWith(',')) tag = tag.slice(0, -1);
-            if (tag && !this.tags.includes(tag)) {
-                this.tags.push(tag);
-            }
+            if (tag && !this.tags.includes(tag)) this.tags.push(tag);
             this.input = '';
+            this.suggestions = [];
         },
         removeTag(idx) {
             this.tags.splice(idx, 1);
-        }
+        },
+        async fetchSuggestions() {
+            if (this.input.length < 1) { this.suggestions = []; return; }
+            const resp = await fetch(`{{ route('tags.autocomplete') }}?q=${encodeURIComponent(this.input)}`);
+            if (resp.ok) {
+                const data = await resp.json();
+                this.suggestions = (data.tags || []).filter(t => !this.tags.includes(t));
+            }
+        },
     }
 }
 

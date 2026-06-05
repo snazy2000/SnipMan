@@ -40,6 +40,11 @@
                 @include('profile.partials.update-password-form')
             </div>
 
+            <!-- API Tokens -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 transition-colors duration-200 p-6">
+                @include('profile.partials.api-tokens-form')
+            </div>
+
             <!-- Delete Account -->
             <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 transition-colors duration-200 p-6">
                 @include('profile.partials.delete-user-form')
