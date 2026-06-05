@@ -755,7 +755,7 @@ class SnippetController extends Controller
         $user = Auth::user();
         $snippets = Snippet::whereIn('id', $request->ids)->get();
 
-        $allowed = $snippets->filter(function ($s) use ($user) {
+        $allowed = $snippets->filter(function ($s) {
             try {
                 $this->authorize('update', $s);
 
@@ -844,12 +844,12 @@ class SnippetController extends Controller
 
         if ($format === 'zip') {
             $zip = new \ZipArchive;
-            $tmpFile = tempnam(sys_get_temp_dir(), 'snippets_') . '.zip';
+            $tmpFile = tempnam(sys_get_temp_dir(), 'snippets_').'.zip';
             $zip->open($tmpFile, \ZipArchive::CREATE);
 
             foreach ($snippets as $snippet) {
                 $ext = $this->extensionForLanguage($snippet->language);
-                $filename = preg_replace('/[^a-zA-Z0-9_\-]/', '_', $snippet->title) . ".{$ext}";
+                $filename = preg_replace('/[^a-zA-Z0-9_\-]/', '_', $snippet->title).".{$ext}";
                 $zip->addFromString($filename, $snippet->content);
             }
 

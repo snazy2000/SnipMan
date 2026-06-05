@@ -5,9 +5,11 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Jobs\ProcessSnippetAI;
 use App\Models\AISetting;
+use App\Models\Folder;
 use App\Models\Snippet;
 use App\Models\SnippetVersion;
 use App\Models\Team;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class SnippetApiController extends Controller
@@ -99,12 +101,12 @@ class SnippetApiController extends Controller
             $ownerType = Team::class;
             $ownerId = $team->id;
         } else {
-            $ownerType = \App\Models\User::class;
+            $ownerType = User::class;
             $ownerId = $user->id;
         }
 
         if (! empty($validated['folder_id'])) {
-            $folder = \App\Models\Folder::findOrFail($validated['folder_id']);
+            $folder = Folder::findOrFail($validated['folder_id']);
             $folderOwnerMatches = $folder->owner_type === $ownerType && $folder->owner_id === $ownerId;
             if (! $folderOwnerMatches) {
                 return response()->json(['message' => 'Folder does not belong to the selected owner'], 403);
@@ -144,7 +146,7 @@ class SnippetApiController extends Controller
             ->map(fn ($f) => ['id' => $f->id, 'name' => $f->name, 'parent_id' => $f->parent_id, 'owner' => 'personal']);
 
         $teams = $user->teams()->get()->keyBy('id');
-        $teamFolders = \App\Models\Folder::whereIn('owner_id', $teams->keys())
+        $teamFolders = Folder::whereIn('owner_id', $teams->keys())
             ->where('owner_type', Team::class)
             ->select('id', 'name', 'parent_id', 'owner_id')
             ->get()
@@ -173,9 +175,10 @@ class SnippetApiController extends Controller
 
     private function canView($user, Snippet $snippet): bool
     {
-        if ($snippet->owner_type === \App\Models\User::class) {
+        if ($snippet->owner_type === User::class) {
             return $snippet->owner_id === $user->id;
         }
+
         return $user->teams->contains('id', $snippet->owner_id);
     }
 
@@ -187,7 +190,7 @@ class SnippetApiController extends Controller
             'language' => $snippet->language,
             'folder' => $snippet->folder ? ['id' => $snippet->folder->id, 'name' => $snippet->folder->name] : null,
             'creator' => $snippet->creator ? ['id' => $snippet->creator->id, 'name' => $snippet->creator->name] : null,
-            'owner_type' => $snippet->owner_type === \App\Models\User::class ? 'personal' : 'team',
+            'owner_type' => $snippet->owner_type === User::class ? 'personal' : 'team',
             'team' => $team ? ['id' => $team->id, 'name' => $team->name] : null,
             'description' => $snippet->description,
             'user_tags' => $snippet->user_tags ?? [],

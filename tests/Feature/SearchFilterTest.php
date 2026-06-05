@@ -21,7 +21,7 @@ test('search can filter by language', function () {
         'owner_type' => 'App\Models\User', 'owner_id' => $user->id, 'created_by' => $user->id,
     ]);
 
-    $response = $this->actingAs($user)->getJson(route('search') . '?q=Snippet&language=php');
+    $response = $this->actingAs($user)->getJson(route('search').'?q=Snippet&language=php');
 
     $response->assertOk();
     $snippets = $response->json('snippets');
@@ -37,7 +37,7 @@ test('language filter is case insensitive', function () {
         'owner_type' => 'App\Models\User', 'owner_id' => $user->id, 'created_by' => $user->id,
     ]);
 
-    $response = $this->actingAs($user)->getJson(route('search') . '?q=Snippet&language=PHP');
+    $response = $this->actingAs($user)->getJson(route('search').'?q=Snippet&language=PHP');
 
     $snippets = $response->json('snippets');
     expect(collect($snippets)->pluck('title'))->toContain('PHP Snippet');
@@ -59,7 +59,7 @@ test('search can filter to personal snippets only', function () {
         'owner_type' => 'App\Models\Team', 'owner_id' => $team->id, 'created_by' => $user->id,
     ]);
 
-    $response = $this->actingAs($user)->getJson(route('search') . '?q=Snippet&owner=personal');
+    $response = $this->actingAs($user)->getJson(route('search').'?q=Snippet&owner=personal');
 
     $snippets = $response->json('snippets');
     expect(collect($snippets)->pluck('title'))->toContain('Personal Snippet')
@@ -80,7 +80,7 @@ test('search can filter to team snippets only', function () {
         'owner_type' => 'App\Models\Team', 'owner_id' => $team->id, 'created_by' => $user->id,
     ]);
 
-    $response = $this->actingAs($user)->getJson(route('search') . '?q=Snippet&owner=team');
+    $response = $this->actingAs($user)->getJson(route('search').'?q=Snippet&owner=team');
 
     $snippets = $response->json('snippets');
     expect(collect($snippets)->pluck('title'))->toContain('Team Snippet')
@@ -101,7 +101,7 @@ test('search can filter by tag', function () {
         'owner_type' => 'App\Models\User', 'owner_id' => $user->id, 'created_by' => $user->id,
     ]);
 
-    $response = $this->actingAs($user)->getJson(route('search') . '?q=ged&tag=laravel');
+    $response = $this->actingAs($user)->getJson(route('search').'?q=ged&tag=laravel');
 
     $snippets = $response->json('snippets');
     expect(collect($snippets)->pluck('title'))->toContain('Tagged')
@@ -125,7 +125,7 @@ test('search can filter by date_from', function () {
     ]);
 
     $response = $this->actingAs($user)->getJson(
-        route('search') . '?q=Snippet&date_from=' . now()->subDays(1)->toDateString()
+        route('search').'?q=Snippet&date_from='.now()->subDays(1)->toDateString()
     );
 
     $snippets = $response->json('snippets');
@@ -148,7 +148,7 @@ test('search can filter by date_to', function () {
     ]);
 
     $response = $this->actingAs($user)->getJson(
-        route('search') . '?q=Snippet&date_to=' . now()->subDays(5)->toDateString()
+        route('search').'?q=Snippet&date_to='.now()->subDays(5)->toDateString()
     );
 
     $snippets = $response->json('snippets');
@@ -166,7 +166,7 @@ test('tag autocomplete returns matching tags from user snippets', function () {
         'owner_type' => 'App\Models\User', 'owner_id' => $user->id, 'created_by' => $user->id,
     ]);
 
-    $response = $this->actingAs($user)->getJson(route('tags.autocomplete') . '?q=lar');
+    $response = $this->actingAs($user)->getJson(route('tags.autocomplete').'?q=lar');
 
     $response->assertOk();
     expect($response->json('tags'))->toContain('laravel')
@@ -182,7 +182,7 @@ test('tag autocomplete does not return tags from other users snippets', function
         'owner_type' => 'App\Models\User', 'owner_id' => $other->id, 'created_by' => $other->id,
     ]);
 
-    $response = $this->actingAs($user)->getJson(route('tags.autocomplete') . '?q=secret');
+    $response = $this->actingAs($user)->getJson(route('tags.autocomplete').'?q=secret');
 
     expect($response->json('tags'))->toBeEmpty();
 });
@@ -197,6 +197,6 @@ test('tag autocomplete returns empty with no query', function () {
 });
 
 test('tag autocomplete requires authentication', function () {
-    $response = $this->getJson(route('tags.autocomplete') . '?q=test');
+    $response = $this->getJson(route('tags.autocomplete').'?q=test');
     $response->assertUnauthorized();
 });

@@ -323,7 +323,7 @@ class AdminController extends Controller
         $team->name = $validated['name'];
 
         if ((int) $validated['owner_id'] !== $team->owner_id) {
-            $newOwner = \App\Models\User::where('id', $validated['owner_id'])
+            $newOwner = User::where('id', $validated['owner_id'])
                 ->where('is_disabled', false)
                 ->whereNull('deleted_at')
                 ->first();

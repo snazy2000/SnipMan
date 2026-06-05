@@ -2,7 +2,6 @@
 
 use App\Models\Folder;
 use App\Models\Snippet;
-use App\Models\Team;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -111,7 +110,7 @@ test('user can export their snippets as json', function () {
         'owner_type' => 'App\Models\User', 'owner_id' => $user->id, 'created_by' => $user->id,
     ]);
 
-    $response = $this->actingAs($user)->get(route('snippets.export') . '?format=json');
+    $response = $this->actingAs($user)->get(route('snippets.export').'?format=json');
 
     $response->assertOk();
     $response->assertHeader('Content-Type', 'application/json');
@@ -132,7 +131,7 @@ test('json export includes expected fields', function () {
         'user_tags' => ['tag1'],
     ]);
 
-    $response = $this->actingAs($user)->get(route('snippets.export') . '?format=json');
+    $response = $this->actingAs($user)->get(route('snippets.export').'?format=json');
 
     $data = json_decode($response->getContent(), true);
     $snippet = $data['snippets'][0];
@@ -148,7 +147,7 @@ test('user can export their snippets as zip', function () {
         'owner_type' => 'App\Models\User', 'owner_id' => $user->id, 'created_by' => $user->id,
     ]);
 
-    $response = $this->actingAs($user)->get(route('snippets.export') . '?format=zip');
+    $response = $this->actingAs($user)->get(route('snippets.export').'?format=zip');
 
     $response->assertOk();
     $response->assertHeader('Content-Type', 'application/zip');
@@ -167,7 +166,7 @@ test('export does not include other users snippets', function () {
         'owner_type' => 'App\Models\User', 'owner_id' => $other->id, 'created_by' => $other->id,
     ]);
 
-    $response = $this->actingAs($user)->get(route('snippets.export') . '?format=json');
+    $response = $this->actingAs($user)->get(route('snippets.export').'?format=json');
 
     $data = json_decode($response->getContent(), true);
     expect($data['snippets'])->toHaveCount(1);
@@ -175,6 +174,6 @@ test('export does not include other users snippets', function () {
 });
 
 test('export requires authentication', function () {
-    $response = $this->get(route('snippets.export') . '?format=json');
+    $response = $this->get(route('snippets.export').'?format=json');
     $response->assertRedirect('/login');
 });

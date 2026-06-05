@@ -6,7 +6,6 @@ use App\Models\Snippet;
 use App\Models\Team;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Auth;
 
 uses(RefreshDatabase::class);
 
@@ -63,7 +62,7 @@ test('cannot preselect a folder belonging to another user on snippet create', fu
     ]);
 
     $response = $this->actingAs($user)
-        ->get(route('snippets.create') . '?folder_id=' . $otherFolder->id);
+        ->get(route('snippets.create').'?folder_id='.$otherFolder->id);
 
     $response->assertForbidden();
 });
@@ -76,7 +75,7 @@ test('can preselect own folder on snippet create', function () {
     ]);
 
     $response = $this->actingAs($user)
-        ->get(route('snippets.create') . '?folder_id=' . $folder->id);
+        ->get(route('snippets.create').'?folder_id='.$folder->id);
 
     $response->assertOk();
 });
