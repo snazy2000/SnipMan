@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Folder;
 use App\Models\Team;
+use App\View\Composers\SidebarComposer;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -118,6 +119,8 @@ class FolderController extends Controller
             ]);
         }
 
+        SidebarComposer::forget(Auth::id());
+
         return redirect()->route('folders.index')
             ->with('success', 'Folder created successfully.');
     }
@@ -160,7 +163,15 @@ class FolderController extends Controller
             'parent_id' => 'nullable|exists:folders,id',
         ]);
 
+        if ($request->filled('parent_id')) {
+            $parent = Folder::findOrFail($request->parent_id);
+            if ($parent->owner_type !== $folder->owner_type || $parent->owner_id !== $folder->owner_id) {
+                abort(403, 'Cannot nest folder: owner mismatch.');
+            }
+        }
+
         $folder->update($request->only(['name', 'parent_id']));
+        SidebarComposer::forget(Auth::id());
 
         return redirect()->route('folders.index')
             ->with('success', 'Folder updated successfully.');
@@ -174,6 +185,7 @@ class FolderController extends Controller
         $this->authorize('delete', $folder);
 
         $folder->delete();
+        SidebarComposer::forget(Auth::id());
 
         return redirect()->route('folders.index')
             ->with('success', 'Folder deleted successfully.');
@@ -192,11 +204,17 @@ class FolderController extends Controller
 
         $parentId = $request->parent_id;
 
-        // Prevent circular references
         if ($parentId) {
             $parent = Folder::findOrFail($parentId);
 
-            // Check if the target parent is a descendant of the current folder
+            // Prevent moving to a folder with a different owner
+            if ($parent->owner_type !== $folder->owner_type || $parent->owner_id !== $folder->owner_id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot move folder: owner mismatch.',
+                ], 403);
+            }
+
             if ($this->isDescendant($folder, $parent)) {
                 return response()->json([
                     'success' => false,
@@ -204,7 +222,6 @@ class FolderController extends Controller
                 ], 400);
             }
 
-            // Validate user has access to target parent folder
             $this->authorize('update', $parent);
         }
 

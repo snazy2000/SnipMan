@@ -2,7 +2,10 @@
 @config "../../tailwind.config.js";
 
 @layer components {
-    /* Monaco Editor Container */
+    /* ── Alpine ── */
+    [x-cloak] { display: none !important; }
+
+    /* ── Monaco Editor ── */
     .monaco-container {
         height: 400px;
         border: 1px solid #d1d5db;
@@ -15,7 +18,11 @@
         border-color: #4b5563;
     }
 
-    /* Monaco Editor Placeholder */
+    /* Shared snippet page uses a taller editor */
+    .monaco-container--tall {
+        height: 500px;
+    }
+
     .monaco-placeholder {
         position: absolute;
         left: 68px;
@@ -36,7 +43,7 @@
         display: none;
     }
 
-    /* Rounded Select Dropdowns */
+    /* ── Select dropdowns ── */
     select {
         border-radius: 0.75rem !important;
         appearance: none;
@@ -47,24 +54,196 @@
         padding-right: 2.5rem;
     }
 
-    /* Style the dropdown menu itself */
     select option {
         border-radius: 0.75rem;
         padding: 0.5rem;
     }
 
-    /* For better cross-browser support, use a wrapper approach */
-    select::-webkit-scrollbar {
-        width: 8px;
+    select::-webkit-scrollbar { width: 8px; }
+    select::-webkit-scrollbar-track { background: transparent; border-radius: 0.75rem; }
+    select::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 0.75rem; }
+
+    /* ── Toast notifications ── */
+    .toast-container {
+        position: fixed;
+        top: 5rem;
+        right: 1.5rem;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        max-width: 24rem;
     }
 
-    select::-webkit-scrollbar-track {
-        background: transparent;
-        border-radius: 0.75rem;
+    .toast {
+        padding: 1rem 1.25rem;
+        border-radius: 0.5rem;
+        box-shadow: 0 10px 15px -3px rgba(0,0,0,.1), 0 4px 6px -2px rgba(0,0,0,.05);
+        display: flex;
+        align-items: start;
+        gap: 0.75rem;
+        animation: toast-in 0.3s ease-out;
     }
 
-    select::-webkit-scrollbar-thumb {
-        background: #4b5563;
-        border-radius: 0.75rem;
+    .toast.toast-error {
+        background-color: #fef2f2;
+        border-left: 4px solid #ef4444;
+        color: #991b1b;
+    }
+
+    .dark .toast.toast-error {
+        background-color: #7f1d1d;
+        border-left-color: #dc2626;
+        color: #fecaca;
+    }
+
+    .toast.toast-success {
+        background-color: #f0fdf4;
+        border-left: 4px solid #22c55e;
+        color: #14532d;
+    }
+
+    .dark .toast.toast-success {
+        background-color: #14532d;
+        border-left-color: #16a34a;
+        color: #bbf7d0;
+    }
+
+    .toast.removing {
+        animation: toast-out 0.3s ease-in forwards;
+    }
+
+    @keyframes toast-in {
+        from { transform: translateX(100%); opacity: 0; }
+        to   { transform: translateX(0);    opacity: 1; }
+    }
+
+    @keyframes toast-out {
+        from { transform: translateX(0);    opacity: 1; }
+        to   { transform: translateX(100%); opacity: 0; }
+    }
+
+    /* ── Sidebar scrollbar ── */
+    #sidebar-tree::-webkit-scrollbar { width: 8px; }
+    #sidebar-tree::-webkit-scrollbar-track { background: transparent; }
+    #sidebar-tree::-webkit-scrollbar-thumb { background: #9ca3af; border-radius: 4px; }
+    #sidebar-tree::-webkit-scrollbar-thumb:hover { background: #6b7280; }
+
+    .dark #sidebar-tree::-webkit-scrollbar-thumb { background: #4b5563; }
+    .dark #sidebar-tree::-webkit-scrollbar-thumb:hover { background: #6b7280; }
+
+    #sidebar-tree {
+        scrollbar-width: thin;
+        scrollbar-color: #9ca3af transparent;
+    }
+
+    .dark #sidebar-tree {
+        scrollbar-color: #4b5563 transparent;
+    }
+
+    /* ── Main content scrollbar ── */
+    .main-content::-webkit-scrollbar { width: 10px; }
+    .main-content::-webkit-scrollbar-track { background: transparent; }
+    .main-content::-webkit-scrollbar-thumb { background: #9ca3af; border-radius: 5px; }
+    .main-content::-webkit-scrollbar-thumb:hover { background: #6b7280; }
+
+    .dark .main-content::-webkit-scrollbar-thumb { background: #4b5563; }
+    .dark .main-content::-webkit-scrollbar-thumb:hover { background: #6b7280; }
+
+    .main-content {
+        scrollbar-width: thin;
+        scrollbar-color: #9ca3af transparent;
+    }
+
+    .dark .main-content {
+        scrollbar-color: #4b5563 transparent;
+    }
+
+    /* ── Folder tree ── */
+    .tree-container { user-select: none; }
+
+    .folder-tree-item { position: relative; }
+
+    .folder-header:hover { background-color: #f3f4f6; }
+    .dark .folder-header:hover { background-color: #1f2937; }
+
+    .folder-contents {
+        overflow: hidden;
+        transition: all 0.1s ease-in-out;
+    }
+
+    .folder-toggle { transition: transform 0.1s ease-in-out; }
+
+    /* ── Drag & drop ── */
+    .drop-zone {
+        min-height: 20px;
+        transition: all 0.1s ease-in-out;
+        pointer-events: auto !important;
+        position: relative;
+    }
+
+    body.dragging .drop-zone {
+        border-color: #3b82f6 !important;
+        background-color: rgba(59, 130, 246, 0.1) !important;
+        border-style: dashed !important;
+        border-width: 2px !important;
+    }
+
+    .drop-zone.drag-over {
+        border-color: #3b82f6 !important;
+        background-color: rgba(59, 130, 246, 0.2) !important;
+        border-style: solid !important;
+    }
+
+    .drop-zone.drop-zone-disabled:not(.folder-header) {
+        border-color: transparent !important;
+        background-color: transparent !important;
+        min-height: 0 !important;
+        padding: 0 !important;
+    }
+
+    .dragging { opacity: 0.5; }
+
+    .drag-ghost {
+        position: fixed;
+        pointer-events: none;
+        z-index: 1000;
+        background: white;
+        border: 1px solid #d1d5db;
+        border-radius: 0.375rem;
+        padding: 0.25rem 0.5rem;
+        font-size: 0.875rem;
+        color: #111827;
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,.1);
+    }
+
+    .dark .drag-ghost {
+        background: #1f2937;
+        border-color: #4b5563;
+        color: #f3f4f6;
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,.4);
+    }
+
+    /* ── Snippet sidebar items ── */
+    .snippet-item:hover { background-color: #f3f4f6; }
+    .dark .snippet-item:hover { background-color: #1f2937; }
+
+    /* ── Snippet show — history sidebar ── */
+    .code-container { position: relative; }
+
+    #history-sidebar {
+        transform: translateX(100%);
+        transition: transform 0.3s ease-in-out;
+    }
+
+    #history-sidebar:not(.hidden) {
+        transform: translateX(0);
+    }
+
+    .history-backdrop {
+        position: fixed;
+        inset: 0;
+        background-color: rgba(0,0,0,.5);
+        z-index: 40;
     }
 }

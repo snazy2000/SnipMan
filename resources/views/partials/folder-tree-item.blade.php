@@ -24,7 +24,7 @@
         @endif
 
         <!-- Draggable Folder Area -->
-        <div class="flex items-center flex-1 cursor-move hover:bg-gray-50 dark:hover:bg-gray-700 rounded px-1 drop-zone transition-colors duration-200"
+        <div class="flex items-center flex-1 cursor-move hover:bg-gray-100 dark:hover:bg-gray-800 rounded px-1 drop-zone transition-colors duration-200"
              draggable="true"
              data-type="folder"
              data-folder-id="{{ $folder->id }}"
@@ -46,7 +46,7 @@
 
             <!-- Snippet Count -->
             @if($hasSnippets)
-                <span class="text-xs text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-700 px-1 rounded transition-colors duration-200" style="pointer-events: none;">{{ $folder->snippets->count() }}</span>
+                <span class="text-xs text-gray-400 dark:text-gray-500 bg-gray-200 dark:bg-gray-600 px-1 rounded transition-colors duration-200" style="pointer-events: none;">{{ $folder->snippets->count() }}</span>
             @endif
         </div>
     </div>
@@ -61,7 +61,7 @@
 
         <!-- Snippets in this Folder -->
         @foreach($folder->snippets as $snippet)
-            <div class="snippet-item flex items-center px-2 py-1 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded cursor-move transition-colors duration-200"
+            <div class="snippet-item flex items-center px-2 py-1 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded cursor-move transition-colors duration-200"
                  style="margin-left: {{ $paddingLeft + 8 }}px;"
                  draggable="true"
                  data-snippet-id="{{ $snippet->id }}"
@@ -69,7 +69,7 @@
                  onmousedown="this.setAttribute('data-mousedown', Date.now())"
                  onclick="if (!window.isDragging && (!this.getAttribute('data-mousedown') || Date.now() - this.getAttribute('data-mousedown') < 200)) { window.location.href='{{ route('snippets.show', $snippet) }}'; }">
 
-                <div class="w-3 h-3 mr-1"></div> <!-- Spacer for alignment -->
+                <div class="w-3 h-3 mr-1"></div>
 
                 <!-- Snippet Icon -->
                 <div class="w-4 h-4 mr-2 flex items-center justify-center"

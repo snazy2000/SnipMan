@@ -31,7 +31,7 @@ Route::middleware('auth')->group(function () {
 
     // API token management (for Chrome extension / API clients)
     Route::get('/profile/tokens', [ProfileController::class, 'tokens'])->name('profile.tokens');
-    Route::post('/profile/tokens', [ProfileController::class, 'createToken'])->name('profile.tokens.create');
+    Route::post('/profile/tokens', [ProfileController::class, 'createToken'])->middleware('throttle:10,60')->name('profile.tokens.create');
     Route::delete('/profile/tokens/{tokenId}', [ProfileController::class, 'revokeToken'])->name('profile.tokens.revoke');
 
     // Sharing routes (must be before resource routes to avoid conflicts)
@@ -49,8 +49,18 @@ Route::middleware('auth')->group(function () {
     // Clone/Fork snippet route
     Route::post('/snippets/{snippet}/clone', [SnippetController::class, 'clone'])->name('snippets.clone');
 
+    // Pin/unpin toggle
+    Route::post('/snippets/{snippet}/pin', [SnippetController::class, 'togglePin'])->name('snippets.pin');
+
     // Search routes (with rate limiting to prevent abuse)
     Route::get('/search', [SearchController::class, 'search'])->name('search')->middleware('throttle:60,1');
+    Route::get('/tags/autocomplete', [SearchController::class, 'tagAutocomplete'])->name('tags.autocomplete')->middleware('throttle:60,1');
+
+    // Bulk snippet operations
+    Route::post('/snippets/bulk', [SnippetController::class, 'bulk'])->name('snippets.bulk');
+
+    // Snippet export
+    Route::get('/snippets/export', [SnippetController::class, 'export'])->name('snippets.export');
 
     // Drag and drop routes
     Route::post('/snippets/{snippet}/move', [SnippetController::class, 'move'])->name('snippets.move');

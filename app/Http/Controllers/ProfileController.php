@@ -7,6 +7,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class ProfileController extends Controller
@@ -43,7 +44,12 @@ class ProfileController extends Controller
     public function updateTheme(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'monaco_theme' => ['required', 'string', 'max:50'],
+            'monaco_theme' => ['required', Rule::in([
+                'vs', 'vs-dark', 'active4d', 'github', 'chrome', 'clouds', 'textmate',
+                'monokai', 'dracula', 'tomorrow-night', 'tomorrow-night-blue',
+                'tomorrow-night-bright', 'tomorrow-night-eighties',
+                'solarized-dark', 'solarized-light',
+            ])],
         ]);
 
         $request->user()->update([
@@ -59,7 +65,11 @@ class ProfileController extends Controller
     public function updateLanguage(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'monaco_language' => ['required', 'string', 'max:50'],
+            'monaco_language' => ['required', Rule::in([
+                'javascript', 'typescript', 'python', 'php', 'java', 'csharp', 'cpp', 'c',
+                'go', 'rust', 'ruby', 'swift', 'kotlin', 'html', 'css', 'sql', 'bash',
+                'powershell', 'json', 'yaml', 'xml', 'markdown', 'plaintext',
+            ])],
         ]);
 
         $request->user()->update([

@@ -20,82 +20,6 @@
         <!-- Alpine.js -->
         <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
-        <!-- Alpine.js Cloak Style -->
-        <style>
-            [x-cloak] { display: none !important; }
-
-            /* Toast Notifications */
-            .toast-container {
-                position: fixed;
-                top: 5rem;
-                right: 1.5rem;
-                z-index: 9999;
-                display: flex;
-                flex-direction: column;
-                gap: 0.75rem;
-                max-width: 24rem;
-            }
-
-            .toast {
-                padding: 1rem 1.25rem;
-                border-radius: 0.5rem;
-                box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-                display: flex;
-                align-items: start;
-                gap: 0.75rem;
-                animation: slideIn 0.3s ease-out;
-            }
-
-            .toast.toast-error {
-                background-color: #fef2f2;
-                border-left: 4px solid #ef4444;
-                color: #991b1b;
-            }
-
-            .dark .toast.toast-error {
-                background-color: #7f1d1d;
-                border-left-color: #dc2626;
-                color: #fecaca;
-            }
-
-            .toast.toast-success {
-                background-color: #f0fdf4;
-                border-left: 4px solid #22c55e;
-                color: #14532d;
-            }
-
-            .dark .toast.toast-success {
-                background-color: #14532d;
-                border-left-color: #16a34a;
-                color: #bbf7d0;
-            }
-
-            @keyframes slideIn {
-                from {
-                    transform: translateX(100%);
-                    opacity: 0;
-                }
-                to {
-                    transform: translateX(0);
-                    opacity: 1;
-                }
-            }
-
-            @keyframes slideOut {
-                from {
-                    transform: translateX(0);
-                    opacity: 1;
-                }
-                to {
-                    transform: translateX(100%);
-                    opacity: 0;
-                }
-            }
-
-            .toast.removing {
-                animation: slideOut 0.3s ease-in forwards;
-            }
-        </style>
 
         <!-- Dark Mode Script -->
         <script>
@@ -110,164 +34,6 @@
 
         @stack('styles')
 
-        <!-- Tree View and Drag & Drop Styles -->
-        <style>
-            /* Custom Scrollbar for Sidebar */
-            #sidebar-tree::-webkit-scrollbar {
-                width: 8px;
-            }
-
-            #sidebar-tree::-webkit-scrollbar-track {
-                background: transparent;
-            }
-
-            #sidebar-tree::-webkit-scrollbar-thumb {
-                background: #9ca3af;
-                border-radius: 4px;
-            }
-
-            #sidebar-tree::-webkit-scrollbar-thumb:hover {
-                background: #6b7280;
-            }
-
-            .dark #sidebar-tree::-webkit-scrollbar-thumb {
-                background: #4b5563;
-            }
-
-            .dark #sidebar-tree::-webkit-scrollbar-thumb:hover {
-                background: #6b7280;
-            }
-
-            /* Firefox */
-            #sidebar-tree {
-                scrollbar-width: thin;
-                scrollbar-color: #9ca3af transparent;
-            }
-
-            .dark #sidebar-tree {
-                scrollbar-color: #4b5563 transparent;
-            }
-
-            /* Custom Scrollbar for Main Content */
-            .main-content::-webkit-scrollbar {
-                width: 10px;
-            }
-
-            .main-content::-webkit-scrollbar-track {
-                background: transparent;
-            }
-
-            .main-content::-webkit-scrollbar-thumb {
-                background: #9ca3af;
-                border-radius: 5px;
-            }
-
-            .main-content::-webkit-scrollbar-thumb:hover {
-                background: #6b7280;
-            }
-
-            .dark .main-content::-webkit-scrollbar-thumb {
-                background: #4b5563;
-            }
-
-            .dark .main-content::-webkit-scrollbar-thumb:hover {
-                background: #6b7280;
-            }
-
-            /* Firefox */
-            .main-content {
-                scrollbar-width: thin;
-                scrollbar-color: #9ca3af transparent;
-            }
-
-            .dark .main-content {
-                scrollbar-color: #4b5563 transparent;
-            }
-
-            .tree-container {
-                user-select: none;
-            }
-
-            .folder-tree-item {
-                position: relative;
-            }
-
-            .folder-header:hover {
-                background-color: #f9fafb;
-            }
-
-            .dark .folder-header:hover {
-                background-color: #374151;
-            }
-
-            .folder-contents {
-                overflow: hidden;
-                transition: all 0.1s ease-in-out;
-            }
-
-            .drop-zone {
-                min-height: 20px;
-                transition: all 0.1s ease-in-out;
-                pointer-events: auto !important;
-                position: relative;
-            }
-
-            /* Show drop zones when dragging */
-            body.dragging .drop-zone {
-                border-color: #3b82f6 !important;
-                background-color: rgba(59, 130, 246, 0.1) !important;
-                border-style: dashed !important;
-                border-width: 2px !important;
-            }
-
-            .drop-zone.drag-over {
-                border-color: #3b82f6 !important;
-                background-color: rgba(59, 130, 246, 0.2) !important;
-                border-style: solid !important;
-            }
-
-            .dragging {
-                opacity: 0.5;
-            }
-
-            .drop-zone.drop-zone-disabled:not(.folder-header) {
-                border-color: transparent !important;
-                background-color: transparent !important;
-                min-height: 0 !important;
-                padding: 0 !important;
-            }
-
-            /* Show drop zones more clearly when dragging */
-            body.dragging .drop-zone {
-                border-color: #3b82f6 !important;
-                background-color: rgba(59, 130, 246, 0.1) !important;
-                border-style: dashed !important;
-                border-width: 2px !important;
-            }
-
-            .drag-ghost {
-                position: fixed;
-                pointer-events: none;
-                z-index: 1000;
-                background: white;
-                border: 1px solid #d1d5db;
-                border-radius: 0.375rem;
-                padding: 0.25rem 0.5rem;
-                font-size: 0.875rem;
-                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            }
-
-            .snippet-item:hover {
-                background-color: #f3f4f6;
-            }
-
-            .folder-toggle {
-                transition: transform 0.1s ease-in-out;
-            }
-
-
-
-        </style>
     </head>
     <body class="font-sans antialiased bg-gray-50 dark:bg-gray-900 transition-colors duration-200"
           x-data="{
@@ -339,26 +105,140 @@
                                     </svg>
                                 </button>
 
-                                <!-- Search Input (Large Desktop Only) -->
-                                <div class="hidden xl:block relative">
+                                <!-- Search Input + Dropdown (Large Desktop Only) -->
+                                <div class="hidden xl:block relative" @click.away="hideResults">
                                     <input type="text"
+                                           x-ref="inlineSearchInput"
                                            @focus="showResults = true"
+                                           @keydown.escape="hideResults(); $el.blur()"
                                            placeholder="Search snippets, folders..."
                                            x-model="searchQuery"
                                            @input="search"
-                                           class="w-64 pl-9 pr-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors duration-200">
+                                           class="w-64 pl-9 pr-8 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors duration-200">
                                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                         <svg class="h-4 w-4 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                                         </svg>
                                     </div>
+                                    <!-- Filter toggle button -->
+                                    <div class="absolute inset-y-0 right-0 pr-2 flex items-center">
+                                        <button @click.stop="showFilters = !showFilters; showResults = true"
+                                                :class="hasActiveFilters ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300'"
+                                                title="Filters" class="p-1 rounded transition-colors">
+                                            <i class="fas fa-sliders-h text-xs"></i>
+                                            <span x-show="hasActiveFilters" class="absolute -top-1 -right-1 w-2 h-2 bg-indigo-500 rounded-full"></span>
+                                        </button>
+                                    </div>
+
+                                    <!-- Dropdown Results (xl only) -->
+                                    <div x-show="showResults && (searchQuery.length >= 2 || showFilters)"
+                                         x-cloak
+                                         class="absolute top-full left-0 mt-1 w-96 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 z-50 max-h-[32rem] overflow-y-auto">
+                                        <!-- Filter panel -->
+                                        <div x-show="showFilters" x-cloak class="px-3 py-2.5 border-b border-gray-200 dark:border-gray-700 space-y-2">
+                                            <div class="flex items-center gap-3">
+                                                <span class="text-xs text-gray-500 dark:text-gray-400 w-16 flex-shrink-0">Language</span>
+                                                <select x-model="filterLanguage" @change="search()"
+                                                        class="flex-1 px-2 py-1 text-xs rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500">
+                                                    <option value="">Any language</option>
+                                                    <option value="javascript">JavaScript</option>
+                                                    <option value="typescript">TypeScript</option>
+                                                    <option value="python">Python</option>
+                                                    <option value="php">PHP</option>
+                                                    <option value="java">Java</option>
+                                                    <option value="csharp">C#</option>
+                                                    <option value="cpp">C++</option>
+                                                    <option value="c">C</option>
+                                                    <option value="go">Go</option>
+                                                    <option value="rust">Rust</option>
+                                                    <option value="ruby">Ruby</option>
+                                                    <option value="swift">Swift</option>
+                                                    <option value="kotlin">Kotlin</option>
+                                                    <option value="html">HTML</option>
+                                                    <option value="css">CSS</option>
+                                                    <option value="sql">SQL</option>
+                                                    <option value="bash">Bash</option>
+                                                    <option value="powershell">PowerShell</option>
+                                                    <option value="json">JSON</option>
+                                                    <option value="yaml">YAML</option>
+                                                    <option value="xml">XML</option>
+                                                    <option value="markdown">Markdown</option>
+                                                    <option value="other">Other</option>
+                                                </select>
+                                            </div>
+                                            <div class="flex items-center gap-3">
+                                                <span class="text-xs text-gray-500 dark:text-gray-400 w-16 flex-shrink-0">Owner</span>
+                                                <div class="flex gap-1">
+                                                    <template x-for="opt in [{val:'all',label:'All'},{val:'personal',label:'Personal'},{val:'team',label:'Team'}]" :key="opt.val">
+                                                        <button @click="filterOwner = opt.val; search()"
+                                                                :class="filterOwner === opt.val ? 'bg-indigo-600 text-white border-indigo-600' : 'text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:border-indigo-400 dark:hover:border-indigo-500'"
+                                                                class="px-2.5 py-0.5 text-xs rounded-md border transition-colors" x-text="opt.label"></button>
+                                                    </template>
+                                                </div>
+                                                <button x-show="hasActiveFilters" @click="clearFilters()"
+                                                        class="ml-auto text-xs text-indigo-500 dark:text-indigo-400 hover:underline">Clear</button>
+                                            </div>
+                                        </div>
+
+                                        <div x-show="loading" x-cloak class="p-4 text-center">
+                                            <div class="inline-flex items-center">
+                                                <svg class="animate-spin -ml-1 mr-3 h-4 w-4 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                </svg>
+                                                <span class="text-sm text-gray-600 dark:text-gray-400">Searching...</span>
+                                            </div>
+                                        </div>
+                                        <div x-show="!loading" x-cloak>
+                                            <template x-if="results.snippets && results.snippets.length > 0">
+                                                <div class="border-b border-gray-100 dark:border-gray-700 last:border-0">
+                                                    <div class="px-4 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-900/50">Snippets</div>
+                                                    <template x-for="snippet in results.snippets" :key="snippet.id">
+                                                        <a :href="`/snippets/${snippet.id}`"
+                                                           @click="hideResults"
+                                                           class="block px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-150 border-b border-gray-50 dark:border-gray-700/50 last:border-0">
+                                                            <div class="flex items-start justify-between">
+                                                                <div class="flex-1 min-w-0">
+                                                                    <p class="text-sm font-medium text-gray-900 dark:text-white truncate" x-text="snippet.title"></p>
+                                                                    <p class="text-xs text-gray-500 dark:text-gray-400 truncate mt-1" x-text="snippet.description || 'No description'"></p>
+                                                                </div>
+                                                                <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200" x-text="snippet.language"></span>
+                                                            </div>
+                                                        </a>
+                                                    </template>
+                                                </div>
+                                            </template>
+                                            <template x-if="results.folders && results.folders.length > 0">
+                                                <div>
+                                                    <div class="px-4 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-900/50">Folders</div>
+                                                    <template x-for="folder in results.folders" :key="folder.id">
+                                                        <a :href="`/folders/${folder.id}`"
+                                                           @click="hideResults"
+                                                           class="block px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-150 border-b border-gray-50 dark:border-gray-700/50 last:border-0">
+                                                            <div class="flex items-center">
+                                                                <svg class="w-4 h-4 mr-2 text-yellow-500 dark:text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                                                                    <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"></path>
+                                                                </svg>
+                                                                <span class="text-sm text-gray-900 dark:text-white" x-text="folder.name"></span>
+                                                            </div>
+                                                        </a>
+                                                    </template>
+                                                </div>
+                                            </template>
+                                            <div x-show="searchQuery.length >= 2 && (!results.snippets || results.snippets.length === 0) && (!results.folders || results.folders.length === 0)"
+                                                 x-cloak
+                                                 class="p-4 text-center text-sm text-gray-500 dark:text-gray-400">
+                                                No results found for "<span x-text="searchQuery"></span>"
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
 
-                                <!-- Search Modal (All Screens) -->
+                                <!-- Search Modal (Small/Medium Screens Only) -->
                                 <div x-show="showResults"
                                      x-cloak
-                                     @click.away="hideResults"
-                                     class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-start justify-center pt-4"
+                                     @click="hideResults"
+                                     class="xl:hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-start justify-center pt-4"
                                      x-transition:enter="transition ease-out duration-200"
                                      x-transition:enter-start="opacity-0"
                                      x-transition:enter-end="opacity-100"
@@ -366,7 +246,7 @@
                                      x-transition:leave-start="opacity-100"
                                      x-transition:leave-end="opacity-0">
                                     <div @click.stop class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-11/12 max-w-2xl mx-auto transition-colors duration-200">
-                                        <div class="p-4 border-b border-gray-200 dark:border-gray-700 transition-colors duration-200">
+                                        <div class="p-4 border-b border-gray-200 dark:border-gray-700 transition-colors duration-200 space-y-3">
                                             <div class="relative">
                                                 <input type="text"
                                                        x-ref="searchInput"
@@ -374,17 +254,45 @@
                                                        x-model="searchQuery"
                                                        @input="search"
                                                        @keydown.escape="hideResults"
-                                                       class="w-full pl-10 pr-10 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors duration-200">
+                                                       class="w-full pl-10 pr-16 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors duration-200">
                                                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                                     <svg class="h-4 w-4 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                                                     </svg>
                                                 </div>
-                                                <button @click="hideResults" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
-                                                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                                                    </svg>
-                                                </button>
+                                                <div class="absolute inset-y-0 right-0 pr-3 flex items-center gap-2">
+                                                    <button @click="showFilters = !showFilters"
+                                                            :class="hasActiveFilters ? 'text-indigo-500' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'"
+                                                            title="Filters">
+                                                        <i class="fas fa-sliders-h text-sm"></i>
+                                                    </button>
+                                                    <button @click="hideResults" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                                                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                                        </svg>
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <!-- Mobile filter panel -->
+                                            <div x-show="showFilters" x-cloak class="space-y-2 pt-1 border-t border-gray-200 dark:border-gray-700 mt-2">
+                                                <div class="flex items-center gap-3 pt-2">
+                                                    <span class="text-xs text-gray-500 dark:text-gray-400 w-16 flex-shrink-0">Language</span>
+                                                    <input x-model="filterLanguage" @input="search()" type="text" placeholder="e.g. php"
+                                                           class="flex-1 px-2 py-1 text-xs rounded-md border border-gray-300 dark:border-gray-600 bg-transparent text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                                                </div>
+                                                <div class="flex items-center gap-3">
+                                                    <span class="text-xs text-gray-500 dark:text-gray-400 w-16 flex-shrink-0">Owner</span>
+                                                    <div class="flex gap-1">
+                                                        <template x-for="opt in [{val:'all',label:'All'},{val:'personal',label:'Personal'},{val:'team',label:'Team'}]" :key="opt.val">
+                                                            <button @click="filterOwner = opt.val; search()"
+                                                                    :class="filterOwner === opt.val ? 'bg-indigo-600 text-white border-indigo-600' : 'text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:border-indigo-400 dark:hover:border-indigo-500'"
+                                                                    class="px-2.5 py-0.5 text-xs rounded-md border transition-colors" x-text="opt.label"></button>
+                                                        </template>
+                                                    </div>
+                                                    <button x-show="hasActiveFilters" @click="clearFilters()"
+                                                            class="ml-auto text-xs text-indigo-500 dark:text-indigo-400 hover:underline">Clear</button>
+                                                </div>
                                             </div>
                                         </div>
                                         <div class="max-h-96 overflow-y-auto">
@@ -589,9 +497,6 @@
                         </div>
 
                         <!-- Personal Folders Tree -->
-                        @php
-                            $personalFolders = Auth::user()->folders()->whereNull('parent_id')->with(['children.children', 'snippets'])->get();
-                        @endphp
 
                         <div class="personal-folders">
                             @if($personalFolders->isEmpty())
@@ -607,23 +512,16 @@
                                 </div>
                             @endif
 
-                            {{-- Unfolderd Personal Snippets --}}
-                            @php
-                                $unfolderedPersonal = Auth::user()->snippets()
-                                    ->where('owner_type', 'App\Models\User')
-                                    ->whereNull('folder_id')
-                                    ->latest()
-                                    ->get();
-                            @endphp
+                            {{-- Unfoldered Personal Snippets --}}
                             @if($unfolderedPersonal->isNotEmpty())
                                 <div class="drop-zone rounded-lg p-2 min-h-[40px] transition-colors mt-2"
                                      data-folder-id="null" data-drop-type="snippets">
                                     @foreach($unfolderedPersonal as $snippet)
-                                        <div class="snippet-item mb-1 cursor-move flex items-center px-2 py-1 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors duration-200"
+                                        <div class="snippet-item mb-1 cursor-move flex items-center px-2 py-1 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors duration-200"
                                              draggable="true"
                                              data-snippet-id="{{ $snippet->id }}"
                                              data-type="snippet">
-                                            <div class="w-4 h-4 mr-2 text-xs bg-gray-200 dark:bg-gray-700 rounded flex items-center justify-center text-gray-600 dark:text-gray-300"
+                                            <div class="w-4 h-4 mr-2 text-xs bg-gray-200 dark:bg-gray-600 rounded flex items-center justify-center text-gray-600 dark:text-gray-300"
                                                  draggable="false">
                                                 {{ strtoupper(substr($snippet->language, 0, 2)) }}
                                             </div>
@@ -638,12 +536,13 @@
                         </div>
 
                         <!-- Team Folders Tree -->
-                        @if(Auth::user()->teams->isNotEmpty())
+                        @if($teams->isNotEmpty())
                         <div class="team-folders mt-6">
                             <h3 class="text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider mb-4">TEAM FOLDERS</h3>
-                                @foreach(Auth::user()->teams as $team)
+                                @foreach($teams as $team)
                                     @php
-                                        $teamFolders = $team->folders()->whereNull('parent_id')->with(['children.children', 'snippets'])->get();
+                                        $teamFolders = $allTeamFolders->get($team->id, collect());
+                                        $unfolderedTeam = $allUnfolderedTeam->get($team->id, collect());
                                     @endphp
                                     <div class="mb-4" data-team-id="{{ $team->id }}">
                                         <div class="flex items-center justify-between mb-2 pl-2 pr-1">
@@ -667,22 +566,16 @@
                                             </div>
                                         @endif
 
-                                        {{-- Unfolderd Team Snippets --}}
-                                        @php
-                                            $unfolderedTeam = $team->snippets()
-                                                ->whereNull('folder_id')
-                                                ->latest()
-                                                ->get();
-                                        @endphp
+                                        {{-- Unfoldered Team Snippets --}}
                                         @if($unfolderedTeam->isNotEmpty())
                                             <div class="drop-zone rounded-lg p-2 min-h-[40px] transition-colors mt-2"
                                                  data-folder-id="null" data-drop-type="snippets" data-team-id="{{ $team->id }}">
                                                 @foreach($unfolderedTeam as $snippet)
-                                                    <div class="snippet-item mb-1 cursor-move flex items-center px-2 py-1 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors duration-200"
+                                                    <div class="snippet-item mb-1 cursor-move flex items-center px-2 py-1 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors duration-200"
                                                          draggable="true"
                                                          data-snippet-id="{{ $snippet->id }}"
                                                          data-type="snippet">
-                                                        <div class="w-4 h-4 mr-2 text-xs bg-gray-200 dark:bg-gray-700 rounded flex items-center justify-center text-gray-600 dark:text-gray-300"
+                                                        <div class="w-4 h-4 mr-2 text-xs bg-gray-200 dark:bg-gray-600 rounded flex items-center justify-center text-gray-600 dark:text-gray-300"
                                                              draggable="false">
                                                             {{ strtoupper(substr($snippet->language, 0, 2)) }}
                                                         </div>
@@ -1187,7 +1080,20 @@
                     results: { snippets: [], folders: [] },
                     loading: false,
                     showResults: false,
+                    showFilters: false,
+                    filterLanguage: '',
+                    filterOwner: 'all',
                     searchTimeout: null,
+
+                    get hasActiveFilters() {
+                        return this.filterLanguage !== '' || this.filterOwner !== 'all';
+                    },
+
+                    clearFilters() {
+                        this.filterLanguage = '';
+                        this.filterOwner = 'all';
+                        this.search();
+                    },
 
                     getLanguageIcon(language) {
                         const lang = language.toLowerCase();
@@ -1285,7 +1191,11 @@
 
                         // Debounce the search
                         this.searchTimeout = setTimeout(() => {
-                            fetch(`/search?q=${encodeURIComponent(this.searchQuery)}`, {
+                            const params = new URLSearchParams({ q: this.searchQuery });
+                            if (this.filterLanguage) params.set('language', this.filterLanguage);
+                            if (this.filterOwner !== 'all') params.set('owner', this.filterOwner);
+
+                            fetch(`/search?${params}`, {
                                 method: 'GET',
                                 headers: {
                                     'Content-Type': 'application/json',
@@ -1311,6 +1221,65 @@
                 }
             }
         </script>
+
+        <script>
+            // ── Keyboard shortcuts ────────────────────────────────────────────────
+            document.addEventListener('keydown', function (e) {
+                const tag = document.activeElement?.tagName;
+                const isTyping = ['INPUT', 'TEXTAREA', 'SELECT'].includes(tag) || document.activeElement?.isContentEditable;
+
+                // Cmd/Ctrl+K → focus search
+                if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+                    e.preventDefault();
+                    const inlineInput = document.querySelector('[x-ref="inlineSearchInput"]');
+                    if (inlineInput && inlineInput.offsetParent !== null) {
+                        inlineInput.focus();
+                    } else {
+                        const searchBtn = document.querySelector('[x-data="searchComponent()"] button');
+                        if (searchBtn) searchBtn.click();
+                    }
+                    return;
+                }
+
+                if (isTyping) return;
+
+                // Cmd/Ctrl+N → new snippet
+                if ((e.metaKey || e.ctrlKey) && e.key === 'n') {
+                    e.preventDefault();
+                    window.location.href = '{{ route('snippets.create') }}';
+                    return;
+                }
+
+                // ? → show shortcuts modal
+                if (e.key === '?') {
+                    e.preventDefault();
+                    document.getElementById('shortcuts-modal')?.classList.toggle('hidden');
+                }
+            });
+        </script>
+
+        <!-- Keyboard shortcuts modal -->
+        <div id="shortcuts-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50" onclick="if(event.target===this)this.classList.add('hidden')">
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-6 max-w-sm w-full mx-4 border border-gray-200 dark:border-gray-700">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-base font-semibold text-gray-900 dark:text-gray-100">Keyboard Shortcuts</h2>
+                    <button onclick="document.getElementById('shortcuts-modal').classList.add('hidden')" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">✕</button>
+                </div>
+                <div class="space-y-2 text-sm">
+                    @foreach([
+                        ['Ctrl / ⌘ + K', 'Open search'],
+                        ['Ctrl / ⌘ + N', 'New snippet'],
+                        ['?', 'Show this help'],
+                        ['Esc', 'Close search / modal'],
+                    ] as [$key, $desc])
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-600 dark:text-gray-400">{{ $desc }}</span>
+                        <kbd class="px-2 py-0.5 text-xs font-mono bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded border border-gray-300 dark:border-gray-600">{{ $key }}</kbd>
+                    </div>
+                    @endforeach
+                </div>
+            </div>
+        </div>
 
         <script>
             // Sidebar resizing functionality

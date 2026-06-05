@@ -79,8 +79,9 @@ class CreateSuperAdmin extends Command
                 'email' => $email,
                 'password' => Hash::make($password),
                 'email_verified_at' => now(),
-                'is_super_admin' => true,
             ]);
+            $user->is_super_admin = true;
+            $user->save();
 
             $this->newLine();
             $this->info('✓ Super admin user created successfully!');

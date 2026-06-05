@@ -174,7 +174,7 @@
                                             @if($member->pivot->role === 'owner') bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200
                                             @elseif($member->pivot->role === 'editor') bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200
                                             @else bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 @endif">
-                                            {{ ucfirst($member->pivot->role) }}@if($member->id === $team->owner_id) (Team Owner)@elseif($member->id === auth()->id()) (You)@endif
+                                            {{ ucfirst($member->pivot->role) }}@if($member->id === auth()->id() && $member->id !== $team->owner_id) (You)@endif
                                         </span>
                                     @else
                                         <form method="POST" action="{{ route('teams.updateMemberRole', [$team, $member]) }}" class="inline">

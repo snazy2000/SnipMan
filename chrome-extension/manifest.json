@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "SnippetMan",
+  "name": "Snippet Manager",
   "version": "1.0.0",
-  "description": "Browse, search, and save your SnippetMan snippets from any page.",
+  "description": "Browse, search, and save your Snippet Manager snippets from any page.",
   "permissions": [
     "storage",
     "tabs",
@@ -16,7 +16,7 @@
   },
   "action": {
     "default_popup": "popup.html",
-    "default_title": "SnippetMan",
+    "default_title": "Snippet Manager",
     "default_icon": {
       "16": "icons/icon16.png",
       "48": "icons/icon48.png",

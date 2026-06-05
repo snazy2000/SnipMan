@@ -15,48 +15,44 @@ class SnippetApiController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
-
         $query = $request->input('q', '');
-        $ownerFilter = $request->input('owner', 'all'); // all, personal, team:{id}
-
-        $personalSnippets = $user->snippets()->with(['folder:id,name', 'creator:id,name']);
-        $teamSnippets = collect();
-
-        if ($query) {
-            $personalSnippets->where(function ($q) use ($query) {
-                $q->where('title', 'like', "%{$query}%")
-                    ->orWhere('content', 'like', "%{$query}%")
-                    ->orWhere('language', 'like', "%{$query}%");
-            });
-        }
+        $ownerFilter = $request->input('owner', 'all');
+        $lowerQuery = strtolower($query);
 
         $results = collect();
 
         if ($ownerFilter === 'all' || $ownerFilter === 'personal') {
-            foreach ($personalSnippets->latest()->get() as $s) {
+            $personalQuery = $user->snippets()->with(['folder:id,name', 'creator:id,name']);
+            if ($query) {
+                $personalQuery->where(function ($q) use ($lowerQuery) {
+                    $q->whereRaw('LOWER(title) LIKE ?', ["%{$lowerQuery}%"])
+                        ->orWhereRaw('LOWER(language) LIKE ?', ["%{$lowerQuery}%"]);
+                });
+            }
+            foreach ($personalQuery->latest()->get() as $s) {
                 $results->push($this->formatSnippet($s, null));
             }
         }
 
         if ($ownerFilter === 'all' || str_starts_with($ownerFilter, 'team:')) {
-            $teamId = str_starts_with($ownerFilter, 'team:') ? (int) substr($ownerFilter, 5) : null;
+            $specificTeamId = str_starts_with($ownerFilter, 'team:') ? (int) substr($ownerFilter, 5) : null;
+            $teams = $user->teams()->get()->keyBy('id');
+            $teamIds = $specificTeamId ? collect([$specificTeamId]) : $teams->keys();
 
-            foreach ($user->teams as $team) {
-                if ($teamId && $team->id !== $teamId) {
-                    continue;
-                }
+            $teamQuery = Snippet::whereIn('owner_id', $teamIds)
+                ->where('owner_type', Team::class)
+                ->with(['folder:id,name', 'creator:id,name'])
+                ->latest();
 
-                $teamQuery = $team->snippets()->with(['folder:id,name', 'creator:id,name']);
-                if ($query) {
-                    $teamQuery->where(function ($q) use ($query) {
-                        $q->where('title', 'like', "%{$query}%")
-                            ->orWhere('content', 'like', "%{$query}%")
-                            ->orWhere('language', 'like', "%{$query}%");
-                    });
-                }
-                foreach ($teamQuery->latest()->get() as $s) {
-                    $results->push($this->formatSnippet($s, $team));
-                }
+            if ($query) {
+                $teamQuery->where(function ($q) use ($lowerQuery) {
+                    $q->whereRaw('LOWER(title) LIKE ?', ["%{$lowerQuery}%"])
+                        ->orWhereRaw('LOWER(language) LIKE ?', ["%{$lowerQuery}%"]);
+                });
+            }
+
+            foreach ($teamQuery->get() as $s) {
+                $results->push($this->formatSnippet($s, $teams->get($s->owner_id)));
             }
         }
 
@@ -107,6 +103,14 @@ class SnippetApiController extends Controller
             $ownerId = $user->id;
         }
 
+        if (! empty($validated['folder_id'])) {
+            $folder = \App\Models\Folder::findOrFail($validated['folder_id']);
+            $folderOwnerMatches = $folder->owner_type === $ownerType && $folder->owner_id === $ownerId;
+            if (! $folderOwnerMatches) {
+                return response()->json(['message' => 'Folder does not belong to the selected owner'], 403);
+            }
+        }
+
         $snippet = Snippet::create([
             'title' => $validated['title'],
             'language' => $validated['language'],
@@ -139,18 +143,19 @@ class SnippetApiController extends Controller
         $personal = $user->folders()->select('id', 'name', 'parent_id')->get()
             ->map(fn ($f) => ['id' => $f->id, 'name' => $f->name, 'parent_id' => $f->parent_id, 'owner' => 'personal']);
 
-        $teamFolders = collect();
-        foreach ($user->teams as $team) {
-            $team->folders()->select('id', 'name', 'parent_id')->get()
-                ->each(fn ($f) => $teamFolders->push([
-                    'id' => $f->id,
-                    'name' => $f->name,
-                    'parent_id' => $f->parent_id,
-                    'owner' => 'team',
-                    'team_id' => $team->id,
-                    'team_name' => $team->name,
-                ]));
-        }
+        $teams = $user->teams()->get()->keyBy('id');
+        $teamFolders = \App\Models\Folder::whereIn('owner_id', $teams->keys())
+            ->where('owner_type', Team::class)
+            ->select('id', 'name', 'parent_id', 'owner_id')
+            ->get()
+            ->map(fn ($f) => [
+                'id' => $f->id,
+                'name' => $f->name,
+                'parent_id' => $f->parent_id,
+                'owner' => 'team',
+                'team_id' => $f->owner_id,
+                'team_name' => $teams->get($f->owner_id)?->name ?? '',
+            ]);
 
         return response()->json(['data' => $personal->merge($teamFolders)->values()]);
     }
@@ -184,8 +189,10 @@ class SnippetApiController extends Controller
             'creator' => $snippet->creator ? ['id' => $snippet->creator->id, 'name' => $snippet->creator->name] : null,
             'owner_type' => $snippet->owner_type === \App\Models\User::class ? 'personal' : 'team',
             'team' => $team ? ['id' => $team->id, 'name' => $team->name] : null,
+            'description' => $snippet->description,
             'user_tags' => $snippet->user_tags ?? [],
             'ai_description' => $snippet->ai_description,
+            'is_pinned' => (bool) $snippet->is_pinned,
             'created_at' => $snippet->created_at->toISOString(),
             'updated_at' => $snippet->updated_at->toISOString(),
         ];

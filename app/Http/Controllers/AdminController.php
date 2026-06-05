@@ -114,10 +114,11 @@ class AdminController extends Controller
         $user = User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
-            'password' => Hash::make(Str::random(32)), // Temporary random password
-            'is_super_admin' => $request->has('is_super_admin'),
+            'password' => Hash::make(Str::random(32)),
             'invitation_token' => hash('sha256', $token),
         ]);
+        $user->is_super_admin = $request->has('is_super_admin');
+        $user->save();
 
         // Send invitation email
         $user->notify(new UserInvitation($token));
@@ -319,7 +320,22 @@ class AdminController extends Controller
             'owner_id' => ['required', 'exists:users,id'],
         ]);
 
-        $team->update($validated);
+        $team->name = $validated['name'];
+
+        if ((int) $validated['owner_id'] !== $team->owner_id) {
+            $newOwner = \App\Models\User::where('id', $validated['owner_id'])
+                ->where('is_disabled', false)
+                ->whereNull('deleted_at')
+                ->first();
+
+            if (! $newOwner) {
+                return back()->withErrors(['owner_id' => 'Cannot assign a disabled or deleted user as team owner.'])->withInput();
+            }
+
+            $team->owner_id = $validated['owner_id'];
+        }
+
+        $team->save();
 
         return redirect()->route('admin.teams')->with('success', 'Team updated successfully.');
     }

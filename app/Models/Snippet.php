@@ -18,6 +18,7 @@ class Snippet extends Model
         'owner_id',
         'owner_type',
         'title',
+        'description',
         'language',
         'content',
         'created_by',
@@ -25,12 +26,14 @@ class Snippet extends Model
         'ai_processed_at',
         'ai_processing_failed',
         'user_tags',
+        'is_pinned',
     ];
 
     protected $casts = [
         'user_tags' => 'array',
         'ai_processed_at' => 'datetime',
         'ai_processing_failed' => 'boolean',
+        'is_pinned' => 'boolean',
     ];
 
     /**

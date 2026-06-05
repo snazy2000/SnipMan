@@ -7,6 +7,19 @@
 
     <title>{{ $snippet->title }} - Shared Snippet</title>
 
+    <!-- Open Graph / link-preview meta tags -->
+    @php
+        $ogDescription = $snippet->description ?: ($snippet->ai_description ?: "{$snippet->language} snippet shared via " . config('app.name'));
+    @endphp
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="{{ $snippet->title }}">
+    <meta property="og:description" content="{{ Str::limit($ogDescription, 200) }}">
+    <meta property="og:url" content="{{ url()->current() }}">
+    <meta property="og:site_name" content="{{ config('app.name') }}">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="{{ $snippet->title }}">
+    <meta name="twitter:description" content="{{ Str::limit($ogDescription, 200) }}">
+
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
@@ -14,14 +27,6 @@
     <!-- Scripts -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
-    <style>
-        .monaco-container {
-            height: 500px;
-            border: 1px solid #e5e7eb;
-            border-radius: 0.5rem;
-            overflow: hidden;
-        }
-    </style>
 </head>
 
 <body class="font-sans antialiased bg-gray-50">
@@ -85,7 +90,7 @@
 
                 <!-- Code Editor -->
                 <div class="p-6">
-                    <div id="monaco-editor" class="monaco-container"></div>
+                    <div id="monaco-editor" class="monaco-container monaco-container--tall"></div>
                 </div>
             </div>
 

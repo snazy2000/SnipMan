@@ -10,6 +10,7 @@ use App\Models\SnippetShare;
 use App\Models\SnippetVersion;
 use App\Models\Team;
 use App\Models\User;
+use App\View\Composers\SidebarComposer;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
@@ -28,21 +29,20 @@ class SnippetController extends Controller
     {
         $user = Auth::user();
 
-        // Get user's personal snippets
+        // Get user's personal snippets — pinned first, then by date
         $personalSnippets = $user->snippets()
             ->with(['folder', 'creator'])
+            ->orderByDesc('is_pinned')
             ->latest()
             ->paginate(10);
 
-        // Get team snippets from user's teams
-        $teamSnippets = collect();
-        foreach ($user->teams as $team) {
-            $snippets = $team->snippets()
-                ->with(['folder', 'creator'])
-                ->latest()
-                ->get();
-            $teamSnippets = $teamSnippets->merge($snippets);
-        }
+        // Get team snippets — single query across all teams
+        $teamIds = $user->teams()->pluck('teams.id');
+        $teamSnippets = Snippet::whereIn('owner_id', $teamIds)
+            ->where('owner_type', Team::class)
+            ->with(['folder', 'creator'])
+            ->latest()
+            ->get();
 
         // Check if AI auto description feature is enabled
         $aiAutoDescriptionEnabled = AISetting::get('ai.features.auto_description', false);
@@ -53,7 +53,7 @@ class SnippetController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
+    public function create(Request $request)
     {
         $user = Auth::user();
 
@@ -68,22 +68,42 @@ class SnippetController extends Controller
             }, 'snippets'])
             ->get();
 
-        // Get team folders with hierarchy (recursive loading)
-        $teamFolders = collect();
-        foreach ($teams as $team) {
-            $folders = $team->folders()
-                ->whereNull('parent_id')
-                ->with(['children' => function ($query) {
-                    $query->with('children');
-                }, 'snippets'])
-                ->get();
-            foreach ($folders as $folder) {
-                $folder->team_name = $team->name;
+        // Get team folders — single query across all teams
+        $teamIds = $teams->pluck('id');
+        $teamNameMap = $teams->pluck('name', 'id');
+        $allTeamFolders = Folder::whereIn('owner_id', $teamIds)
+            ->where('owner_type', Team::class)
+            ->whereNull('parent_id')
+            ->with(['children' => function ($query) {
+                $query->with('children');
+            }, 'snippets'])
+            ->get();
+
+        $teamFolders = $allTeamFolders->each(function ($folder) use ($teamNameMap) {
+            $folder->team_name = $teamNameMap[$folder->owner_id] ?? '';
+        });
+
+        // Pre-select owner context when arriving from a folder page
+        $preselectedFolderId = null;
+        $preselectedOwnerType = 'personal';
+        $preselectedTeamId = null;
+
+        if ($request->filled('folder_id')) {
+            $folder = Folder::find($request->folder_id);
+            if ($folder) {
+                $this->authorize('view', $folder);
+                $preselectedFolderId = $folder->id;
+                if ($folder->owner_type === 'App\\Models\\Team') {
+                    $preselectedOwnerType = 'team';
+                    $preselectedTeamId = $folder->owner_id;
+                }
             }
-            $teamFolders = $teamFolders->merge($folders);
         }
 
-        return view('snippets.create', compact('teams', 'personalFolders', 'teamFolders'));
+        return view('snippets.create', compact(
+            'teams', 'personalFolders', 'teamFolders',
+            'preselectedFolderId', 'preselectedOwnerType', 'preselectedTeamId'
+        ));
     }
 
     /**
@@ -94,6 +114,7 @@ class SnippetController extends Controller
 
         $request->validate([
             'title' => 'required|string|max:255',
+            'description' => 'nullable|string|max:1000',
             'language' => 'required|string|max:50',
             'content' => 'required|string',
             'folder_id' => 'nullable|exists:folders,id',
@@ -139,6 +160,7 @@ class SnippetController extends Controller
 
             $snippetData = [
                 'title' => $request->title,
+                'description' => $request->description,
                 'language' => $request->language,
                 'content' => $request->content,
                 'folder_id' => $request->folder_id,
@@ -150,6 +172,7 @@ class SnippetController extends Controller
         } else {
             $snippetData = [
                 'title' => $request->title,
+                'description' => $request->description,
                 'language' => $request->language,
                 'content' => $request->content,
                 'folder_id' => $request->folder_id,
@@ -174,6 +197,8 @@ class SnippetController extends Controller
         if (AISetting::get('ai.features.auto_description', false)) {
             ProcessSnippetAI::dispatch($snippet);
         }
+
+        SidebarComposer::forget(Auth::id());
 
         return redirect()->route('snippets.show', $snippet)
             ->with('success', 'Snippet created successfully.');
@@ -276,6 +301,7 @@ class SnippetController extends Controller
 
         $request->validate([
             'title' => 'required|string|max:255',
+            'description' => 'nullable|string|max:1000',
             'language' => 'required|string|max:50',
             'content' => 'required|string',
             'folder_id' => 'nullable|exists:folders,id',
@@ -312,7 +338,7 @@ class SnippetController extends Controller
         $contentChanged = $snippet->content !== $request->content;
 
         $snippet->update(array_merge(
-            $request->only(['title', 'language', 'content', 'folder_id']),
+            $request->only(['title', 'description', 'language', 'content', 'folder_id']),
             ['user_tags' => $userTags]
         ));
 
@@ -331,6 +357,8 @@ class SnippetController extends Controller
                 ProcessSnippetAI::dispatch($snippet, true); // Force reprocess
             }
         }
+
+        SidebarComposer::forget(Auth::id());
 
         return redirect()->route('snippets.show', $snippet)
             ->with('success', 'Snippet updated successfully.');
@@ -351,9 +379,27 @@ class SnippetController extends Controller
         $this->authorize('delete', $snippet);
 
         $snippet->delete();
+        SidebarComposer::forget(Auth::id());
 
         return redirect()->route('snippets.index')
             ->with('success', 'Snippet deleted successfully.');
+    }
+
+    /**
+     * Toggle pin status for a snippet.
+     */
+    public function togglePin(Snippet $snippet)
+    {
+        $this->authorize('update', $snippet);
+
+        $snippet->update(['is_pinned' => ! $snippet->is_pinned]);
+
+        SidebarComposer::forget(Auth::id());
+
+        return response()->json([
+            'is_pinned' => $snippet->is_pinned,
+            'message' => $snippet->is_pinned ? 'Snippet pinned.' : 'Snippet unpinned.',
+        ]);
     }
 
     /**
@@ -690,5 +736,164 @@ class SnippetController extends Controller
                 'message' => 'Failed to start AI analysis. Please try again.',
             ], 500);
         }
+    }
+
+    /**
+     * Bulk operations on multiple snippets (delete, move, tag).
+     */
+    public function bulk(Request $request)
+    {
+        $request->validate([
+            'action' => 'required|in:delete,move,tag',
+            'ids' => 'required|array|min:1|max:100',
+            'ids.*' => 'integer|exists:snippets,id',
+            'folder_id' => 'nullable|exists:folders,id',
+            'tags' => 'nullable|array',
+            'tags.*' => 'string|max:50',
+        ]);
+
+        $user = Auth::user();
+        $snippets = Snippet::whereIn('id', $request->ids)->get();
+
+        $allowed = $snippets->filter(function ($s) use ($user) {
+            try {
+                $this->authorize('update', $s);
+
+                return true;
+            } catch (\Exception) {
+                return false;
+            }
+        });
+
+        if ($allowed->isEmpty()) {
+            return response()->json(['success' => false, 'message' => 'No snippets could be modified.'], 403);
+        }
+
+        switch ($request->action) {
+            case 'delete':
+                $allowed->each(fn ($s) => $s->delete());
+                SidebarComposer::forget($user->id);
+                break;
+
+            case 'move':
+                if ($request->filled('folder_id')) {
+                    $folder = Folder::findOrFail($request->folder_id);
+                    $allowed->each(fn ($s) => $s->update(['folder_id' => $folder->id]));
+                } else {
+                    $allowed->each(fn ($s) => $s->update(['folder_id' => null]));
+                }
+                SidebarComposer::forget($user->id);
+                break;
+
+            case 'tag':
+                $tags = array_unique(array_map('strval', $request->tags ?? []));
+                $allowed->each(fn ($s) => $s->update([
+                    'user_tags' => array_unique(array_merge($s->user_tags ?? [], $tags)),
+                ]));
+                break;
+        }
+
+        return response()->json([
+            'success' => true,
+            'affected' => $allowed->count(),
+            'message' => "{$allowed->count()} snippet(s) updated.",
+        ]);
+    }
+
+    /**
+     * Export snippets as JSON or ZIP.
+     */
+    public function export(Request $request)
+    {
+        $request->validate([
+            'format' => 'nullable|in:json,zip',
+            'owner' => 'nullable|in:personal,all',
+        ]);
+
+        $format = $request->get('format', 'json');
+        $user = Auth::user();
+
+        $query = $user->snippets()->with(['folder:id,name']);
+
+        if ($request->get('owner') === 'all') {
+            $teamIds = $user->teams()->pluck('teams.id');
+            $teamSnippets = Snippet::whereIn('owner_id', $teamIds)
+                ->where('owner_type', Team::class)
+                ->with(['folder:id,name'])
+                ->get();
+        }
+
+        $snippets = $query->get();
+
+        if (isset($teamSnippets)) {
+            $snippets = $snippets->merge($teamSnippets);
+        }
+
+        $data = $snippets->map(fn ($s) => [
+            'id' => $s->id,
+            'title' => $s->title,
+            'description' => $s->description,
+            'language' => $s->language,
+            'content' => $s->content,
+            'folder' => $s->folder?->name,
+            'tags' => $s->user_tags ?? [],
+            'is_pinned' => (bool) $s->is_pinned,
+            'created_at' => $s->created_at->toISOString(),
+            'updated_at' => $s->updated_at->toISOString(),
+        ]);
+
+        if ($format === 'zip') {
+            $zip = new \ZipArchive;
+            $tmpFile = tempnam(sys_get_temp_dir(), 'snippets_') . '.zip';
+            $zip->open($tmpFile, \ZipArchive::CREATE);
+
+            foreach ($snippets as $snippet) {
+                $ext = $this->extensionForLanguage($snippet->language);
+                $filename = preg_replace('/[^a-zA-Z0-9_\-]/', '_', $snippet->title) . ".{$ext}";
+                $zip->addFromString($filename, $snippet->content);
+            }
+
+            $zip->close();
+
+            return response()->download($tmpFile, 'snippets.zip', [
+                'Content-Type' => 'application/zip',
+            ])->deleteFileAfterSend();
+        }
+
+        $json = json_encode(['snippets' => $data, 'exported_at' => now()->toISOString()], JSON_PRETTY_PRINT);
+
+        return response($json, 200, [
+            'Content-Type' => 'application/json',
+            'Content-Disposition' => 'attachment; filename="snippets.json"',
+        ]);
+    }
+
+    private function extensionForLanguage(string $language): string
+    {
+        return match (strtolower($language)) {
+            'javascript', 'js' => 'js',
+            'typescript', 'ts' => 'ts',
+            'python', 'py' => 'py',
+            'php' => 'php',
+            'java' => 'java',
+            'csharp', 'c#' => 'cs',
+            'cpp', 'c++' => 'cpp',
+            'c' => 'c',
+            'go', 'golang' => 'go',
+            'rust' => 'rs',
+            'ruby' => 'rb',
+            'swift' => 'swift',
+            'kotlin' => 'kt',
+            'html' => 'html',
+            'css' => 'css',
+            'sql' => 'sql',
+            'bash', 'shell', 'sh' => 'sh',
+            'powershell' => 'ps1',
+            'json' => 'json',
+            'yaml', 'yml' => 'yml',
+            'xml' => 'xml',
+            'markdown', 'md' => 'md',
+            default => 'txt',
+        };
     }
 }
