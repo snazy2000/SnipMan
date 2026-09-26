@@ -67,11 +67,20 @@ class AISettingsController extends Controller
 
         foreach ($settings as $setting) {
             $formFieldName = str_replace('.', '_', $setting->key);
-            if ($request->has($formFieldName)) {
-                $rules = $setting->validation_rules ?? [];
-                if (! empty($rules)) {
-                    $validationRules[$formFieldName] = $rules;
-                }
+            if (! $request->has($formFieldName)) {
+                continue;
+            }
+
+            // Merge the row's own rules with rules defined in code. Relying on
+            // the column alone meant any row with an empty validation_rules was
+            // saved unchecked - including provider names and base URLs.
+            $rules = array_values(array_unique(array_merge(
+                $setting->validation_rules ?? [],
+                $this->baselineRulesFor($setting->key),
+            )));
+
+            if ($rules !== []) {
+                $validationRules[$formFieldName] = $rules;
             }
         }
 
@@ -117,8 +126,9 @@ class AISettingsController extends Controller
             }
         }
 
-        // Clear both config cache and AISetting cache to pick up new database values
-        Artisan::call('config:clear');
+        // Clear the AISetting cache so new database values are picked up.
+        // Deliberately not config:clear - that drops the production config cache
+        // mid-request and degrades every request until it is rebuilt.
         AISetting::clearCache();
 
         // Clear any cached service instances to pick up new provider
@@ -147,6 +157,32 @@ class AISettingsController extends Controller
         return redirect()->back()->with('success', $message);
     }
 
+    /**
+     * Validation rules defined in code, keyed off the setting name.
+     *
+     * These are the guard rails that hold regardless of what the ai_settings row
+     * says: a provider the application actually implements, and a base URL that
+     * is a real http(s) URL rather than an arbitrary host a compromised admin
+     * account could aim the AI client at.
+     *
+     * @return array<int, string>
+     */
+    private function baselineRulesFor(string $key): array
+    {
+        return match (true) {
+            $key === 'ai.provider' => ['string', 'in:ollama,openrouter,openai'],
+            str_ends_with($key, '.base_url') => ['nullable', 'string', 'url', 'starts_with:http://,https://', 'max:2048'],
+            str_ends_with($key, '.site_url') => ['nullable', 'string', 'url', 'max:2048'],
+            str_ends_with($key, '.api_key') => ['nullable', 'string', 'max:512'],
+            str_ends_with($key, '.model'), str_ends_with($key, '.site_name') => ['nullable', 'string', 'max:255'],
+            str_ends_with($key, '.temperature') => ['nullable', 'numeric', 'between:0,2'],
+            str_ends_with($key, '.top_p') => ['nullable', 'numeric', 'between:0,1'],
+            str_ends_with($key, '.timeout') => ['nullable', 'integer', 'min:1', 'max:600'],
+            str_ends_with($key, '.max_tokens') => ['nullable', 'integer', 'min:1', 'max:32768'],
+            default => [],
+        };
+    }
+
     public function resetToDefaults()
     {
         try {
@@ -157,9 +193,6 @@ class AISettingsController extends Controller
 
             // Run the seeder to reset all settings to defaults
             Artisan::call('db:seed', ['--class' => 'AISettingsSeeder']);
-
-            // Clear config cache
-            Artisan::call('config:clear');
 
             // Clear AISetting cache
             AISetting::clearCache();
@@ -200,9 +233,6 @@ class AISettingsController extends Controller
     public function clearCaches()
     {
         try {
-            // Clear config cache
-            Artisan::call('config:clear');
-
             // Clear AISetting cache
             AISetting::clearCache();
 

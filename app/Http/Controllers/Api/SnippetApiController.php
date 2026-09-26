@@ -39,7 +39,9 @@ class SnippetApiController extends Controller
         if ($ownerFilter === 'all' || str_starts_with($ownerFilter, 'team:')) {
             $specificTeamId = str_starts_with($ownerFilter, 'team:') ? (int) substr($ownerFilter, 5) : null;
             $teams = $user->teams()->get()->keyBy('id');
-            $teamIds = $specificTeamId ? collect([$specificTeamId]) : $teams->keys();
+            $teamIds = $specificTeamId
+                ? $teams->keys()->intersect([$specificTeamId])
+                : $teams->keys();
 
             $teamQuery = Snippet::whereIn('owner_id', $teamIds)
                 ->where('owner_type', Team::class)

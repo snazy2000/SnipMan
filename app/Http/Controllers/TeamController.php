@@ -6,7 +6,9 @@ use App\Models\Team;
 use App\Models\User;
 use App\Notifications\TeamInvitation;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
@@ -141,6 +143,7 @@ class TeamController extends Controller
                 'email' => $request->email,
                 'password' => Hash::make(Str::random(32)),
                 'invitation_token' => hash('sha256', $token),
+                'invitation_expires_at' => now()->addDays(config('auth.invitation_ttl_days')),
             ]);
         }
 
@@ -229,38 +232,58 @@ class TeamController extends Controller
     {
         $hashedToken = hash('sha256', $token);
 
-        // Find the team invitation (lock row to prevent race condition on concurrent acceptance)
-        $membership = \DB::table('team_user')
-            ->where('invitation_token', $hashedToken)
-            ->where('invitation_status', 'pending')
-            ->lockForUpdate()
-            ->first();
+        return DB::transaction(function () use ($token, $hashedToken) {
+            // Lock the row so two concurrent acceptances cannot both pass the
+            // pending check. lockForUpdate only holds inside a transaction.
+            $membership = DB::table('team_user')
+                ->where('invitation_token', $hashedToken)
+                ->where('invitation_status', 'pending')
+                ->lockForUpdate()
+                ->first();
 
-        if (! $membership) {
-            return redirect()->route('login')->with('error', 'This invitation link is invalid or has already been used.');
-        }
+            if (! $membership) {
+                return redirect()->route('login')->with('error', 'This invitation link is invalid or has already been used.');
+            }
 
-        $user = User::find($membership->user_id);
-        $team = Team::find($membership->team_id);
+            // Team invitations expire on the same clock as account invitations.
+            // A null invited_at predates the expiry rule, so it stays valid.
+            if ($membership->invited_at !== null && Carbon::parse($membership->invited_at)
+                ->addDays(config('auth.invitation_ttl_days'))->isPast()) {
+                return redirect()->route('login')->with('error', 'This invitation link has expired. Ask a team owner to resend it.');
+            }
 
-        // If user hasn't accepted their account invitation yet, redirect to account setup
-        if ($user->invitation_token) {
-            return redirect()->route('invitation.show', ['token' => $token])
-                ->with('info', 'Please set up your account first, then you\'ll be added to the team.');
-        }
+            $user = User::find($membership->user_id);
+            $team = Team::find($membership->team_id);
 
-        // Accept the team invitation
-        \DB::table('team_user')
-            ->where('id', $membership->id)
-            ->update([
-                'invitation_status' => 'accepted',
-                'invitation_token' => null,
-                'updated_at' => now(),
-            ]);
+            if (! $user || ! $team) {
+                return redirect()->route('login')->with('error', 'This invitation link is no longer valid.');
+            }
 
-        \Auth::login($user);
+            // If user hasn't accepted their account invitation yet, redirect to account setup
+            if ($user->invitation_token) {
+                return redirect()->route('invitation.show', ['token' => $token])
+                    ->with('info', 'Please set up your account first, then you\'ll be added to the team.');
+            }
 
-        return redirect()->route('teams.show', $team)->with('success', 'Welcome to '.$team->name.'!');
+            // Possession of an invitation token must not sign in a disabled
+            // account. EnsureUserIsActive would catch it on the next request,
+            // but the check belongs at the point of login.
+            if (! $user->isActive()) {
+                return redirect()->route('login')->withErrors(['email' => 'Your account has been disabled.']);
+            }
+
+            DB::table('team_user')
+                ->where('id', $membership->id)
+                ->update([
+                    'invitation_status' => 'accepted',
+                    'invitation_token' => null,
+                    'updated_at' => now(),
+                ]);
+
+            Auth::login($user);
+
+            return redirect()->route('teams.show', $team)->with('success', 'Welcome to '.$team->name.'!');
+        });
     }
 
     /**
@@ -285,6 +308,13 @@ class TeamController extends Controller
             'invitation_token' => $hashedToken,
             'invited_at' => now(),
         ]);
+
+        // If the account invitation is still outstanding, push its expiry out
+        // too - the email links to account setup, which enforces that clock.
+        if ($user->invitation_token !== null) {
+            $user->invitation_expires_at = now()->addDays(config('auth.invitation_ttl_days'));
+            $user->save();
+        }
 
         // Resend notification
         $isNewUser = $user->invitation_token !== null;

@@ -26,6 +26,10 @@ class InvitationController extends Controller
             return redirect()->route('login')->with('error', 'This invitation link is invalid or has already been used.');
         }
 
+        if ($user->invitationHasExpired()) {
+            return redirect()->route('login')->with('error', 'This invitation link has expired. Ask an administrator to send a new one.');
+        }
+
         return view('auth.accept-invitation', compact('user', 'token'));
     }
 
@@ -42,6 +46,10 @@ class InvitationController extends Controller
 
         if (! $user) {
             return redirect()->route('login')->with('error', 'This invitation link is invalid or has already been used.');
+        }
+
+        if ($user->invitationHasExpired()) {
+            return redirect()->route('login')->with('error', 'This invitation link has expired. Ask an administrator to send a new one.');
         }
 
         $validated = $request->validate([

@@ -121,6 +121,10 @@ class ProfileController extends Controller
 
         $user = $request->user();
 
+        // Close any public share links before the account goes away; snippet
+        // ownership is polymorphic so nothing cascades on delete.
+        $user->revokePublicShares();
+
         Auth::logout();
 
         $user->delete();

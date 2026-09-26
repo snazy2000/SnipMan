@@ -116,8 +116,9 @@ class AdminController extends Controller
             'email' => $validated['email'],
             'password' => Hash::make(Str::random(32)),
             'invitation_token' => hash('sha256', $token),
+            'invitation_expires_at' => now()->addDays(config('auth.invitation_ttl_days')),
         ]);
-        $user->is_super_admin = $request->has('is_super_admin');
+        $user->is_super_admin = $request->boolean('is_super_admin');
         $user->save();
 
         // Send invitation email
@@ -159,7 +160,7 @@ class AdminController extends Controller
 
         // Prevent users from removing their own super admin privileges
         if ($user->id !== auth()->id()) {
-            $user->is_super_admin = $request->has('is_super_admin');
+            $user->is_super_admin = $request->boolean('is_super_admin');
         }
 
         if (! empty($validated['password'])) {
@@ -183,6 +184,7 @@ class AdminController extends Controller
         // Generate new token
         $token = Str::random(64);
         $user->invitation_token = hash('sha256', $token);
+        $user->invitation_expires_at = now()->addDays(config('auth.invitation_ttl_days'));
         $user->save();
 
         // Resend invitation email
@@ -233,6 +235,11 @@ class AdminController extends Controller
                 }
             }
         }
+
+        // Close any public share links on this user's personal snippets. The
+        // snippets themselves are retained for attribution (see the flash
+        // message below), but their /s/{uuid} links must not outlive the account.
+        $user->revokePublicShares();
 
         // Detach from teams
         $user->teams()->detach();

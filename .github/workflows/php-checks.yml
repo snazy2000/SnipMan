@@ -35,7 +35,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
 
       - name: Install Node dependencies
@@ -63,6 +63,9 @@ jobs:
 
       - name: Run PHPStan (Static Analysis)
         run: ./vendor/bin/phpstan analyse --memory-limit=2G
+
+      - name: Audit Dependencies for Known Advisories
+        run: composer audit
 
       - name: Run Tests
         env:

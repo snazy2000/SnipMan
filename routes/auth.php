@@ -33,6 +33,7 @@ Route::middleware('guest')->group(function () {
         ->name('invitation.accept');
 
     Route::get('teams/invitation/{token}', [TeamController::class, 'acceptInvitation'])
+        ->middleware('throttle:10,1')
         ->name('teams.acceptInvitation');
 
     Route::get('forgot-password', [PasswordResetLinkController::class, 'create'])
