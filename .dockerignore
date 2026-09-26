@@ -29,6 +29,8 @@ database/*.sqlite
 .phpunit.result.cache
 
 # Not needed at runtime
+.claude
+test.html
 tests
 coverage-report
 chrome-extension

@@ -114,4 +114,16 @@ return [
 
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Invitation Lifetime
+    |--------------------------------------------------------------------------
+    |
+    | How many days an account or team invitation link stays valid for. After
+    | this the token is rejected and an administrator must resend the invite.
+    |
+    */
+
+    'invitation_ttl_days' => (int) env('AUTH_INVITATION_TTL_DAYS', 7),
+
 ];

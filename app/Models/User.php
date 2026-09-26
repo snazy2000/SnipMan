@@ -11,8 +11,13 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Carbon;
 use Laravel\Sanctum\HasApiTokens;
 
+/**
+ * @property Carbon|null $invitation_expires_at
+ * @property Carbon|null $invitation_accepted_at
+ */
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
@@ -31,6 +36,7 @@ class User extends Authenticatable
         'monaco_language',
         'invitation_token',
         'invitation_accepted_at',
+        'invitation_expires_at',
     ];
 
     /**
@@ -55,6 +61,7 @@ class User extends Authenticatable
             'password' => 'hashed',
             'is_super_admin' => 'boolean',
             'is_disabled' => 'boolean',
+            'invitation_expires_at' => 'datetime',
         ];
     }
 
@@ -130,5 +137,32 @@ class User extends Authenticatable
     public function createdVersions(): HasMany
     {
         return $this->hasMany(SnippetVersion::class, 'created_by');
+    }
+
+    /**
+     * Has this user's account invitation passed its expiry?
+     *
+     * A null expiry is treated as valid so invitations issued before the
+     * expiry column existed keep working.
+     */
+    public function invitationHasExpired(): bool
+    {
+        return $this->invitation_expires_at !== null
+            && $this->invitation_expires_at->isPast();
+    }
+
+    /**
+     * Deactivate every public share
+ belonging to this user's personal snippets.
+     *
+     * Snippet ownership is polymorphic, so there is no foreign key from users to
+     * snippets and nothing cascades when a user is (soft) deleted. Without this,
+     * a deleted account's /s/{uuid} links keep serving its code indefinitely.
+     */
+    public function revokePublicShares(): int
+    {
+        return SnippetShare::whereIn('snippet_id', $this->snippets()->select('snippets.id'))
+            ->where('is_active', true)
+            ->update(['is_active' => false]);
     }
 }
