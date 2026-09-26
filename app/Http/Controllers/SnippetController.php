@@ -778,6 +778,18 @@ class SnippetController extends Controller
             case 'move':
                 if ($request->filled('folder_id')) {
                     $folder = Folder::findOrFail($request->folder_id);
+
+                    // Validation proves the folder exists; it does not prove the
+                    // caller may write to it. Same check as move() above.
+                    try {
+                        $this->authorize('update', $folder);
+                    } catch (AuthorizationException) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'You do not have permission to move snippets to this folder.',
+                        ], 403);
+                    }
+
                     $allowed->each(fn ($s) => $s->update(['folder_id' => $folder->id]));
                 } else {
                     $allowed->each(fn ($s) => $s->update(['folder_id' => null]));

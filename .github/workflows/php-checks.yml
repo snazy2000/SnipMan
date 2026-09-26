@@ -64,6 +64,9 @@ jobs:
       - name: Run PHPStan (Static Analysis)
         run: ./vendor/bin/phpstan analyse --memory-limit=2G
 
+      - name: Audit Dependencies for Known Advisories
+        run: composer audit
+
       - name: Run Tests
         env:
           DB_CONNECTION: sqlite

@@ -21,8 +21,11 @@ services:
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
       QUEUE_CONNECTION: database
-      CACHE_DRIVER: file
+      # Laravel 11+ reads CACHE_STORE; the old CACHE_DRIVER key is ignored.
+      CACHE_STORE: file
       SESSION_DRIVER: file
+      SESSION_SECURE_COOKIE: "true"
+      SESSION_SAME_SITE: strict
       # Add any other env vars needed
     ports:
       - "8080:8080"
@@ -48,8 +51,11 @@ services:
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
       QUEUE_CONNECTION: database
-      CACHE_DRIVER: file
+      # Laravel 11+ reads CACHE_STORE; the old CACHE_DRIVER key is ignored.
+      CACHE_STORE: file
       SESSION_DRIVER: file
+      SESSION_SECURE_COOKIE: "true"
+      SESSION_SAME_SITE: strict
       # Add any other env vars needed
     volumes:
       - ./:/var/www/html

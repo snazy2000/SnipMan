@@ -23,9 +23,8 @@ RUN apk --no-cache add \
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 
-# Copy composer files first for better caching
-COPY composer.json composer.lock ./
-# Copy application code (except node_modules)
+# Copy application code. See .dockerignore for what is kept out of the
+# image - notably .git, .env and vendor/.
 COPY . .
 # Install composer and dependencies
 RUN apk --no-cache add curl git && \
