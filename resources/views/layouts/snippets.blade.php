@@ -971,10 +971,10 @@
 
                 if (draggedType === 'snippet') {
                     const title = draggedElement.querySelector('a').textContent.trim();
-                    dragGhost.innerHTML = `📄 ${title}`;
+                    dragGhost.textContent = `📄 ${title}`;
                 } else if (draggedType === 'folder') {
                     const name = draggedElement.querySelector('a').textContent.trim();
-                    dragGhost.innerHTML = `📁 ${name}`;
+                    dragGhost.textContent = `📁 ${name}`;
                 }
 
                 dragGhost.style.left = (e.clientX + 10) + 'px';
@@ -1056,7 +1056,7 @@
                 toast.innerHTML = `
                     ${icon}
                     <div class="flex-1">
-                        <p class="text-sm font-medium">${message}</p>
+                        <p class="text-sm font-medium"></p>
                     </div>
                     <button onclick="this.parentElement.remove()" class="flex-shrink-0 text-current opacity-70 hover:opacity-100 transition-opacity">
                         <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -1064,6 +1064,10 @@
                         </svg>
                     </button>
                 `;
+
+                // The message is caller-supplied and carries folder and snippet names,
+                // so it is inserted as text and never parsed as markup.
+                toast.querySelector('p').textContent = message;
 
                 container.appendChild(toast);
 

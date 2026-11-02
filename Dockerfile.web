@@ -10,14 +10,36 @@ COPY . .
 RUN npm run build
 
 # --- Final Stage: PHP-Nginx ---
+#
+# trafex/php-nginx:3.10.0 is PHP 8.4 on Alpine 3.23. The PHP baked into the
+# published image predates 8.4.27, so the apk step below force-upgrades PHP to
+# a build that carries the fixes for CVE-2026-109618 and CVE-2026-109619
+# (unauthenticated RCE, CVSS 9.2, both in the CISA KEV catalog). Alpine 3.23
+# community ships php84-8.4.27-r0.
 FROM trafex/php-nginx:3.10.0
 USER root
-RUN apk --no-cache add \
+RUN apk --no-cache add --upgrade \
+	'php84>=8.4.27' \
+	'php84-fpm>=8.4.27' \
+	'php84-opcache>=8.4.27' \
 	php84-pdo \
 	php84-pdo_pgsql \
 	php84-pgsql \
 	php84-iconv \
 	postgresql-dev
+
+# Harden the PHP runtime.
+#
+# session.upload_progress is the confirmed cross-request vector for
+# CVE-2026-109619 and the only published mitigation for CVE-2026-115560, which
+# has no upstream fix as of 2026-11-02. It is enabled by default and does not
+# require session_start(). It must be disabled in php.ini - ini_set() is too
+# late to help.
+RUN printf 'session.upload_progress.enabled=0\nexpose_php=0\n' \
+	> /etc/php84/conf.d/99-security.ini
+
+# Fail the build rather than ship a PHP that is still vulnerable.
+RUN php -r 'exit(version_compare(PHP_VERSION, "8.4.27", ">=") ? 0 : 1);'
 
 # Copy custom nginx configuration
 COPY nginx.conf /etc/nginx/conf.d/default.conf
